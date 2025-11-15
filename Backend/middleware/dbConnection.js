@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const connectDB = require('../config/database')
+const logger = require('../utils/logger')
 
 /**
  * Middleware to ensure database connection before handling requests
@@ -36,7 +37,7 @@ const ensureDBConnection = async (req, res, next) => {
     // Connection is ready (readyState === 1)
     next()
   } catch (error) {
-    console.error('Database connection middleware error:', error.message)
+    logger.error('Database connection middleware error:', error)
     return res.status(503).json({
       success: false,
       message: 'Database connection failed. Please try again later.',

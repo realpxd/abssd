@@ -1,21 +1,46 @@
 const Razorpay = require('razorpay')
 const User = require('../models/User')
+const logger = require('../utils/logger')
 
 // Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_1DP5mmOlF5G5ag_secret',
-})
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET
+
+if (!razorpayKeyId || !razorpayKeySecret) {
+  console.warn('Razorpay credentials not configured. Payment features will not work.')
+}
+
+const razorpay = razorpayKeyId && razorpayKeySecret
+  ? new Razorpay({
+      key_id: razorpayKeyId,
+      key_secret: razorpayKeySecret,
+    })
+  : null
 
 // Create order
 exports.createOrder = async (req, res) => {
   try {
+    if (!razorpay) {
+      return res.status(503).json({
+        success: false,
+        message: 'Payment service is not configured',
+      })
+    }
+
     const { amount, membershipType } = req.body
 
     if (!amount || !membershipType) {
       return res.status(400).json({
         success: false,
         message: 'Amount and membership type are required',
+      })
+    }
+
+    // Validate amount
+    if (typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid amount',
       })
     }
 
@@ -40,11 +65,11 @@ exports.createOrder = async (req, res) => {
         orderId: order.id,
         amount: order.amount,
         currency: order.currency,
-        key: process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
+        key: razorpayKeyId,
       },
     })
   } catch (error) {
-    console.error('Razorpay order creation error:', error)
+    logger.error('Razorpay order creation error:', error)
     res.status(500).json({
       success: false,
       message: error.message || 'Error creating order',
@@ -64,9 +89,16 @@ exports.verifyPayment = async (req, res) => {
       })
     }
 
+    if (!razorpayKeySecret) {
+      return res.status(503).json({
+        success: false,
+        message: 'Payment service is not configured',
+      })
+    }
+
     const crypto = require('crypto')
     const generated_signature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'rzp_test_1DP5mmOlF5G5ag_secret')
+      .createHmac('sha256', razorpayKeySecret)
       .update(razorpay_order_id + '|' + razorpay_payment_id)
       .digest('hex')
 
@@ -129,7 +161,7 @@ exports.verifyPayment = async (req, res) => {
       user: updatedUser,
     })
   } catch (error) {
-    console.error('Payment verification error:', error)
+    logger.error('Payment verification error:', error)
     res.status(500).json({
       success: false,
       message: error.message || 'Error verifying payment',

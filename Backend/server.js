@@ -4,6 +4,7 @@ const cors = require('cors')
 const path = require('path')
 const connectDB = require('./config/database')
 const ensureDBConnection = require('./middleware/dbConnection')
+const logger = require('./utils/logger')
 
 // Import routes
 const contactRoutes = require('./routes/contactRoutes')
@@ -14,16 +15,62 @@ const paymentRoutes = require('./routes/paymentRoutes')
 
 const app = express()
 
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET']
+const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
+
+if (missingEnvVars.length > 0 && process.env.NODE_ENV !== 'test') {
+  logger.warn(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
+  logger.warn('Some features may not work correctly. Please check your .env file.')
+}
+
 // Connect to database (async, don't block server startup)
 // In serverless, connection will be established on first request via middleware
 if (!process.env.VERCEL) {
   connectDB().catch((error) => {
-    console.error('Database connection error:', error)
+    logger.error('Database connection error:', error)
   })
 }
 
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true)
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'https://abssd.vercel.app',
+      'https://abssd-fe.vercel.app',
+      /\.vercel\.app$/, // Allow all Vercel preview deployments
+    ].filter(Boolean)
+    
+    // Check if origin matches any allowed pattern
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return origin === allowed
+      }
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin)
+      }
+      return false
+    })
+    
+    // In production/Vercel, be more permissive if FRONTEND_URL is not set
+    if (isAllowed || !process.env.FRONTEND_URL || process.env.VERCEL) {
+      callback(null, true)
+    } else {
+      logger.warn(`CORS blocked request from origin: ${origin}`)
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}
 
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
@@ -35,8 +82,12 @@ app.use('/api', (req, res, next) => {
   return ensureDBConnection(req, res, next)
 })
 
-// Serve static files (uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+// Serve static files (uploads) - with security headers
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1y', // Cache for 1 year
+  etag: true,
+  lastModified: true,
+}))
 
 // Routes
 app.use('/api/auth', authRoutes)
@@ -82,11 +133,12 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   // Log error
-  console.error('Error:', {
+  logger.error('Request error:', {
     message: err.message,
     stack: err.stack,
     path: req.path,
     method: req.method,
+    url: req.originalUrl,
   })
 
   // Mongoose validation error
@@ -139,8 +191,8 @@ app.use((err, req, res, next) => {
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
+    logger.info(`Server running on port ${PORT}`)
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
   })
 }
 

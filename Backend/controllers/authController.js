@@ -1,6 +1,8 @@
 const User = require('../models/User')
 const { validationResult } = require('express-validator')
 const crypto = require('crypto')
+const path = require('path')
+const fs = require('fs')
 
 // Register new user
 exports.register = async (req, res) => {
@@ -53,25 +55,25 @@ exports.register = async (req, res) => {
 
     // Create user
     const user = await User.create({
-      username,
-      email: email.toLowerCase(),
-      contactNo,
+      username: username.trim(),
+      email: email.toLowerCase().trim(),
+      contactNo: contactNo.trim(),
       password,
       dob: dob ? new Date(dob) : undefined,
       gender,
-      fatherName,
-      motherName,
+      fatherName: fatherName?.trim(),
+      motherName: motherName?.trim(),
       address: address ? {
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode,
-        country: address.country || 'India',
+        street: address.street?.trim(),
+        city: address.city?.trim(),
+        state: address.state?.trim(),
+        pincode: address.pincode?.trim(),
+        country: address.country?.trim() || 'India',
       } : undefined,
-      aadharNo,
-      qualification,
-      occupation,
-      moreDetails,
+      aadharNo: aadharNo?.trim(),
+      qualification: qualification?.trim(),
+      occupation: occupation?.trim(),
+      moreDetails: moreDetails?.trim(),
       membershipType,
       membershipAmount,
       membershipStatus: 'pending',
@@ -375,14 +377,34 @@ exports.adminLogin = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const updates = req.body
+    const updates = {}
     const userId = req.user._id
 
-    // Remove fields that shouldn't be updated directly
-    delete updates.password
-    delete updates.email
-    delete updates.membershipStatus
-    delete updates.paymentId
+    // Only allow specific fields to be updated
+    const allowedFields = [
+      'username', 'contactNo', 'dob', 'gender', 'fatherName', 'motherName',
+      'address', 'aadharNo', 'qualification', 'occupation', 'moreDetails', 'role'
+    ]
+    
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === 'address' && typeof req.body[field] === 'object') {
+          updates[field] = {
+            street: req.body[field].street?.trim(),
+            city: req.body[field].city?.trim(),
+            state: req.body[field].state?.trim(),
+            pincode: req.body[field].pincode?.trim(),
+            country: req.body[field].country?.trim() || 'India',
+          }
+        } else if (field === 'dob' && req.body[field]) {
+          updates[field] = new Date(req.body[field])
+        } else if (typeof req.body[field] === 'string') {
+          updates[field] = req.body[field].trim()
+        } else {
+          updates[field] = req.body[field]
+        }
+      }
+    })
     
     // Allow role update only if explicitly provided (for testing/admin purposes)
     // In production, you might want to restrict this to admin-only
@@ -392,6 +414,20 @@ exports.updateProfile = async (req, res) => {
 
     // Handle photo upload
     if (req.file) {
+      // Delete old photo if exists
+      const oldUser = await User.findById(userId)
+      if (oldUser && oldUser.photo && oldUser.photo.startsWith('/uploads/')) {
+        const oldFilePath = path.join(__dirname, '..', oldUser.photo)
+        if (fs.existsSync(oldFilePath)) {
+          try {
+            fs.unlinkSync(oldFilePath)
+          } catch (unlinkError) {
+            // Log but don't fail if file deletion fails
+            const logger = require('../utils/logger')
+            logger.warn('Failed to delete old photo:', unlinkError)
+          }
+        }
+      }
       updates.photo = `/uploads/${req.file.filename}`
     }
 

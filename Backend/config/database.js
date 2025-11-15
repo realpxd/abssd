@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const logger = require('../utils/logger')
 
 // Connection state management
 let isConnecting = false
@@ -26,40 +27,41 @@ const connectDB = async () => {
       maxPoolSize: 10, // Maintain up to 10 socket connections
       minPoolSize: 2, // Maintain at least 2 socket connections
       maxIdleTimeMS: 30000, // Close connections after 30s of inactivity
-      bufferMaxEntries: 0, // Disable mongoose buffering; throw immediately if not connected
-      bufferCommands: false, // Disable mongoose buffering
     })
+    
+    // Disable mongoose buffering globally (for serverless environments)
+    mongoose.set('bufferCommands', false)
 
     const conn = await connectionPromise
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`)
+    logger.info(`MongoDB Connected: ${conn.connection.host}`)
     isConnecting = false
     return conn
   } catch (error) {
     isConnecting = false
     connectionPromise = null
-    console.error(`MongoDB Connection Error: ${error.message}`)
+    logger.error('MongoDB Connection Error:', error)
     throw error
   }
 }
 
 // Handle connection events
 mongoose.connection.on('connected', () => {
-  console.log('Mongoose connected to MongoDB')
+  logger.info('Mongoose connected to MongoDB')
 })
 
 mongoose.connection.on('error', (err) => {
-  console.error('Mongoose connection error:', err)
+  logger.error('Mongoose connection error:', err)
 })
 
 mongoose.connection.on('disconnected', () => {
-  console.log('Mongoose disconnected from MongoDB')
+  logger.warn('Mongoose disconnected from MongoDB')
 })
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await mongoose.connection.close()
-  console.log('MongoDB connection closed through app termination')
+  logger.info('MongoDB connection closed through app termination')
   process.exit(0)
 })
 

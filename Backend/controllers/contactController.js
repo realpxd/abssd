@@ -1,9 +1,20 @@
 const Contact = require('../models/Contact')
+const { getPaginationParams, getPaginationResponse } = require('../utils/pagination')
 
 // Create new contact
 exports.createContact = async (req, res) => {
   try {
-    const contact = await Contact.create(req.body)
+    // Basic input sanitization
+    const { name, email, phone, message } = req.body
+    
+    if (!name || !email || !phone || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required',
+      })
+    }
+    
+    const contact = await Contact.create({ name, email, phone, message })
     res.status(201).json({
       success: true,
       data: contact,
@@ -13,7 +24,6 @@ exports.createContact = async (req, res) => {
     res.status(400).json({
       success: false,
       message: error.message || 'Error creating contact',
-      error: error,
     })
   }
 }
@@ -21,12 +31,16 @@ exports.createContact = async (req, res) => {
 // Get all contacts (admin)
 exports.getAllContacts = async (req, res) => {
   try {
-    const contacts = await Contact.find().sort({ createdAt: -1 })
-    res.status(200).json({
-      success: true,
-      count: contacts.length,
-      data: contacts,
-    })
+    // Get pagination parameters
+    const { page, limit, skip } = getPaginationParams(req)
+    
+    // Get total count and paginated results
+    const [contacts, total] = await Promise.all([
+      Contact.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Contact.countDocuments(),
+    ])
+    
+    res.status(200).json(getPaginationResponse(page, limit, total, contacts))
   } catch (error) {
     res.status(500).json({
       success: false,

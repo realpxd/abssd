@@ -138,7 +138,11 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 // Generate JWT token
 userSchema.methods.generateToken = function () {
   const jwt = require('jsonwebtoken')
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET || 'your-secret-key', {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured. Please set it in environment variables.')
+  }
+  return jwt.sign({ id: this._id }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '30d',
   })
 }

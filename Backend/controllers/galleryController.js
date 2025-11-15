@@ -1,6 +1,8 @@
 const Gallery = require('../models/Gallery')
 const path = require('path')
 const fs = require('fs')
+const { getPaginationParams, getPaginationResponse } = require('../utils/pagination')
+const logger = require('../utils/logger')
 
 // Get all gallery items (public - only active)
 // Get all gallery items (admin - all items)
@@ -9,12 +11,17 @@ exports.getGallery = async (req, res) => {
     // Check if user is admin (optional - req.user might not exist for public access)
     const isAdmin = req.user && req.user.role === 'admin'
     const query = isAdmin ? {} : { isActive: true }
-    const gallery = await Gallery.find(query).sort({ createdAt: -1 })
-    res.status(200).json({
-      success: true,
-      count: gallery.length,
-      data: gallery,
-    })
+    
+    // Get pagination parameters
+    const { page, limit, skip } = getPaginationParams(req)
+    
+    // Get total count and paginated results
+    const [gallery, total] = await Promise.all([
+      Gallery.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Gallery.countDocuments(query),
+    ])
+    
+    res.status(200).json(getPaginationResponse(page, limit, total, gallery))
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -26,12 +33,27 @@ exports.getGallery = async (req, res) => {
 // Create gallery item (admin)
 exports.createGalleryItem = async (req, res) => {
   try {
-    const data = { ...req.body }
+    const data = {
+      title: req.body.title?.trim(),
+      titleEn: req.body.titleEn?.trim(),
+      description: req.body.description?.trim(),
+      category: req.body.category,
+    }
+    
+    // Validate required fields
+    if (!data.title) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title is required',
+      })
+    }
     
     // Handle file upload (priority over imageUrl in body)
     if (req.file) {
       data.imageUrl = `/uploads/${req.file.filename}`
-    } else if (!data.imageUrl) {
+    } else if (req.body.imageUrl) {
+      data.imageUrl = req.body.imageUrl.trim()
+    } else {
       return res.status(400).json({
         success: false,
         message: 'Image URL or image file is required',
@@ -54,7 +76,14 @@ exports.createGalleryItem = async (req, res) => {
 // Update gallery item (admin)
 exports.updateGalleryItem = async (req, res) => {
   try {
-    const data = { ...req.body }
+    const data = {}
+    
+    // Only update provided fields
+    if (req.body.title !== undefined) data.title = req.body.title.trim()
+    if (req.body.titleEn !== undefined) data.titleEn = req.body.titleEn.trim()
+    if (req.body.description !== undefined) data.description = req.body.description.trim()
+    if (req.body.category !== undefined) data.category = req.body.category
+    if (req.body.isActive !== undefined) data.isActive = req.body.isActive
     
     // Handle file upload (priority over imageUrl in body)
     if (req.file) {
@@ -63,12 +92,18 @@ exports.updateGalleryItem = async (req, res) => {
       if (oldItem && oldItem.imageUrl && oldItem.imageUrl.startsWith('/uploads/')) {
         const oldFilePath = path.join(__dirname, '..', oldItem.imageUrl)
         if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath)
+          try {
+            fs.unlinkSync(oldFilePath)
+          } catch (unlinkError) {
+            // Log but don't fail if file deletion fails
+            logger.warn('Failed to delete old file:', unlinkError)
+          }
         }
       }
       data.imageUrl = `/uploads/${req.file.filename}`
+    } else if (req.body.imageUrl !== undefined) {
+      data.imageUrl = req.body.imageUrl.trim()
     }
-    // If no file uploaded, use imageUrl from body (if provided)
     
     const galleryItem = await Gallery.findByIdAndUpdate(req.params.id, data, {
       new: true,
@@ -107,7 +142,12 @@ exports.deleteGalleryItem = async (req, res) => {
     if (galleryItem.imageUrl && galleryItem.imageUrl.startsWith('/uploads/')) {
       const filePath = path.join(__dirname, '..', galleryItem.imageUrl)
       if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath)
+        try {
+          fs.unlinkSync(filePath)
+        } catch (unlinkError) {
+          // Log but don't fail if file deletion fails
+          logger.warn('Failed to delete file:', unlinkError)
+        }
       }
     }
     

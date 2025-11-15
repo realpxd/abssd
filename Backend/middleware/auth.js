@@ -17,7 +17,14 @@ exports.protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error',
+      })
+    }
+    const decoded = jwt.verify(token, secret)
     
     // Use select to avoid password field unless needed
     req.user = await User.findById(decoded.id).select('-password')

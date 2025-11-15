@@ -31,16 +31,16 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await client(api.endpoints.auth + '/me', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
+          const response = await client(api.endpoints.auth + '/me')
           setUser(response.data)
         } catch (error) {
+          // Token is invalid or expired, clear it
           setToken(null)
           setUser(null)
+          localStorage.removeItem('token')
         }
+      } else {
+        setLoading(false)
       }
       setLoading(false)
     }

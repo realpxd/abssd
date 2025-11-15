@@ -24,14 +24,28 @@ const client = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config)
-    const data = await response.json()
+    
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type')
+    let data
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json()
+    } else {
+      const text = await response.text()
+      throw new Error(text || `HTTP ${response.status}: ${response.statusText}`)
+    }
     
     if (!response.ok) {
-      throw new Error(data.message || 'An error occurred')
+      throw new Error(data.message || data.error || `HTTP ${response.status}: ${response.statusText}`)
     }
     
     return data
   } catch (error) {
+    // Enhance error with more context
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to server. Please check your connection.')
+    }
     throw error
   }
 }
