@@ -23,10 +23,7 @@ if (!process.env.VERCEL) {
 }
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
-}))
+app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -69,15 +66,11 @@ app.use((err, req, res, next) => {
   })
 })
 
-// Only start server if not in Vercel serverless environment
-// Vercel will handle the serverless function invocation
-if (!process.env.VERCEL) {
-  const PORT = process.env.PORT || 5000
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  })
-}
+const PORT = process.env.PORT || 5000
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
+})
 
 module.exports = app
 
