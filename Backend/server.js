@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
+const mongoose = require('mongoose')
 const connectDB = require('./config/database')
 
 // Import routes
@@ -11,10 +12,15 @@ const eventRoutes = require('./routes/eventRoutes')
 const authRoutes = require('./routes/authRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 
-// Connect to database
-connectDB()
-
 const app = express()
+
+// Connect to database (async, don't block server startup)
+// In serverless, connection will be established on first request
+if (!process.env.VERCEL) {
+  connectDB().catch((error) => {
+    console.error('Database connection error:', error)
+  })
+}
 
 // Middleware
 app.use(cors({
@@ -63,12 +69,15 @@ app.use((err, req, res, next) => {
   })
 })
 
-const PORT = process.env.PORT || 5000
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-})
+// Only start server if not in Vercel serverless environment
+// Vercel will handle the serverless function invocation
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
+  })
+}
 
 module.exports = app
 
