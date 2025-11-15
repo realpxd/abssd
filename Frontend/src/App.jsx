@@ -12,6 +12,7 @@ import GalleryPage from './pages/GalleryPage'
 import NewsPage from './pages/NewsPage'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
+import TestControls from './pages/TestControls'
 
 function App() {
   return (
@@ -66,6 +67,8 @@ function App() {
             </AdminProtectedRoute>
           }
         />
+        {/* Hidden Test Controls Route - Not visible in UI */}
+        <Route path="/test-controls" element={<TestControls />} />
       </Routes>
     </div>
   )

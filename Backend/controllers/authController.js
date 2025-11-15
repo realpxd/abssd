@@ -383,6 +383,12 @@ exports.updateProfile = async (req, res) => {
     delete updates.email
     delete updates.membershipStatus
     delete updates.paymentId
+    
+    // Allow role update only if explicitly provided (for testing/admin purposes)
+    // In production, you might want to restrict this to admin-only
+    if (updates.role && !['user', 'admin'].includes(updates.role)) {
+      delete updates.role
+    }
 
     // Handle photo upload
     if (req.file) {

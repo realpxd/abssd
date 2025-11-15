@@ -18,7 +18,9 @@ exports.protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
-    req.user = await User.findById(decoded.id)
+    
+    // Use select to avoid password field unless needed
+    req.user = await User.findById(decoded.id).select('-password')
     
     if (!req.user) {
       return res.status(401).json({
@@ -36,6 +38,21 @@ exports.protect = async (req, res, next) => {
 
     next()
   } catch (error) {
+    // Handle specific JWT errors
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token',
+      })
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired',
+      })
+    }
+    
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',
@@ -54,7 +71,8 @@ exports.optionalProtect = async (req, res, next) => {
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
-      req.user = await User.findById(decoded.id)
+      // Use select to avoid password field
+      req.user = await User.findById(decoded.id).select('-password')
     } catch (error) {
       // Invalid token, but continue without req.user
       req.user = null
