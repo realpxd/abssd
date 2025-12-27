@@ -146,7 +146,7 @@ const Profile = () => {
       </div>
     )
   }
-
+console.log({user})
   const photoUrl = user.photo ? getImageUrl(user.photo) : null
 
   return (
@@ -163,8 +163,8 @@ const Profile = () => {
               {[
                 { id: 'idcard', label: 'ID Card', hi: 'आईडी कार्ड' },
                 { id: 'personal', label: 'Personal Settings', hi: 'व्यक्तिगत सेटिंग्स' },
-                { id: 'privacy', label: 'Privacy & Security', hi: 'गोपनीयता और सुरक्षा' },
-                { id: 'notifications', label: 'Notifications', hi: 'सूचनाएं' },
+                // { id: 'privacy', label: 'Privacy & Security', hi: 'गोपनीयता और सुरक्षा' },
+                // { id: 'notifications', label: 'Notifications', hi: 'सूचनाएं' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -226,20 +226,35 @@ const Profile = () => {
                       </label>
                     </div>
                   </div>
+                  <div className='flex w-full justify-between'>
+
                   <div className="border-t border-white/30 pt-4 mt-4">
                     <div className="text-lg font-semibold mb-1">{user.username}</div>
-                    <div className="text-sm opacity-90 mb-2">{user.email}</div>
+                    <div className="text-sm opacity-90 mb-2">📧 {user.email}</div>
                     <div className="text-sm">
                       <div className="mb-1">📞 {user.contactNo}</div>
-                      {user.membershipStatus && (
+                      {/* {user.membershipStatus && (
                         <div className="mt-2">
                           <span className="bg-white/20 px-2 py-1 rounded text-xs">
                             {user.membershipStatus === 'active' ? 'Active Member' : 'Pending'}
                           </span>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
+
+                  {/* QR Code - Bottom Left */}
+                  <div className="mt-4 flex items-end">
+                    <div className="bg-white p-2 rounded">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`}
+                        alt="Member QR Code"
+                        className="w-10 h-10"
+                      />
+                    </div>
+                  </div>
+                  </div>
+                  
                 </div>
                 <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
                   <div>
