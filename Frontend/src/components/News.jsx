@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEvents } from '../hooks/useEvents.js'
+import { getImageUrl } from '../utils/imageUrl.js'
 
 const News = () => {
   const { data, isLoading, error } = useEvents()
@@ -69,7 +70,7 @@ const News = () => {
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={item.imageUrl || item.image}
+                      src={getImageUrl(item.imageUrl || item.image)}
                       alt={item.title}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                     />

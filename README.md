@@ -186,7 +186,6 @@ When using `./start.sh`, logs are saved to:
 - **Founded**: 2017
 - **Founder & National President**: श्री जीतू माली (Shri Jeetu Mali)
 - **Contact**: +91 8860442044
-- **Address**: 5/1, महालक्ष्मी गार्डन, राजेंद्र पार्क, गुरुग्राम – 122001
 
 ### Services
 - स्वच्छता अभियान (Cleanliness Campaigns)

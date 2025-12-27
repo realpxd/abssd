@@ -1,6 +1,7 @@
 import { useEvents } from '../hooks/useEvents.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
+import { getImageUrl } from '../utils/imageUrl.js'
 
 const NewsPage = () => {
   const { data, isLoading, error } = useEvents()
@@ -77,7 +78,7 @@ const NewsPage = () => {
                 >
                   <div className="relative h-56 overflow-hidden">
                     <img
-                      src={item.imageUrl || item.image}
+                      src={getImageUrl(item.imageUrl || item.image)}
                       alt={item.title}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                     />

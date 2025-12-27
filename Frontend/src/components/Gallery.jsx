@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useGallery } from '../hooks/useGallery.js'
+import { getImageUrl } from '../utils/imageUrl.js'
 
 const Gallery = () => {
   const { data, isLoading, error } = useGallery()
@@ -53,7 +54,7 @@ const Gallery = () => {
                   onClick={() => setSelectedImage(image)}
                 >
                   <img
-                    src={image.imageUrl || image.src}
+                    src={getImageUrl(image.imageUrl || image.src)}
                     alt={image.title}
                     className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
                   />
@@ -88,7 +89,7 @@ const Gallery = () => {
           >
             <div className="max-w-4xl w-full">
               <img
-                src={selectedImage.imageUrl || selectedImage.src}
+                src={getImageUrl(selectedImage.imageUrl || selectedImage.src)}
                 alt={selectedImage.title}
                 className="w-full h-auto rounded-lg"
               />

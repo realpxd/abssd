@@ -170,10 +170,6 @@ const About = () => {
                   <span className="text-2xl">📞</span>
                   <a href="tel:+918860442044" className="hover:underline font-semibold">+91 8860442044</a>
                 </p>
-                <p className="flex items-center justify-center gap-3">
-                  <span className="text-2xl">📮</span>
-                  <span>5/1, महालक्ष्मी गार्डन, राजेंद्र पार्क, गुरुग्राम – 122001</span>
-                </p>
                 <p className="mt-6 notranslate" translate="no">
                   <span className="text-2xl mr-2">🌐</span>
                   अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट

@@ -161,7 +161,6 @@ npm run dev
 ### Founder & Leadership
 - **Founder & National President**: श्री जीतू माली (Shri Jeetu Mali)
 - **Contact**: +91 8860442044
-- **Address**: 5/1, महालक्ष्मी गार्डन, राजेंद्र पार्क, गुरुग्राम – 122001
 
 ### Services Provided
 1. **स्वच्छता अभियान** (Cleanliness Campaigns)

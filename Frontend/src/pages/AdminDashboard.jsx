@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useNavigate } from 'react-router-dom'
 import client from '../api/client.js'
 import api from '../api/config.js'
+import { getImageUrl } from '../utils/imageUrl.js'
 
 const AdminDashboard = () => {
   const { user, logout, isAdmin } = useAuth()
@@ -559,7 +560,7 @@ const AdminDashboard = () => {
             {galleryItems.map((item) => (
               <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden">
                 <img
-                  src={item.imageUrl || 'https://via.placeholder.com/400x300'}
+                  src={getImageUrl(item.imageUrl) || 'https://via.placeholder.com/400x300'}
                   alt={item.title}
                   className="w-full h-48 object-cover"
                 />
@@ -592,7 +593,7 @@ const AdminDashboard = () => {
                 <div className="flex gap-6">
                   {item.imageUrl && (
                     <img
-                      src={item.imageUrl}
+                      src={getImageUrl(item.imageUrl)}
                       alt={item.title}
                       className="w-32 h-32 object-cover rounded-lg"
                     />

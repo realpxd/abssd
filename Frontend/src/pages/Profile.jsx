@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import client from '../api/client.js'
 import api from '../api/config.js'
 import Logo from '../components/Logo.jsx'
+import { getImageUrl } from '../utils/imageUrl.js'
 
 const Profile = () => {
   const { user, updateUser, logout } = useAuth()
@@ -146,12 +147,7 @@ const Profile = () => {
     )
   }
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
-  const photoUrl = user.photo
-    ? user.photo.startsWith('http')
-      ? user.photo
-      : `${API_BASE_URL.replace('/api', '')}${user.photo}`
-    : null
+  const photoUrl = user.photo ? getImageUrl(user.photo) : null
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

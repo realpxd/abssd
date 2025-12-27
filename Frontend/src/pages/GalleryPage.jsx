@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGallery } from '../hooks/useGallery.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
+import { getImageUrl } from '../utils/imageUrl.js'
 
 const GalleryPage = () => {
   const { data, isLoading, error } = useGallery()
@@ -94,7 +95,7 @@ const GalleryPage = () => {
                   >
                     <div className="aspect-square overflow-hidden">
                       <img
-                        src={image.imageUrl || image.src}
+                        src={getImageUrl(image.imageUrl || image.src)}
                         alt={image.title}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
@@ -137,7 +138,7 @@ const GalleryPage = () => {
             >
               <div className="max-w-5xl w-full">
                 <img
-                  src={selectedImage.imageUrl || selectedImage.src}
+                  src={getImageUrl(selectedImage.imageUrl || selectedImage.src)}
                   alt={selectedImage.title}
                   className="w-full h-auto rounded-lg shadow-2xl"
                 />
