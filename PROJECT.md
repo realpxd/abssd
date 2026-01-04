@@ -172,7 +172,7 @@ npm run dev
    - Water coolers installed at key locations
    - Drinking water facilities for pilgrims
 
-3. **सोचालय प्रबंधन** (Toilet Management)
+3. **शोचालय प्रबंधन** (Toilet Management)
    - Toilet cleaning and maintenance
    - Public facility management
 
@@ -186,7 +186,7 @@ npm run dev
    - Environmental awareness programs
 
 ### Achievements
-- **9+ Years** of service
+- **10+ Years** of service
 - **500+ Volunteers** actively involved
 - **1000+ Cleanliness Drives** conducted
 - **24/7 Service** commitment

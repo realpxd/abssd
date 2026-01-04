@@ -66,7 +66,7 @@ const Hero = () => {
           <div className="aspect-[16/9] md:aspect-[16/8] w-full">
             <img
               src={volunteerImageUrl}
-              alt="अखिल भारतीय स्वच्छता सेवा दल के स्वयंसेवक - स्वच्छता अभियान में समर्पित"
+              alt="अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट के स्वयंसेवक - स्वच्छता अभियान में समर्पित"
               className="w-full h-full object-cover"
               onError={(e) => {
                 // Fallback to placeholder if local image not found

@@ -1,4 +1,4 @@
-# अखिल भारतीय स्वच्छता सेवा दल (ABSSD) Website
+# अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट (ABSSD) Website
 
 A professional, modern website for Akhil Bhartiya Swachta Sewa Dal Trust, built with React, Node.js, Express, and MongoDB.
 
@@ -190,7 +190,7 @@ When using `./start.sh`, logs are saved to:
 ### Services
 - स्वच्छता अभियान (Cleanliness Campaigns)
 - जलसेवा (Water Service)
-- सोचालय प्रबंधन (Toilet Management)
+- शोचालय प्रबंधन (Toilet Management)
 - मेले सेवा (Fair Service)
 - एकादशी सेवा (Ekadashi Service)
 - पर्यावरण जागरूकता (Environmental Awareness)

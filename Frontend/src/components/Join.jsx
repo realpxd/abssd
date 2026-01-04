@@ -24,7 +24,7 @@ const Join = () => {
             >
               📞 अभी कॉल करें / Call Now
             </a>
-            {!isAuthenticated ? (
+            {/* {!isAuthenticated ? (
               <Link
                 to="/register"
                 className="bg-white text-orange-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 cursor-pointer"
@@ -38,7 +38,7 @@ const Join = () => {
               >
                 मेरी प्रोफ़ाइल / My Profile
               </Link>
-            )}
+            )} */}
             <a
               href="#contact"
               onClick={(e) => handleSmoothScroll(e, '#contact', 80)}

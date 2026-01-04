@@ -42,13 +42,17 @@ const Header = () => {
     <header className="bg-white shadow-md sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <Link
+            to="/"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <Logo size="md" />
             <div className="notranslate" translate="no">
-              <h1 className="text-xl font-bold text-gray-800">अखिल भारतीय स्वच्छता सेवा दल</h1>
-              <p className="text-xs text-gray-600">Akhil Bhartiya Swachta Sewa Dal</p>
+              <h1 className="text-xl font-bold text-gray-800">अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट</h1>
+              <p className="text-xs text-gray-600">Akhil Bhartiya Swachta Sewa Dal Trust</p>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
@@ -77,7 +81,7 @@ const Header = () => {
                 </a>
               )
             })}
-            {isAuthenticated ? (
+            {/* {isAuthenticated ? (
               <Link
                 to="/profile"
                 className="bg-orange-500 text-white px-6 py-2 rounded-full hover:bg-orange-600 transition-colors font-medium"
@@ -99,7 +103,7 @@ const Header = () => {
                   जुड़ें / Join
                 </Link>
               </>
-            )}
+            )} */}
           </div>
 
           {/* Mobile Menu Button */}
@@ -160,7 +164,7 @@ const Header = () => {
                 </a>
               )
             })}
-            {isAuthenticated ? (
+            {/* {isAuthenticated ? (
               <Link
                 to="/profile"
                 className="block bg-orange-500 text-white px-6 py-2 rounded-full text-center hover:bg-orange-600 transition-colors font-medium mt-4"
@@ -184,7 +188,7 @@ const Header = () => {
                   जुड़ें / Join
                 </Link>
               </>
-            )}
+            )} */}
           </div>
         )}
       </nav>

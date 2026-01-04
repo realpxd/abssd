@@ -1,6 +1,6 @@
 const About = () => {
   const achievements = [
-    { number: '9+', label: 'वर्षों का अनुभव', en: 'Years of Service' },
+    { number: '10+', label: 'वर्षों का अनुभव', en: 'Years of Service' },
     { number: '500+', label: 'स्वयंसेवक', en: 'Volunteers' },
     { number: '1000+', label: 'सफाई अभियान', en: 'Cleanliness Drives' },
     { number: '24/7', label: 'सेवा', en: 'Service' },
@@ -21,9 +21,9 @@ const About = () => {
     },
     {
       icon: '🚻',
-      title: 'सोचालय प्रबंधन',
+      title: 'शोचालय प्रबंधन',
       en: 'Toilet Management',
-      description: 'सोचालयों की सफाई एवं जनसुविधा प्रबंधन',
+      description: 'शोचालयों की सफाई एवं जनसुविधा प्रबंधन',
     },
     {
       icon: '🎪',
@@ -85,7 +85,7 @@ const About = () => {
                 </p>
                 <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-6 border-l-4 border-orange-500">
                   <p className="mb-4">
-                    पिछले <span className="font-bold text-orange-600 text-xl">9 वर्षों</span> से संगठन लगातार खाटूधाम में:
+                    पिछले <span className="font-bold text-orange-600 text-xl">10 वर्षों</span> से संगठन लगातार खाटूधाम में:
                   </p>
                   <ul className="space-y-2 ml-4">
                     <li className="flex items-start">
@@ -98,7 +98,7 @@ const About = () => {
                     </li>
                     <li className="flex items-start">
                       <span className="text-orange-600 mr-2">🚻</span>
-                      <span><strong>सोचालय प्रबंधन</strong> - सफाई एवं जनसुविधा</span>
+                      <span><strong>शोचालय प्रबंधन</strong> - सफाई एवं जनसुविधा</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-orange-600 mr-2">🎪</span>

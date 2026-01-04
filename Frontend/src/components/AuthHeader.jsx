@@ -33,7 +33,7 @@ const AuthHeader = ({ showBack = true }) => {
             <Link to="/" className="flex items-center space-x-3">
               <Logo size="sm" />
               <div className="notranslate" translate="no">
-                <h1 className="text-lg font-bold text-gray-800">अखिल भारतीय स्वच्छता सेवा दल</h1>
+                <h1 className="text-lg font-bold text-gray-800">अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट</h1>
                 <p className="text-xs text-gray-600">Akhil Bhartiya Swachta Sewa Dal</p>
               </div>
             </Link>

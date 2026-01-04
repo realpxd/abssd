@@ -33,8 +33,8 @@ const Footer = () => {
             <div className="flex items-center space-x-3 mb-4">
               <Logo size="md" />
               <div className="notranslate" translate="no">
-                <h3 className="font-bold text-lg">अखिल भारतीय स्वच्छता सेवा दल</h3>
-                <p className="text-sm text-gray-400">Akhil Bhartiya Swachta Sewa Dal</p>
+                <h3 className="font-bold text-lg">अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट</h3>
+                <p className="text-sm text-gray-400">Akhil Bhartiya Swachta Sewa Dal Trust</p>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">

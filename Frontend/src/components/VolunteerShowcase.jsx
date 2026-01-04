@@ -51,7 +51,7 @@ const VolunteerShowcase = () => {
           {/* Stats Section Below Image */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-orange-600 mb-2">9+</div>
+              <div className="text-3xl md:text-4xl font-bold text-orange-600 mb-2">10+</div>
               <div className="text-sm md:text-base text-gray-700 font-medium">वर्षों का अनुभव</div>
               <div className="text-xs text-gray-500 mt-1">Years of Service</div>
             </div>

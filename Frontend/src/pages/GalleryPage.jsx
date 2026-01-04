@@ -23,7 +23,7 @@ const GalleryPage = () => {
     { id: 'all', name: 'सभी / All', en: 'All' },
     { id: 'cleanliness', name: 'स्वच्छता अभियान', en: 'Cleanliness' },
     { id: 'water-service', name: 'जलसेवा', en: 'Water Service' },
-    { id: 'toilet-management', name: 'सोचालय प्रबंधन', en: 'Toilet Management' },
+    { id: 'toilet-management', name: 'शोचालय प्रबंधन', en: 'Toilet Management' },
     { id: 'fair-service', name: 'मेले सेवा', en: 'Fair Service' },
     { id: 'ekadashi', name: 'एकादशी सेवा', en: 'Ekadashi Service' },
     { id: 'environment', name: 'पर्यावरण', en: 'Environment' },

@@ -13,6 +13,7 @@ import NewsPage from './pages/NewsPage'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import TestControls from './pages/TestControls'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -28,9 +29,9 @@ function App() {
             </>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* <Route path="/login" element={<Login />} /> */}
+        {/* <Route path="/register" element={<Register />} /> */}
+        {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
         <Route
           path="/gallery"
           element={
@@ -68,7 +69,18 @@ function App() {
           }
         />
         {/* Hidden Test Controls Route - Not visible in UI */}
-        <Route path="/test-controls" element={<TestControls />} />
+        {/* <Route path="/test-controls" element={<TestControls />} /> */}
+        {/* 404 Page - Catch all unmatched routes */}
+        <Route
+          path="*"
+          element={
+            <>
+              <Header />
+              <NotFound />
+              <Footer />
+            </>
+          }
+        />
       </Routes>
     </div>
   )
