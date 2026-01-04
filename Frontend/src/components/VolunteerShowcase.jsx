@@ -42,6 +42,7 @@ const VolunteerShowcase = () => {
                     e.target.src = fallbackImageUrl
                   }
                 }}
+                loading='lazy'
               />
             </div>
             {/* Subtle overlay for depth */}

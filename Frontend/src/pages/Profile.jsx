@@ -203,6 +203,7 @@ console.log({user})
                           src={photoPreview || photoUrl}
                           alt="Profile"
                           className="w-20 h-20 rounded-full border-2 border-white object-cover"
+                          loading='lazy'
                         />
                       ) : (
                         <div className="w-20 h-20 rounded-full border-2 border-white bg-white/20 flex items-center justify-center">
@@ -328,6 +329,7 @@ console.log({user})
                             src={photoPreview || photoUrl}
                             alt="Profile Preview"
                             className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
+                            loading='lazy'
                           />
                         ) : (
                           <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center">

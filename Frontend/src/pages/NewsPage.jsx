@@ -84,6 +84,7 @@ const NewsPage = () => {
                         e.target.src = '/images/news-thumbnail.png'
                       }}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                      loading='lazy'
                     />
                     <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
                       समाचार / News

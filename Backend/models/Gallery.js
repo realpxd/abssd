@@ -4,7 +4,6 @@ const gallerySchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'Title is required'],
       trim: true,
     },
     titleEn: {

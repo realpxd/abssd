@@ -7,14 +7,17 @@ const client = async (endpoint, options = {}) => {
   // Check if body is FormData
   const isFormData = options.body instanceof FormData
 
+  // Build config by merging options first, then construct headers so callers can't
+  // accidentally overwrite the default Content-Type we set for JSON bodies.
   const config = {
-    headers: {
-      // Don't set Content-Type for FormData, let browser set it with boundary
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
     ...options,
+  }
+
+  config.headers = {
+    // Don't set Content-Type for FormData, let browser set it with boundary
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(options.headers || {}),
   }
 
   // Only stringify if it's not FormData

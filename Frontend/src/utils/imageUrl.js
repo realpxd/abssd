@@ -16,7 +16,7 @@ export const getImageUrl = (imageUrl) => {
   // If it's a relative path starting with /uploads/, prepend backend base URL
   if (imageUrl.startsWith('/uploads/')) {
     // Remove /api from baseURL to get the backend root URL
-    const backendBaseUrl = api.baseURL.replace('/api', '')
+    const backendBaseUrl = api.baseURL
     return `${backendBaseUrl}${imageUrl}`
   }
   

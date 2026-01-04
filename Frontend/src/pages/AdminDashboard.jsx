@@ -311,7 +311,7 @@ const AdminDashboard = () => {
 
         {/* Add/Edit Form */}
         {showAddForm && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 absolute h-full top-0 left-0 right-0 z-10 pt-10 px-10 md:pt-20 md:px-20">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
                 {editingId ? 'Edit' : 'Add New'} {activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}
@@ -320,7 +320,7 @@ const AdminDashboard = () => {
                 onClick={() => {
                   activeTab === 'gallery' ? resetGalleryForm() : resetNewsForm()
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
               >
                 ✕
               </button>
@@ -336,7 +336,6 @@ const AdminDashboard = () => {
                       value={galleryForm.title}
                       onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                      required
                     />
                   </div>
                   <div>

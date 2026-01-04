@@ -74,6 +74,7 @@ const Hero = () => {
                   e.target.src = fallbackImageUrl
                 }
               }}
+              loading='lazy'
             />
           </div>
           {/* Subtle overlay for depth */}

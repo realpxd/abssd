@@ -98,6 +98,7 @@ const GalleryPage = () => {
                         src={getImageUrl(image.imageUrl || image.src)}
                         alt={image.title}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        loading="lazy"
                       />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -136,13 +137,18 @@ const GalleryPage = () => {
               className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
               onClick={() => setSelectedImage(null)}
             >
-              <div className="max-w-5xl w-full">
-                <img
-                  src={getImageUrl(selectedImage.imageUrl || selectedImage.src)}
-                  alt={selectedImage.title}
-                  className="w-full h-auto rounded-lg shadow-2xl"
-                />
-                <div className="mt-6 text-center text-white">
+              {/* inner wrapper stops propagation so clicking image doesn't close modal */}
+              <div className="flex flex-col items-center justify-center gap-4" onClick={(e) => e.stopPropagation()}>
+                {/* Fixed-size container: image will scale down to fit, but won't be upscaled */}
+                <div className="max-w-5xl w-full h-[70vh] flex items-center justify-center bg-black/0">
+                  <img
+                    src={getImageUrl(selectedImage.imageUrl || selectedImage.src)}
+                    alt={selectedImage.title}
+                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg shadow-2xl"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="mt-6 text-center text-white w-full">
                   <h3 className="text-3xl font-bold mb-2">{selectedImage.title}</h3>
                   <p className="text-xl text-gray-300 mb-4">{selectedImage.titleEn || selectedImage.en}</p>
                 </div>

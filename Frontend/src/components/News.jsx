@@ -76,6 +76,7 @@ const News = () => {
                         e.target.src = '/images/news-thumbnail.png'
                       }}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                      loading='lazy'
                     />
                   </div>
                   <div className="p-6">

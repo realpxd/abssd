@@ -43,6 +43,8 @@ const corsOptions = {
       'http://localhost:5173',
       'https://abssd.vercel.app',
       'https://abssd-fe.vercel.app',
+      'https://abssd.in',
+      'https://www.abssd.in',
       /\.vercel\.app$/, // Allow all Vercel preview deployments
     ].filter(Boolean)
     
@@ -95,6 +97,11 @@ app.use('/api/payment', paymentRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/gallery', galleryRoutes)
 app.use('/api/events', eventRoutes)
+app.use(
+  "/api/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
+
 
 // Health check (doesn't require DB connection)
 app.get('/api/health', async (req, res) => {

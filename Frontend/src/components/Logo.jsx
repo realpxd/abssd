@@ -23,6 +23,7 @@ const Logo = ({ size = 'md', showText = false, className = '' }) => {
             e.target.src = fallbackImageUrl
           }
         }}
+              loading='lazy'
       />
     </div>
   )
