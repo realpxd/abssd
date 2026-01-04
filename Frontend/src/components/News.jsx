@@ -70,8 +70,11 @@ const News = () => {
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={getImageUrl(item.imageUrl || item.image)}
+                      src={getImageUrl(item.imageUrl || item.image) || '/images/news-thumbnail.png'}
                       alt={item.title}
+                      onError={(e) => {
+                        e.target.src = '/images/news-thumbnail.png'
+                      }}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                     />
                   </div>

@@ -593,8 +593,11 @@ const AdminDashboard = () => {
                 <div className="flex gap-6">
                   {item.imageUrl && (
                     <img
-                      src={getImageUrl(item.imageUrl)}
+                      src={getImageUrl(item.imageUrl) || '/images/news-thumbnail.png'}
                       alt={item.title}
+                      onError={(e) => {
+                        e.target.src = '/images/news-thumbnail.png'
+                      }}
                       className="w-32 h-32 object-cover rounded-lg"
                     />
                   )}

@@ -78,8 +78,11 @@ const NewsPage = () => {
                 >
                   <div className="relative h-56 overflow-hidden">
                     <img
-                      src={getImageUrl(item.imageUrl || item.image)}
+                      src={getImageUrl(item.imageUrl || item.image) || '/images/news-thumbnail.png'}
                       alt={item.title}
+                      onError={(e) => {
+                        e.target.src = '/images/news-thumbnail.png'
+                      }}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                     />
                     <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
