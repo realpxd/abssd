@@ -1,0 +1,39 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /root/projects/abssd
+            git pull origin main
+
+            echo "=== Backend deploy ==="
+            cd Backend
+            npm install
+            pm2 restart abssd-backend || pm2 start server.js --name abssd-backend
+
+            echo "=== Frontend deploy ==="
+            cd ../Frontend
+            npm install
+            npm run build
+
+            rm -rf /var/www/abssd-frontend
+            mv dist /var/www/abssd-frontend
+
+            sudo systemctl reload nginx
