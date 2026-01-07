@@ -71,6 +71,12 @@ const Gallery = () => {
             <div className="text-center">
               <Link
                 to="/gallery"
+                onClick={() => {
+                  window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                  })
+                }}
                 className="inline-flex items-center bg-orange-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-orange-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 सभी देखें / View All

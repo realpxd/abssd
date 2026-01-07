@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useEvents } from '../hooks/useEvents.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
@@ -5,6 +6,10 @@ import { getImageUrl } from '../utils/imageUrl.js'
 
 const NewsPage = () => {
   const { data, isLoading, error } = useEvents()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   // Fallback to placeholder events if API fails or no data
   const allNews = data?.data || [

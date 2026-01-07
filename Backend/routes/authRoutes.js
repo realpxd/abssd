@@ -11,8 +11,12 @@ const {
   forgotPassword,
   resetPassword,
   updateProfile,
+  getAllUsers,
+  getUserById,
+  updateMembershipStatus,
+  notifyUser,
 } = require('../controllers/authController')
-const { protect } = require('../middleware/auth')
+const { protect, restrictToAdmin } = require('../middleware/auth')
 const upload = require('../middleware/upload')
 
 // Validation rules
@@ -38,6 +42,12 @@ router.get('/me', protect, getMe)
 router.post('/forgot-password', forgotPassword)
 router.post('/reset-password', resetPassword)
 router.put('/profile', protect, upload.single('photo'), updateProfile)
+
+// Admin routes for user management
+router.get('/users', protect, restrictToAdmin, getAllUsers)
+router.get('/users/:id', protect, restrictToAdmin, getUserById)
+router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
+router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
 
 module.exports = router
 

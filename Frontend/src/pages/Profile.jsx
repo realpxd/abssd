@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useNavigate } from 'react-router-dom'
 import client from '../api/client.js'
@@ -9,6 +9,7 @@ import { getImageUrl } from '../utils/imageUrl.js'
 const Profile = () => {
   const { user, updateUser, logout } = useAuth()
   const navigate = useNavigate()
+  const printRef = useRef(null)
   const [activeTab, setActiveTab] = useState('idcard')
   const [editMode, setEditMode] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -34,6 +35,190 @@ const Profile = () => {
       })
     }
   }, [user])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
+  const handlePrintCard = () => {
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Print ID Card - ${user.username}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              background: #f3f4f6;
+              padding: 20px;
+            }
+            .card-container {
+              width: 100%;
+              max-width: 500px;
+              background: linear-gradient(to bottom right, #f97316, #ea580c);
+              border-radius: 8px;
+              padding: 24px;
+              color: white;
+              box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+            .card-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 16px;
+            }
+            .logo-section {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .logo-section h2 {
+              font-size: 24px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .logo-section p {
+              font-size: 12px;
+              opacity: 0.9;
+              margin: 0;
+            }
+            .photo {
+              width: 80px;
+              height: 80px;
+              border-radius: 50%;
+              border: 2px solid white;
+              object-fit: cover;
+            }
+            .photo-placeholder {
+              width: 80px;
+              height: 80px;
+              border-radius: 50%;
+              border: 2px solid white;
+              background: rgba(255, 255, 255, 0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 32px;
+              font-weight: bold;
+            }
+            .divider {
+              border-top: 1px solid rgba(255, 255, 255, 0.3);
+              padding-top: 16px;
+              margin-top: 16px;
+            }
+            .card-body {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+            }
+            .user-info h3 {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 8px;
+            }
+            .user-info p {
+              font-size: 12px;
+              opacity: 0.9;
+              margin-bottom: 8px;
+            }
+            .membership-badge {
+              background: rgba(255, 255, 255, 0.2);
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 11px;
+              margin-top: 8px;
+            }
+            .qr-code {
+              background: white;
+              padding: 8px;
+              border-radius: 4px;
+            }
+            .qr-code img {
+              width: 80px;
+              height: 80px;
+            }
+            .card-footer {
+              margin-top: 24px;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
+              font-size: 12px;
+            }
+            .footer-item {
+              text-align: left;
+            }
+            .footer-item div:first-child {
+              color: #d1d5db;
+              font-size: 11px;
+            }
+            .footer-item div:last-child {
+              font-weight: bold;
+              font-size: 13px;
+            }
+            @media print {
+              body {
+                background: white;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card-container">
+            <div class="card-header">
+              <div class="logo-section">
+                <div>
+                  <h2>ABSSD</h2>
+                  <p>Member ID Card</p>
+                </div>
+              </div>
+              ${photoPreview || (user.photo ? `<img src="${getImageUrl(user.photo)}" alt="Profile" class="photo" />` : `<div class="photo-placeholder">${user.username?.charAt(0).toUpperCase() || 'U'}</div>`)}
+            </div>
+            
+            <div class="divider">
+              <div class="card-body">
+                <div class="user-info">
+                  <h3>${user.username}</h3>
+                  <p>📧 ${user.email}</p>
+                  <p>📞 ${user.contactNo}</p>
+                  ${user.membershipStatus ? `<div class="membership-badge">${user.membershipStatus === 'active' ? 'Active Member' : 'Pending'}</div>` : ''}
+                </div>
+                <div class="qr-code">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100" alt="QR Code" />
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <div class="footer-item">
+                <div>Membership Type</div>
+                <div>${user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}</div>
+              </div>
+              <div class="footer-item">
+                <div>Member Since</div>
+                <div>${user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 250)
+  }
+
 
   const handleChange = (e) => {
     const { name, value, files } = e.target
@@ -163,7 +348,7 @@ console.log({user})
               {[
                 { id: 'idcard', label: 'ID Card', hi: 'आईडी कार्ड' },
                 { id: 'personal', label: 'Personal Settings', hi: 'व्यक्तिगत सेटिंग्स' },
-                // { id: 'privacy', label: 'Privacy & Security', hi: 'गोपनीयता और सुरक्षा' },
+                { id: 'privacy', label: 'Privacy & Security', hi: 'गोपनीयता और सुरक्षा' },
                 // { id: 'notifications', label: 'Notifications', hi: 'सूचनाएं' },
               ].map((tab) => (
                 <button
@@ -187,8 +372,15 @@ console.log({user})
           {/* ID Card View */}
           {activeTab === 'idcard' && (
             <div className="bg-white rounded-lg shadow-lg p-8">
+              {user.membershipStatus && user.membershipStatus === 'pending' && 
+              (<div>
+                <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                  आपका सदस्यता आवेदन प्रक्रिया में है। कृपया कुछ समय प्रतीक्षा करें या समर्थन से संपर्क करें।
+                </div>
+                
+              </div>)}
               <div className="max-w-md mx-auto">
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-white">
+                <div ref={printRef} className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-white">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center space-x-3 notranslate" translate="no">
                       <Logo size="lg" className="bg-white/20 rounded-full p-2" />
@@ -234,13 +426,13 @@ console.log({user})
                     <div className="text-sm opacity-90 mb-2">📧 {user.email}</div>
                     <div className="text-sm">
                       <div className="mb-1">📞 {user.contactNo}</div>
-                      {/* {user.membershipStatus && (
+                      {user.membershipStatus && (
                         <div className="mt-2">
                           <span className="bg-white/20 px-2 py-1 rounded text-xs">
-                            {user.membershipStatus === 'active' ? 'Active Member' : 'Pending'}
+                            {user.membershipStatus === 'active' ? 'Active Member' : user.membershipStatus === 'cancelled' ? 'Membership Cancelled' : 'Approval Pending'}
                           </span>
                         </div>
-                      )} */}
+                      )}
                     </div>
                   </div>
 
@@ -274,6 +466,19 @@ console.log({user})
                   </div>
                 </div>
                 
+                {/* Print Button */}
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={handlePrintCard}
+                    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    प्रिंट करें / Print
+                  </button>
+                </div>
+
                 {/* Photo Upload Section */}
                 {photoFile && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -626,7 +831,7 @@ console.log({user})
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-bold mb-6">गोपनीयता और सुरक्षा / Privacy & Security</h2>
               <div className="space-y-4">
-                <div className="border-b pb-4">
+                {/* <div className="border-b pb-4">
                   <h3 className="font-semibold mb-2">Password</h3>
                   <p className="text-gray-600 text-sm mb-4">
                     Change your password to keep your account secure.
@@ -634,7 +839,7 @@ console.log({user})
                   <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
                     Change Password
                   </button>
-                </div>
+                </div> */}
                 <div className="border-b pb-4">
                   <h3 className="font-semibold mb-2">Email Verification</h3>
                   <p className="text-gray-600 text-sm mb-2">
@@ -646,7 +851,24 @@ console.log({user})
                     </button>
                   )}
                 </div>
-                <div>
+                {user.membershipStatus === 'pending' && (
+                  <div className="border-b pb-4">
+                    <h3 className="font-semibold mb-2">Membership Verification</h3>
+                    <p className="text-gray-600 text-sm mb-2">
+                      Status: Not Verified
+                    </p>
+                    {!user.isMembershipVerified && (
+                      <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" 
+                        onClick={() => {
+                          const message = `Hello, I would like to verify my membership. \nMy username is _${user.username}_. \nMy user ID is _${user._id}_.\nThank you.\n\n_redirected from abssd.in_`;
+                          window.open(`https://wa.me/9306794492?text=${encodeURIComponent(message)}`, '_blank');
+                      }}>
+                        Contact Support to Verify Membership
+                      </button>
+                    )}
+                  </div>
+                )}
+                {/* <div>
                   <h3 className="font-semibold mb-2">Account Deletion</h3>
                   <p className="text-gray-600 text-sm mb-4">
                     Permanently delete your account and all associated data.
@@ -654,7 +876,7 @@ console.log({user})
                   <button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
                     Delete Account
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           )}

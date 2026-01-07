@@ -192,8 +192,8 @@ npm run dev
 - **24/7 Service** commitment
 
 ### Mission
-"स्वच्छ भारत, सुंदर भारत, और संस्कारवान भारत"
-(Clean India, Beautiful India, and Cultured India)
+"स्वच्छ भारत, सुंदर भारत"
+(Clean India, Beautiful India)
 
 ## Design Features
 

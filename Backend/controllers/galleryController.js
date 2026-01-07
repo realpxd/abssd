@@ -40,14 +40,6 @@ exports.createGalleryItem = async (req, res) => {
       category: req.body.category,
     }
     
-    // Validate required fields
-    if (!data.title) {
-      return res.status(400).json({
-        success: false,
-        message: 'Title is required',
-      })
-    }
-    
     // Handle file upload (priority over imageUrl in body)
     if (req.file) {
       data.imageUrl = `/uploads/${req.file.filename}`

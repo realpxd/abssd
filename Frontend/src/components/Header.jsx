@@ -62,6 +62,11 @@ const Header = () => {
                   <Link
                     key={item.href}
                     to={item.href}
+                    onClick={() => {
+                      if(item.href === '/gallery' || item.href === '/news') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }
+                    }}
                     className="text-gray-700 hover:text-orange-500 font-medium transition-colors cursor-pointer"
                   >
                     <span className="hidden lg:inline">{item.name}</span>
@@ -81,7 +86,7 @@ const Header = () => {
                 </a>
               )
             })}
-            {/* {isAuthenticated ? (
+            {isAuthenticated ? (
               <Link
                 to="/profile"
                 className="bg-orange-500 text-white px-6 py-2 rounded-full hover:bg-orange-600 transition-colors font-medium"
@@ -103,7 +108,7 @@ const Header = () => {
                   जुड़ें / Join
                 </Link>
               </>
-            )} */}
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -164,7 +169,7 @@ const Header = () => {
                 </a>
               )
             })}
-            {/* {isAuthenticated ? (
+            {isAuthenticated ? (
               <Link
                 to="/profile"
                 className="block bg-orange-500 text-white px-6 py-2 rounded-full text-center hover:bg-orange-600 transition-colors font-medium mt-4"
@@ -188,7 +193,7 @@ const Header = () => {
                   जुड़ें / Join
                 </Link>
               </>
-            )} */}
+            )}
           </div>
         )}
       </nav>

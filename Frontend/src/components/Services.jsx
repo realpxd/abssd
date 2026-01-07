@@ -95,10 +95,10 @@ const Services = () => {
               </div>
               <h3 className="text-3xl md:text-4xl font-bold mb-8">हमारा लक्ष्य</h3>
               <p className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
-                "स्वच्छ भारत, सुंदर भारत,<br />और संस्कारवान भारत।"
+                "स्वच्छ भारत, सुंदर भारत।"
               </p>
               <p className="text-xl mb-6 opacity-90">
-                "Clean India, Beautiful India, and Cultured India."
+                "Clean India, Beautiful India."
               </p>
               <div className="w-24 h-1 bg-white/30 mx-auto mb-6"></div>
               <p className="text-lg md:text-xl leading-relaxed opacity-95 max-w-3xl mx-auto">

@@ -119,7 +119,7 @@ const About = () => {
                 <div className="text-center">
                   <p className="text-lg font-semibold mb-3 opacity-90">हमारा लक्ष्य है —</p>
                   <p className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                    "स्वच्छ भारत, सुंदर भारत,<br />और संस्कारवान भारत।"
+                    "स्वच्छ भारत, सुंदर भारत।"
                   </p>
                   <p className="text-lg opacity-90 leading-relaxed">
                     हम मानते हैं कि स्वच्छता केवल एक कार्य नहीं, बल्कि एक संस्कृति है — और इस संस्कृति को जन-जन तक पहुँचाना ही हमारा संकल्प है।

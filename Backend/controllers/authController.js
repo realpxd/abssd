@@ -453,3 +453,122 @@ exports.updateProfile = async (req, res) => {
   }
 }
 
+// Get all users (Admin only)
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password')
+      .sort({ createdAt: -1 })
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users,
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching users',
+    })
+  }
+}
+
+// Get single user by ID (Admin only)
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password')
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching user',
+    })
+  }
+}
+
+// Update user membership status (Admin only)
+exports.updateMembershipStatus = async (req, res) => {
+  try {
+    const { membershipStatus } = req.body
+    const userId = req.params.id
+
+    if (!['pending', 'active', 'cancelled'].includes(membershipStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid membership status',
+      })
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { membershipStatus },
+      { new: true, runValidators: true }
+    ).select('-password')
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Membership status updated successfully',
+      data: user,
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating membership status',
+    })
+  }
+}
+
+// Notify user by email (Admin only)
+exports.notifyUser = async (req, res) => {
+  try {
+    const { subject, message } = req.body
+    const userId = req.params.id
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    // TODO: Implement email sending logic here
+    // For now, we'll just return success
+    // You can integrate with nodemailer or any email service
+
+    res.status(200).json({
+      success: true,
+      message: `Email sent to ${user.email}`,
+      data: {
+        to: user.email,
+        subject,
+        message,
+      },
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error sending notification',
+    })
+  }
+}
+

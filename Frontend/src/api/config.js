@@ -9,6 +9,7 @@ export const api = {
     events: '/events',
     members: '/members',
     payment: '/payment',
+    users: '/auth/users',
   },
 }
 

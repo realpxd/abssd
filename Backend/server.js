@@ -73,8 +73,8 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(express.json({ limit: '20mb' }))
+app.use(express.urlencoded({ extended: true, limit: '20mb' }))
 
 // Ensure database connection before API routes (except health check)
 app.use('/api', (req, res, next) => {

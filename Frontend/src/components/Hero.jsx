@@ -15,15 +15,13 @@ const Hero = () => {
             <div className="text-center mb-8">
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
                 स्वच्छ भारत, सुंदर भारत
-                <br />
-                <span className="text-orange-600">संस्कारवान भारत</span>
               </h1>
             </div>
 
             {/* Description */}
             {/* <div className="text-center mb-12">
               <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-4">
-                Clean India, Beautiful India, Cultured India
+                Clean India, Beautiful India
                 <br />
                 <span className="text-gray-700">सेवा, समर्पण और स्वच्छता का संकल्प</span>
               </p>

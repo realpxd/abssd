@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGallery } from '../hooks/useGallery.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
@@ -8,6 +8,10 @@ const GalleryPage = () => {
   const { data, isLoading, error } = useGallery()
   const [selectedImage, setSelectedImage] = useState(null)
   const [filter, setFilter] = useState('all')
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   // Fallback to placeholder images if API fails or no data
   const allImages = data?.data || [
