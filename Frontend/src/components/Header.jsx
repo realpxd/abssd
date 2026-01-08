@@ -109,6 +109,15 @@ const Header = () => {
                 </Link>
               </>
             )}
+
+            <div className="text-center">
+              <a
+                href="/donation"
+                className="inline-block bg-orange-600 text-white px-6 py-2 rounded-lg font-bold text-lg hover:bg-orange-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                मदद का हाथ बढ़ाएं / Extend Help
+              </a>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -152,7 +161,12 @@ const Header = () => {
                     key={item.href}
                     to={item.href}
                     className="block py-2 text-gray-700 hover:text-orange-500 font-medium cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      if(item.href === '/gallery' || item.href === '/news') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }
+                    }}
                   >
                     {item.name} ({item.en})
                   </Link>
@@ -194,6 +208,15 @@ const Header = () => {
                 </Link>
               </>
             )}
+            <div className="mt-4">
+              <a
+                href="/donation"
+                className="block bg-orange-600 text-white px-6 py-3 rounded-lg font-bold text-center hover:bg-orange-700 transition-colors shadow-lg"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                मदद का हाथ बढ़ाएं / Extend Help
+              </a>
+            </div>
           </div>
         )}
       </nav>

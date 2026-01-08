@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import Profile from './pages/Profile'
 import GalleryPage from './pages/GalleryPage'
 import NewsPage from './pages/NewsPage'
+import Donation from './pages/Donation'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import TestControls from './pages/TestControls'
@@ -45,6 +46,16 @@ function App() {
           element={
             <>
               <NewsPage />
+            </>
+          }
+        />
+        <Route
+          path="/donation"
+          element={
+            <>
+              <Header />
+              <Donation />
+              <Footer />
             </>
           }
         />

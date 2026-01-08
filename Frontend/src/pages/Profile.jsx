@@ -372,13 +372,20 @@ console.log({user})
           {/* ID Card View */}
           {activeTab === 'idcard' && (
             <div className="bg-white rounded-lg shadow-lg p-8">
-              {user.membershipStatus && user.membershipStatus === 'pending' && 
-              (<div>
-                <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
-                  आपका सदस्यता आवेदन प्रक्रिया में है। कृपया कुछ समय प्रतीक्षा करें या समर्थन से संपर्क करें।
+              {user.membershipStatus && user.membershipStatus === 'pending' && (
+                <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded">
+                  <p className="mb-4">आपका सदस्यता आवेदन प्रक्रिया में है। कृपया कुछ समय प्रतीक्षा करें या समर्थन से संपर्क करें।</p>
+                  <button
+                    onClick={() => {
+                      const message = `Hello, I would like to verify my membership. \nMy username is _${user.username}_. \nMy user ID is _${user._id}_.\nThank you.\n\n_redirected from abssd.in_`;
+                      window.open(`https://wa.me/8860442044?text=${encodeURIComponent(message)}`, '_blank');
+                    }}
+                    className="inline-flex items-center bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-all shadow-md hover:shadow-lg"
+                  >
+                    Verify Membership Status
+                  </button>
                 </div>
-                
-              </div>)}
+              )}
               <div className="max-w-md mx-auto">
                 <div ref={printRef} className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-white">
                   <div className="flex justify-between items-start mb-4">
@@ -861,7 +868,7 @@ console.log({user})
                       <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" 
                         onClick={() => {
                           const message = `Hello, I would like to verify my membership. \nMy username is _${user.username}_. \nMy user ID is _${user._id}_.\nThank you.\n\n_redirected from abssd.in_`;
-                          window.open(`https://wa.me/9306794492?text=${encodeURIComponent(message)}`, '_blank');
+                          window.open(`https://wa.me/8860442044?text=${encodeURIComponent(message)}`, '_blank');
                       }}>
                         Contact Support to Verify Membership
                       </button>

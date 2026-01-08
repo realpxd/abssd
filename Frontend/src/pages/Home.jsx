@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Hero from '../components/Hero'
 import About from '../components/About'
 import Services from '../components/Services'
+import DonationHighlight from '../components/DonationHighlight'
 import Gallery from '../components/Gallery'
 import News from '../components/News'
 import Contact from '../components/Contact'
@@ -34,6 +35,7 @@ const Home = () => {
       <Hero />
       <About />
       <Services />
+      <DonationHighlight />
       <Gallery />
       <News />
       <Join />

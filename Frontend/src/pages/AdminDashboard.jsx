@@ -24,6 +24,8 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null)
   const [userSearchQuery, setUserSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [gallerySubmitting, setGallerySubmitting] = useState(false)
+  const [newsSubmitting, setNewsSubmitting] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
 
@@ -88,6 +90,7 @@ const AdminDashboard = () => {
 
   const handleGallerySubmit = async (e, id = null) => {
     e.preventDefault()
+    setGallerySubmitting(true)
     try {
       const formData = new FormData()
       formData.append('title', galleryForm.title)
@@ -141,11 +144,14 @@ const AdminDashboard = () => {
       fetchData()
     } catch (error) {
       alert(error.message || 'Error saving gallery item')
+    } finally {
+      setGallerySubmitting(false)
     }
   }
 
   const handleNewsSubmit = async (e, id = null) => {
     e.preventDefault()
+    setNewsSubmitting(true)
     try {
       const formData = new FormData()
       formData.append('title', newsForm.title)
@@ -201,6 +207,8 @@ const AdminDashboard = () => {
       fetchData()
     } catch (error) {
       alert(error.message || 'Error saving news item')
+    } finally {
+      setNewsSubmitting(false)
     }
   }
 
@@ -344,6 +352,7 @@ const AdminDashboard = () => {
               onSubmit={handleGallerySubmit}
               onChange={setGalleryForm}
               onCancel={resetGalleryForm}
+              submitting={gallerySubmitting}
             />
           ) : (
             <NewsForm
@@ -352,6 +361,7 @@ const AdminDashboard = () => {
               onSubmit={handleNewsSubmit}
               onChange={setNewsForm}
               onCancel={resetNewsForm}
+              submitting={newsSubmitting}
             />
           )}
         </FormModal>

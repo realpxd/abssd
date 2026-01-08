@@ -1,4 +1,4 @@
-const NewsForm = ({ formData, editingId, onSubmit, onChange, onCancel }) => {
+const NewsForm = ({ formData, editingId, onSubmit, onChange, onCancel, submitting }) => {
   return (
     <form onSubmit={(e) => onSubmit(e, editingId)} className="space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
@@ -92,9 +92,10 @@ const NewsForm = ({ formData, editingId, onSubmit, onChange, onCancel }) => {
       <div className="flex space-x-4">
         <button
           type="submit"
-          className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700"
+          className={`bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 ${submitting ? 'opacity-80 cursor-not-allowed' : ''}`}
+          disabled={submitting}
         >
-          {editingId ? 'Update' : 'Add'} News
+          {submitting ? 'Saving...' : editingId ? 'Update' : 'Add'} News
         </button>
         <button
           type="button"
