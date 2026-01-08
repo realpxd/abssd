@@ -5,13 +5,15 @@ const Donation = () => {
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            <span className="block text-orange-600">दान करें</span>
+            <span className="block text-orange-600">सहयोग करें</span>
             <span className="block text-3xl md:text-4xl mt-2">Support Our Mission</span>
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
-            आपका योगदान हमारे समाज सेवा कार्यों में महत्वपूर्ण भूमिका निभाता है।
-            <br />
-            Your contribution plays a vital role in our social service initiatives.
+            आपका योगदान हमारे समाज सेवा कार्यों में महत्वपूर्ण भूमिका निभाता है। <br />
+            आपके द्वारा दिया गया दान सेक्शन 80G/12A के टहत कर्म-मुक्त है।
+            <br /><br />
+            Your contribution plays a vital role in our social service initiatives.<br />
+            Your contribution is exempt from tax under section 80G/12A of the Income Tax Act.
           </p>
         </div>
 

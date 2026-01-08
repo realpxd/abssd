@@ -31,6 +31,7 @@ const GalleryPage = () => {
     { id: 'fair-service', name: 'मेले सेवा', en: 'Fair Service' },
     { id: 'ekadashi', name: 'एकादशी सेवा', en: 'Ekadashi Service' },
     { id: 'environment', name: 'पर्यावरण', en: 'Environment' },
+    { id: 'others', name: 'अन्य', en: 'Others' },
   ]
 
   const filteredImages = filter === 'all' 

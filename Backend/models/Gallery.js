@@ -20,7 +20,7 @@ const gallerySchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['cleanliness', 'water-service', 'toilet-management', 'fair-service', 'ekadashi', 'environment'],
+      enum: ['cleanliness', 'water-service', 'toilet-management', 'fair-service', 'ekadashi', 'environment', 'others'],
       default: 'cleanliness',
     },
     isActive: {

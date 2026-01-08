@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import client from '../api/client.js'
 import api from '../api/config.js'
@@ -37,6 +37,49 @@ const Contact = () => {
       [e.target.name]: e.target.value,
     })
   }
+
+  // Load Twitter widgets script once so anchor timeline renders
+  const [youtubeLoaded, setYoutubeLoaded] = useState(false)
+  const [twitterLoaded, setTwitterLoaded] = useState(false)
+  const [facebookLoaded, setFacebookLoaded] = useState(false)
+
+  useEffect(() => {
+    let twitterScript = null
+    const loadTwitter = () => {
+      if (window.twttr && window.twttr.widgets) {
+        try {
+          window.twttr.widgets.load(document.querySelector('.twitter-embed-container'))
+        } catch (e) {}
+        setTwitterLoaded(true)
+        return
+      }
+
+      twitterScript = document.createElement('script')
+      twitterScript.src = 'https://platform.twitter.com/widgets.js'
+      twitterScript.async = true
+      twitterScript.charset = 'utf-8'
+      twitterScript.onload = () => {
+        try {
+          window.twttr && window.twttr.widgets && window.twttr.widgets.load(document.querySelector('.twitter-embed-container'))
+          setTwitterLoaded(true)
+        } catch (e) {
+          setTwitterLoaded(false)
+        }
+      }
+      document.body.appendChild(twitterScript)
+
+      // fallback: if script doesn't load in 4s, consider it failed
+      setTimeout(() => {
+        if (!window.twttr || !window.twttr.widgets) setTwitterLoaded(false)
+      }, 4000)
+    }
+
+    loadTwitter()
+
+    return () => {
+      try { if (twitterScript) document.body.removeChild(twitterScript) } catch (e) {}
+    }
+  }, [])
 
   return (
     <section id="contact" className="py-20 bg-white">
@@ -171,6 +214,97 @@ const Contact = () => {
             </form>
           </div>
         </div>
+
+        {/* Khatu map (between contact form and socials) */}
+        <div className="max-w-8xl mx-auto mt-8">
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">खाटू स्थान / Khatu Map</h3>
+          <div className="bg-white rounded-2xl shadow p-4 mb-6">
+            <div className="w-full h-[800px] rounded overflow-hidden">
+              <iframe
+                title="Khatu Map"
+                className="w-full h-full"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6206.495552647221!2d75.40220776924092!3d27.364453634097163!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x396cedbb5645b19d%3A0xe27fa89540960859!2sKhatoo%2C%20Rajasthan%20332602%2C%20India!5e0!3m2!1sen!2sus!4v1767869862869!5m2!1sen!2sus"
+                frameBorder="0"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
+
+        </div>
+        {/* Social embeds grid */}
+        <div className="max-w-6xl mx-auto mt-4">
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">हमारा सोशल / Social</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* YouTube */}
+            <div className="bg-white rounded-2xl shadow p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800">YouTube</h4>
+                <a href="https://youtube.com/@akhilbhartiyeswachhtasew-fu1kt?si=8NaCAc2BSFvUU9qH" target="_blank" rel="noreferrer" className="text-sm text-orange-600">Open</a>
+              </div>
+              <div className="w-full h-[500px] bg-gray-100 rounded overflow-hidden relative">
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/sOpFTK-QIzU?si=wKEcFEDOqrYy75Vo`}
+                    title="YouTube - latest uploads"
+                    frameBorder="0"
+                    allowFullScreen
+                    onLoad={() => setYoutubeLoaded(true)}
+                  ></iframe>
+                  {!youtubeLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 p-4">
+                      <p className="text-center text-sm text-gray-600 mb-3">This video/embed may be unavailable due to provider restrictions.</p>
+                      <a href="https://youtube.com/@akhilbhartiyeswachhtasew-fu1kt" target="_blank" rel="noreferrer" className="inline-block bg-orange-500 text-white px-4 py-2 rounded">Open on YouTube</a>
+                    </div>
+                  )}
+              </div>
+                <p className="mt-2 text-xs text-gray-500">If the embed doesn't load due to provider restrictions, click "Open" to view the channel.</p>
+            </div>
+
+            {/* Instagram */}
+            <div className="bg-white rounded-2xl shadow p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800">Instagram</h4>
+                <a href="https://www.instagram.com/akhilbhartiyaswachhtasewadal?igsh=aGVpdHE4ZzN1ZjY3&utm_source=qr" target="_blank" rel="noreferrer" className="text-sm text-orange-600">Open</a>
+              </div>
+              <div className="w-full h-[500px] bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                <iframe src="https://www.instagram.com/akhilbhartiyaswachhtasewadal/embed" title="Instagram" className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
+              </div>
+            </div>
+
+            {/* X / Twitter */}
+            <div className="bg-white rounded-2xl shadow p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800">X / Twitter</h4>
+                <a href="https://twitter.com/abssdtrust" target="_blank" rel="noreferrer" className="text-sm text-orange-600">Open</a>
+              </div>
+              <div className="w-full h-[500px] bg-gray-100 rounded overflow-hidden p-4 twitter-embed-container relative">
+                <div className="h-full">
+                  <a className="twitter-timeline" href="https://twitter.com/abssdtrust?ref_src=twsrc%5Etfw">Tweets by abssdtrust</a>
+                </div>
+                {!twitterLoaded && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 p-4">
+                    <p className="text-center text-sm text-gray-600 mb-3">Twitter timeline not available — it may be blocked or the script failed to load.</p>
+                    <a href="https://twitter.com/abssdtrust" target="_blank" rel="noreferrer" className="inline-block bg-orange-500 text-white px-4 py-2 rounded">Open on X</a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Facebook */}
+            <div className="bg-white rounded-2xl shadow p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800">Facebook</h4>
+                <a href="https://www.facebook.com/p/%E0%A4%85%E0%A4%96%E0%A4%BF%E0%A4%B2-%E0%A4%AD%E0%A4%BE%E0%A4%B0%E0%A4%A4%E0%A5%80%E0%A4%AF%E0%A4%B8%E0%A5%8D%E0%A4%B5%E0%A4%9B%E0%A4%A4%E0%A5%8D%E0%A4%A4%E0%A4%BE-%E0%A4%B8%E0%A5%87%E0%A4%B5%E0%A4%BE-%E0%A4%A6%E0%A4%B2-100064129565746/" target="_blank" rel="noreferrer" className="text-sm text-orange-600">Open</a>
+              </div>
+              <div className="w-full h-[500px] bg-gray-100 rounded overflow-hidden">
+                <iframe className="w-full h-full" src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent('https://www.facebook.com/p/%E0%A4%85%E0%A4%96%E0%A4%BF%E0%A4%B2-%E0%A4%AD%E0%A4%BE%E0%A4%B0%E0%A4%A4%E0%A5%80%E0%A4%AF%E0%A4%B8%E0%A5%8D%E0%A4%B5%E0%A4%9B%E0%A4%A4%E0%A5%8D%E0%A4%A4%E0%A4%BE-%E0%A4%B8%E0%A5%87%E0%A4%B5%E0%A4%BE-%E0%A4%A6%E0%A4%B2-100064129565746/')}&tabs=timeline&width=580&height=500`} title="Facebook" frameBorder="0" allowFullScreen></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
       </div>
     </section>
   )

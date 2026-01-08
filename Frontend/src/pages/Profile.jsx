@@ -41,184 +41,54 @@ const Profile = () => {
   }, [])
 
   const handlePrintCard = () => {
-    const printWindow = window.open('', '_blank')
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Print ID Card - ${user.username}</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body {
-              font-family: Arial, sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-              background: #f3f4f6;
-              padding: 20px;
-            }
-            .card-container {
-              width: 100%;
-              max-width: 500px;
-              background: linear-gradient(to bottom right, #f97316, #ea580c);
-              border-radius: 8px;
-              padding: 24px;
-              color: white;
-              box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            }
-            .card-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 16px;
-            }
-            .logo-section {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-            }
-            .logo-section h2 {
-              font-size: 24px;
-              font-weight: bold;
-              margin: 0;
-            }
-            .logo-section p {
-              font-size: 12px;
-              opacity: 0.9;
-              margin: 0;
-            }
-            .photo {
-              width: 80px;
-              height: 80px;
-              border-radius: 50%;
-              border: 2px solid white;
-              object-fit: cover;
-            }
-            .photo-placeholder {
-              width: 80px;
-              height: 80px;
-              border-radius: 50%;
-              border: 2px solid white;
-              background: rgba(255, 255, 255, 0.2);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 32px;
-              font-weight: bold;
-            }
-            .divider {
-              border-top: 1px solid rgba(255, 255, 255, 0.3);
-              padding-top: 16px;
-              margin-top: 16px;
-            }
-            .card-body {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-            }
-            .user-info h3 {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 8px;
-            }
-            .user-info p {
-              font-size: 12px;
-              opacity: 0.9;
-              margin-bottom: 8px;
-            }
-            .membership-badge {
-              background: rgba(255, 255, 255, 0.2);
-              padding: 4px 8px;
-              border-radius: 4px;
-              font-size: 11px;
-              margin-top: 8px;
-            }
-            .qr-code {
-              background: white;
-              padding: 8px;
-              border-radius: 4px;
-            }
-            .qr-code img {
-              width: 80px;
-              height: 80px;
-            }
-            .card-footer {
-              margin-top: 24px;
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 16px;
-              font-size: 12px;
-            }
-            .footer-item {
-              text-align: left;
-            }
-            .footer-item div:first-child {
-              color: #d1d5db;
-              font-size: 11px;
-            }
-            .footer-item div:last-child {
-              font-weight: bold;
-              font-size: 13px;
-            }
-            @media print {
-              body {
-                background: white;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="card-container">
-            <div class="card-header">
-              <div class="logo-section">
-                <div>
-                  <h2>ABSSD</h2>
-                  <p>Member ID Card</p>
-                </div>
-              </div>
-              ${photoPreview || (user.photo ? `<img src="${getImageUrl(user.photo)}" alt="Profile" class="photo" />` : `<div class="photo-placeholder">${user.username?.charAt(0).toUpperCase() || 'U'}</div>`)}
-            </div>
-            
-            <div class="divider">
-              <div class="card-body">
-                <div class="user-info">
-                  <h3>${user.username}</h3>
-                  <p>📧 ${user.email}</p>
-                  <p>📞 ${user.contactNo}</p>
-                  ${user.membershipStatus ? `<div class="membership-badge">${user.membershipStatus === 'active' ? 'Active Member' : 'Pending'}</div>` : ''}
-                </div>
-                <div class="qr-code">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100" alt="QR Code" />
-                </div>
-              </div>
-            </div>
+    const node = printRef.current
+    if (!node) return
 
-            <div class="card-footer">
-              <div class="footer-item">
-                <div>Membership Type</div>
-                <div>${user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}</div>
-              </div>
-              <div class="footer-item">
-                <div>Member Since</div>
-                <div>${user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}</div>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    setTimeout(() => {
-      printWindow.print()
-      printWindow.close()
-    }, 250)
+    try {
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        alert('Please allow popups for this site to enable printing')
+        return
+      }
+
+      // Collect current page styles (link and style tags) so the printed card looks identical
+      const headNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      const headHtml = headNodes.map((n) => n.outerHTML).join('\n')
+
+      // Clone the card DOM node (use outerHTML so classes and images are preserved)
+      const cardHtml = node.outerHTML
+
+      printWindow.document.open()
+      printWindow.document.write(`
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Print ID Card - ${user.username}</title>
+            ${headHtml}
+            <style>
+              body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f4f6; padding:20px; }
+              /* Ensure the card prints in its natural size */
+              .card-container { box-shadow: none !important; }
+            </style>
+          </head>
+          <body>
+            ${cardHtml}
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+      // Focus then print
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+        printWindow.close()
+      }, 300)
+    } catch (err) {
+      console.error('Print error', err)
+      alert('Unable to open print window')
+    }
   }
-
 
   const handleChange = (e) => {
     const { name, value, files } = e.target
@@ -247,6 +117,7 @@ const Profile = () => {
       })
     }
   }
+
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -386,105 +257,165 @@ console.log({user})
                   </button>
                 </div>
               )}
-              <div className="max-w-md mx-auto">
-                <div ref={printRef} className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center space-x-3 notranslate" translate="no">
-                      <Logo size="lg" className="bg-white/20 rounded-full p-2" />
-                      <div>
-                        <h2 className="text-2xl font-bold mb-1">ABSSD</h2>
-                        <p className="text-sm opacity-90">Member ID Card</p>
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Left: ID card */}
+                  <div className="md:w-[340px]">
+                    <div
+                      ref={printRef}
+                      className="w-full bg-white border rounded-xl shadow-md overflow-hidden flex flex-col"
+                      style={{ borderColor: 'rgba(35,48,63,0.08)', width: '340px', height: '380px' }}
+                    >
+                      {/* Top Dark Blue Header */}
+                      <div className="h-[56px] px-4 flex items-center gap-3" style={{ background: 'linear-gradient(90deg,#2b5b8f,#3b66a9)' }}>
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: '1px solid white' }}>
+                          <img src="/images/logo.png" alt="logo" className="w-10 h-10 object-cover rounded-full" />
+                        </div>
+
+                        <div>
+                          <div className="text-white text-[16px] font-bold leading-tight">
+                            अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* White Content Area */}
+                      <div className="flex gap-4 px-4 pl-6 py-6">
+                        {/* Left: Photo Section */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-22 h-22" style={{ width: 86, height: 86, borderRadius: 9999, overflow: 'hidden', border: '3px solid rgba(35,48,63,0.08)', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {photoPreview || photoUrl ? (
+                              <img src={photoPreview || photoUrl} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-3xl font-bold text-gray-400">
+                                {user.username?.[0]?.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="bg-[#133b6b] text-white text-[10px] font-bold px-3 py-[4px] rounded-full">
+                            MEMBER
+                          </div>
+                        </div>
+
+                        {/* Right: Details Section */}
+                        <div className="flex-1 text-[12px]">
+                          <div>
+                            <span className="text-gray-600 font-semibold">नाम:</span>
+                            <span className="text-[#133b6b] font-bold ml-1">{user.username}</span>
+                          </div>
+
+                          <div style={{ height: 6 }}></div>
+
+                          <div>
+                            <span className="text-gray-600 font-semibold">पद:</span>
+                            <span className="text-[#133b6b] ml-1">Member</span>
+                          </div>
+
+                          <div style={{ height: 6 }}></div>
+
+                          <div>
+                            <span className="text-gray-600 font-semibold">स्थान:</span>
+                            <span className="text-[#133b6b] ml-1">{user.address?.city}{user.address?.state ? ', ' + user.address?.state : ''}</span>
+                          </div>
+
+                          <div style={{ height: 6 }}></div>
+
+                          <div>
+                            <span className="text-gray-600 font-semibold">मोबाइल:</span>
+                            <span className="text-[#133b6b] ml-1">{user.contactNo}</span>
+                          </div>
+                          
+                          <div style={{ height: 6 }}></div>
+
+                          <div>
+                            <span className="text-gray-600 font-semibold">ईमेल:</span>
+                            <span className="text-[#133b6b] ml-1">{user.email}</span>
+                          </div>
+
+                          <div className="pt-2 border-t border-gray-100 mt-2"></div>
+                        </div>
+                      </div>
+
+                      {user.membershipStatus && (
+                        <div className="flex justify-center mt-auto">
+                          {user.membershipStatus === 'pending' && (
+                            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
+                              Pending Verification
+                            </span>
+                          )}
+
+                          {user.membershipStatus === 'active' && (
+                            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-green-100 text-green-800 border border-green-200">
+                              Active Member
+                            </span>
+                          )}
+
+                          {user.membershipStatus === 'inactive' && (
+                            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-red-100 text-red-800 border border-red-200">
+                              Inactive Member
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Bottom Section with Signature and Seal */}
+                      <div className="mt-2 flex border-t border-gray-100 bg-white px-3 py-4 items-center">
+                        {/* Left: Signature Area (empty) */}
+                        <div className="w-1/2 pr-2">
+                          <div className="text-[#133b6b] font-bold text-sm">राष्ट्रीय अध्यक्ष</div>
+                          <div className="h-9 border-b border-dashed border-gray-300 my-2"></div>
+                        </div>
+
+                        {/* Right: QR and small id */}
+                        <div className="w-1/2 flex items-center justify-end pr-2">
+                          <div style={{ width: 78, height: 78 }} className="flex flex-col items-center">
+                            <div style={{ width: 72, height: 72 }} className="bg-white flex items-center justify-center">
+                              <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`} alt="Member QR Code" style={{ width: 72, height: 72 }} />
+                            </div>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
-                    <div className="relative group">
-                      {photoPreview || photoUrl ? (
-                        <img
-                          src={photoPreview || photoUrl}
-                          alt="Profile"
-                          className="w-20 h-20 rounded-full border-2 border-white object-cover"
-                          loading='lazy'
-                        />
-                      ) : (
-                        <div className="w-20 h-20 rounded-full border-2 border-white bg-white/20 flex items-center justify-center">
-                          <span className="text-2xl font-bold">
-                            {user.username?.charAt(0).toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      )}
-                      <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </div>
+
+                  {/* Right: membership panel */}
+                  <div className="flex-1 flex flex-col justify-start gap-6">
+                    <div className="bg-white p-4 rounded shadow-sm">
+                      <div className="text-gray-600">Membership Type</div>
+                      <div className="font-semibold">
+                        {user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded shadow-sm">
+                      <div className="text-gray-600">Member Since</div>
+                      <div className="font-semibold">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 mt-auto">
+                      <button
+                        onClick={handlePrintCard}
+                        className="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
-                        <input
-                          type="file"
-                          name="photo"
-                          accept="image/*"
-                          onChange={handleChange}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                  <div className='flex w-full justify-between'>
+                        प्रिंट करें / Print
+                      </button>
 
-                  <div className="border-t border-white/30 pt-4 mt-4">
-                    <div className="text-lg font-semibold mb-1">{user.username}</div>
-                    <div className="text-sm opacity-90 mb-2">📧 {user.email}</div>
-                    <div className="text-sm">
-                      <div className="mb-1">📞 {user.contactNo}</div>
-                      {user.membershipStatus && (
-                        <div className="mt-2">
-                          <span className="bg-white/20 px-2 py-1 rounded text-xs">
-                            {user.membershipStatus === 'active' ? 'Active Member' : user.membershipStatus === 'cancelled' ? 'Membership Cancelled' : 'Approval Pending'}
-                          </span>
-                        </div>
-                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full bg-red-500 text-white px-4 py-3 rounded-lg hover:bg-red-600 font-semibold"
+                      >
+                        लॉगआउट करें / Logout
+                      </button>
                     </div>
                   </div>
+                </div>
 
-                  {/* QR Code - Bottom Left */}
-                  <div className="mt-4 flex items-end">
-                    <div className="bg-white p-2 rounded">
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`}
-                        alt="Member QR Code"
-                        className="w-10 h-10"
-                      />
-                    </div>
-                  </div>
-                  </div>
-                  
-                </div>
-                <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-gray-600">Membership Type</div>
-                    <div className="font-semibold">
-                      {user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600">Member Since</div>
-                    <div className="font-semibold">
-                      {user.createdAt
-                        ? new Date(user.createdAt).toLocaleDateString('en-IN')
-                        : 'N/A'}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Print Button */}
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={handlePrintCard}
-                    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    प्रिंट करें / Print
-                  </button>
-                </div>
 
                 {/* Photo Upload Section */}
                 {photoFile && (
@@ -509,7 +440,6 @@ console.log({user})
                   </div>
                 )}
               </div>
-            </div>
           )}
 
           {/* Personal Settings */}
@@ -927,15 +857,7 @@ console.log({user})
             </div>
           )}
 
-          {/* Logout Button */}
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-8 py-3 rounded-lg hover:bg-red-600 font-semibold"
-            >
-              लॉगआउट करें / Logout
-            </button>
-          </div>
+          {/* Logout moved to right panel */}
         </div>
       </div>
     </div>

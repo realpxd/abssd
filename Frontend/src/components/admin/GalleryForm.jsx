@@ -43,6 +43,7 @@ const GalleryForm = ({ formData, editingId, onSubmit, onChange, onCancel, submit
           <option value="fair-service">Fair Service</option>
           <option value="ekadashi">Ekadashi</option>
           <option value="environment">Environment</option>
+          <option value="others">Others</option>
         </select>
       </div>
       <div>
