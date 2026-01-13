@@ -355,6 +355,23 @@ const AdminDashboard = () => {
     }
   }
 
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return
+    try {
+      await client(`${api.endpoints.users}/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+      alert('User deleted successfully')
+      fetchData()
+      setSelectedUser(null)
+    } catch (error) {
+      alert(error.message || 'Error deleting user')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader username={user?.username} onLogout={handleLogout} />
@@ -476,6 +493,7 @@ const AdminDashboard = () => {
           onUpdateStatus={handleUpdateMembershipStatus}
           onNotify={handleNotifyUser}
           onToggleAdmin={handleToggleAdmin}
+          onDelete={handleDeleteUser}
         />
       )}
     </div>

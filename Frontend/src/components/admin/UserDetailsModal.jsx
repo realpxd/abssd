@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getImageUrl } from '../../utils/imageUrl.js'
 
-const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin }) => {
+const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin, onDelete}) => {
   const [notificationForm, setNotificationForm] = useState({
     subject: '',
     message: '',
@@ -266,6 +266,22 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
                     ⛔ Revoke Admin
                   </button>
                 )
+              )}
+
+              {/* Delete User (admin only) */}
+              {typeof onDelete === 'function' && (
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Permanently delete user ${user.username}? This cannot be undone.`)) return
+                    setLoading(true)
+                    await onDelete(user._id)
+                    setLoading(false)
+                  }}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  🗑️ Delete User
+                </button>
               )}
             </div>
 

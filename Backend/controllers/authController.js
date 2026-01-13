@@ -54,17 +54,47 @@ exports.register = async (req, res) => {
       })
     }
 
-    // Generate sequential memberNumber atomically
+    // Generate sequential memberNumber atomically.
+    // Ensure we don't overlap with any existing memberNumber values that may have been
+    // assigned directly (e.g., via backfill). Strategy:
+    // 1. Read current maximum memberNumber in users collection.
+    // 2. Atomically update the Counter document using an aggregation-pipeline update
+    //    to set seq = max(seq, currentMax) and then increment by 1.
+    // 3. As a safety-net, if a user already exists with the assigned memberNumber
+    //    (race or external DB change), increment the counter again until unique.
     let memberNumber
     try {
+      const maxDoc = await User.findOne({ memberNumber: { $exists: true } }).sort({ memberNumber: -1 }).select('memberNumber').lean()
+      const currentMax = (maxDoc && maxDoc.memberNumber) ? parseInt(maxDoc.memberNumber, 10) : 0
+
+      // Use aggregation pipeline update (MongoDB 4.2+) to atomically ensure seq >= currentMax
+      // and then increment. Mongoose supports passing an array as the update.
+      const updatePipeline = [
+        { $set: { seq: { $max: ['$seq', currentMax] } } },
+        { $set: { seq: { $add: ['$seq', 1] } } },
+      ]
+
       const counter = await Counter.findOneAndUpdate(
         { _id: 'userId' },
-        { $inc: { seq: 1 } },
+        updatePipeline,
         { new: true, upsert: true }
       )
-      memberNumber = counter.seq
+
+      memberNumber = counter?.seq
+
+      // Safety loop: ensure no existing user already has this memberNumber (rare)
+      // If conflict, increment the counter until we find a free number.
+      while (memberNumber) {
+        const conflict = await User.findOne({ memberNumber })
+        if (!conflict) break
+        const next = await Counter.findOneAndUpdate(
+          { _id: 'userId' },
+          { $inc: { seq: 1 } },
+          { new: true }
+        )
+        memberNumber = next?.seq
+      }
     } catch (err) {
-      // If counter fails, fall back to undefined (user will still be created)
       console.error('Failed to generate memberNumber:', err)
       memberNumber = undefined
     }
@@ -662,6 +692,37 @@ exports.notifyUser = async (req, res) => {
       success: false,
       message: error.message || 'Error sending notification',
     })
+  }
+}
+
+// Delete a user (Admin only)
+exports.deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    // Remove uploaded photo file if present and stored locally
+    if (user.photo && user.photo.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '..', user.photo)
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath)
+        } catch (unlinkErr) {
+          const logger = require('../utils/logger')
+          logger.warn('Failed to delete user photo during user deletion:', unlinkErr)
+        }
+      }
+    }
+
+    await User.findByIdAndDelete(userId)
+
+    res.status(200).json({ success: true, message: 'User deleted successfully' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Error deleting user' })
   }
 }
 

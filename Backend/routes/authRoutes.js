@@ -16,6 +16,7 @@ const {
   updateMemberNumber,
   updateUserRole,
   updateMembershipStatus,
+  deleteUser,
   notifyUser,
 } = require('../controllers/authController')
 const { protect, restrictToAdmin } = require('../middleware/auth')
@@ -51,6 +52,7 @@ router.get('/users/:id', protect, restrictToAdmin, getUserById)
 router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
 router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole)
 router.put('/users/:id/member-number', protect, restrictToAdmin, updateMemberNumber)
+router.delete('/users/:id', protect, restrictToAdmin, deleteUser)
 router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
 
 module.exports = router
