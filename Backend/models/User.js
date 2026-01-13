@@ -112,6 +112,13 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    // Sequential member number (1, 2, 3 ...). Assigned at registration.
+    memberNumber: {
+      type: Number,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

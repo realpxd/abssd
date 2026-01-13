@@ -279,7 +279,10 @@ console.log({user})
                       </div>
 
                       {/* White Content Area */}
-                      <div className="flex gap-4 px-4 pl-6 py-6">
+                      <div className="flex gap-4 px-4 pl-6 py-6 relative">
+                        <div className="absolute top-4 right-4 text-gray-600 text-sm">
+                          <p>{user.memberNumber ? `#${user.memberNumber}` : 'N/A'}</p>
+                        </div>
                         {/* Left: Photo Section */}
                         <div className="flex flex-col items-center gap-2">
                           <div className="w-22 h-22" style={{ width: 86, height: 86, borderRadius: 9999, overflow: 'hidden', border: '3px solid rgba(35,48,63,0.08)', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -355,6 +355,60 @@ const TestControls = () => {
     setLoading(false)
   }
 
+  // Backfill memberNumber sequentially by createdAt
+  const backfillMemberNumbers = async () => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      alert('Please login as admin to run this operation')
+      return
+    }
+
+    if (!confirm('This will assign sequential member numbers to ALL users based on creation date (oldest -> newest). Proceed?')) return
+
+    setLoading(true)
+    setResults(prev => ({ ...prev, backfill: { running: true, progress: 0 } }))
+
+    try {
+      const res = await client(api.endpoints.users)
+      const users = res.data || []
+      // Sort by createdAt ascending
+      users.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+
+      const total = users.length
+      let successCount = 0
+      let failCount = 0
+
+      for (let i = 0; i < users.length; i++) {
+        const u = users[i]
+        const memberNumber = i + 1
+        try {
+          await client(`${api.endpoints.users}/${u._id}/member-number`, {
+            method: 'PUT',
+            body: { memberNumber },
+          })
+          successCount++
+        } catch (err) {
+          // Log individual failures but continue
+          failCount++
+          setResults(prev => ({
+            ...prev,
+            [`backfill_error_${u._id}`]: { success: false, error: err.message || String(err), user: u, attempted: memberNumber }
+          }))
+        }
+
+        // update progress
+        setResults(prev => ({ ...prev, backfill: { running: true, progress: Math.round(((i + 1) / total) * 100), successCount, failCount, total } }))
+      }
+
+      setResults(prev => ({ ...prev, backfill: { running: false, progress: 100, successCount, failCount, total } }))
+      alert(`Backfill completed. Success: ${successCount}, Failed: ${failCount}`)
+    } catch (error) {
+      setResults(prev => ({ ...prev, backfill: { running: false, error: error.message } }))
+      alert(`Backfill failed: ${error.message}`)
+    }
+
+    setLoading(false)
+  }
+
   // Auto-expand results when new results are added
   useEffect(() => {
     if (Object.keys(results).length > 0) {
@@ -398,6 +452,27 @@ const TestControls = () => {
                 onChange={(e) => setTestData({ ...testData, email: e.target.value })}
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Backfill Member Numbers</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={backfillMemberNumbers}
+                  disabled={loading}
+                  className="bg-indigo-600 px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  Run Backfill
+                </button>
+                <button
+                  onClick={() => {
+                    setResults(prev => ({ ...prev, backfill: undefined }))
+                  }}
+                  className="bg-gray-700 px-3 py-2 rounded hover:bg-gray-600"
+                >
+                  Clear
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Assigns sequential member numbers to users by registration date (oldest=1).</p>
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Password</label>

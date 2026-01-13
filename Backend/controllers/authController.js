@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const Counter = require('../models/Counter')
 const { validationResult } = require('express-validator')
 const crypto = require('crypto')
 const path = require('path')
@@ -53,6 +54,21 @@ exports.register = async (req, res) => {
       })
     }
 
+    // Generate sequential memberNumber atomically
+    let memberNumber
+    try {
+      const counter = await Counter.findOneAndUpdate(
+        { _id: 'userId' },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      )
+      memberNumber = counter.seq
+    } catch (err) {
+      // If counter fails, fall back to undefined (user will still be created)
+      console.error('Failed to generate memberNumber:', err)
+      memberNumber = undefined
+    }
+
     // Create user
     const user = await User.create({
       username: username.trim(),
@@ -77,6 +93,7 @@ exports.register = async (req, res) => {
       membershipType,
       membershipAmount,
       membershipStatus: 'pending',
+      memberNumber,
     })
 
     // Generate token
@@ -572,6 +589,43 @@ exports.updateUserRole = async (req, res) => {
       success: false,
       message: error.message || 'Error updating user role',
     })
+  }
+}
+
+// Update user member number (Admin only) - used for backfill/migrations
+exports.updateMemberNumber = async (req, res) => {
+  try {
+    const { memberNumber } = req.body
+    const userId = req.params.id
+
+    if (memberNumber === undefined || memberNumber === null) {
+      return res.status(400).json({ success: false, message: 'memberNumber is required' })
+    }
+
+    const num = parseInt(memberNumber, 10)
+    if (isNaN(num) || num <= 0) {
+      return res.status(400).json({ success: false, message: 'memberNumber must be a positive integer' })
+    }
+
+    // Check for uniqueness: if some other user already has this memberNumber, reject
+    const conflict = await User.findOne({ memberNumber: num, _id: { $ne: userId } })
+    if (conflict) {
+      return res.status(409).json({ success: false, message: 'memberNumber already assigned to another user' })
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { memberNumber: num },
+      { new: true, runValidators: true }
+    ).select('-password')
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    res.status(200).json({ success: true, message: 'memberNumber updated', data: user })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Error updating memberNumber' })
   }
 }
 

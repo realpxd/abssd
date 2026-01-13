@@ -13,6 +13,7 @@ const {
   updateProfile,
   getAllUsers,
   getUserById,
+  updateMemberNumber,
   updateUserRole,
   updateMembershipStatus,
   notifyUser,
@@ -49,6 +50,7 @@ router.get('/users', protect, restrictToAdmin, getAllUsers)
 router.get('/users/:id', protect, restrictToAdmin, getUserById)
 router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
 router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole)
+router.put('/users/:id/member-number', protect, restrictToAdmin, updateMemberNumber)
 router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
 
 module.exports = router

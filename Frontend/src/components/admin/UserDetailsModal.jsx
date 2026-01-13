@@ -106,6 +106,10 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
                   <span className="ml-2 text-gray-900">{user.contactNo || 'N/A'}</span>
                 </div>
                 <div>
+                  <span className="text-gray-500">Member No.:</span>
+                  <span className="ml-2 text-gray-900">{user.memberNumber ? `#${user.memberNumber}` : 'N/A'}</span>
+                </div>
+                <div>
                   <span className="text-gray-500">Date of Birth:</span>
                   <span className="ml-2 text-gray-900">
                     {user.dob ? new Date(user.dob).toLocaleDateString() : 'N/A'}
