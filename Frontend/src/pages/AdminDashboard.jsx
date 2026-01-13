@@ -7,6 +7,7 @@ import AdminHeader from '../components/admin/AdminHeader.jsx'
 import TabNavigation from '../components/admin/TabNavigation.jsx'
 import FormModal from '../components/admin/FormModal.jsx'
 import GalleryForm from '../components/admin/GalleryForm.jsx'
+import AdminCreateUser from '../components/admin/AdminCreateUser.jsx'
 import NewsForm from '../components/admin/NewsForm.jsx'
 import GalleryCard from '../components/admin/GalleryCard.jsx'
 import NewsCard from '../components/admin/NewsCard.jsx'
@@ -28,6 +29,8 @@ const AdminDashboard = () => {
   const [newsSubmitting, setNewsSubmitting] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
+
+  // Admin create-user handled inside AdminCreateUser component
 
   // Form states
   const [galleryForm, setGalleryForm] = useState({
@@ -74,7 +77,7 @@ const AdminDashboard = () => {
           },
         })
         setNewsItems(response.data || [])
-      } else if (activeTab === 'users') {
+      } else if (activeTab === 'users' || activeTab === 'create-user') {
         const response = await client(api.endpoints.users, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -268,6 +271,8 @@ const AdminDashboard = () => {
     setShowAddForm(false)
   }
 
+  // Admin create-user is handled inside AdminCreateUser component; no parent reset required
+
   const resetNewsForm = () => {
     setNewsForm({
       title: '',
@@ -342,10 +347,18 @@ const AdminDashboard = () => {
 
         <FormModal
           show={showAddForm && activeTab !== 'users'}
-          title={`${editingId ? 'Edit' : 'Add New'} ${activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}`}
-          onClose={() => activeTab === 'gallery' ? resetGalleryForm() : resetNewsForm()}
+          title={
+            activeTab === 'gallery' ? `${editingId ? 'Edit' : 'Add New'} Gallery Item` :
+            activeTab === 'news' ? `${editingId ? 'Edit' : 'Add New'} News Item` :
+            activeTab === 'create-user' ? 'Create User' : ''
+          }
+          onClose={() => {
+            if (activeTab === 'gallery') resetGalleryForm()
+            else if (activeTab === 'news') resetNewsForm()
+            else if (activeTab === 'create-user') setShowAddForm(false)
+          }}
         >
-          {activeTab === 'gallery' ? (
+          {activeTab === 'gallery' && (
             <GalleryForm
               formData={galleryForm}
               editingId={editingId}
@@ -354,7 +367,8 @@ const AdminDashboard = () => {
               onCancel={resetGalleryForm}
               submitting={gallerySubmitting}
             />
-          ) : (
+          )}
+          {activeTab === 'news' && (
             <NewsForm
               formData={newsForm}
               editingId={editingId}
@@ -364,17 +378,28 @@ const AdminDashboard = () => {
               submitting={newsSubmitting}
             />
           )}
+          {activeTab === 'create-user' && (
+            <AdminCreateUser
+              onCreated={() => {
+                fetchData()
+                setShowAddForm(false)
+              }}
+              onCancel={() => setShowAddForm(false)}
+            />
+          )}
         </FormModal>
 
         {!showAddForm && activeTab !== 'users' && (
           <button
             onClick={() => {
-              activeTab === 'gallery' ? resetGalleryForm() : resetNewsForm()
+              if (activeTab === 'gallery') resetGalleryForm()
+              else if (activeTab === 'news') resetNewsForm()
+              // create-user handled by AdminCreateUser component; just open modal
               setShowAddForm(true)
             }}
             className="mb-6 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-medium"
           >
-            + Add New {activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}
+            {activeTab === 'create-user' ? '+ Create User' : `+ Add New ${activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}`}
           </button>
         )}
 

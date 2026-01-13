@@ -410,7 +410,7 @@ const Register = () => {
       <div className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
         {/* Membership Info Section */}
-        {/* <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow-lg p-8 mb-8 text-white">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow-lg p-8 mb-8 text-white">
           <h2 className="text-3xl font-bold mb-6 text-center">
             सदस्यता योजना / Membership Plans
           </h2>
@@ -436,7 +436,7 @@ const Register = () => {
               </div>
             ))}
           </div>
-        </div> */}
+        </div>
 
         {/* Registration Form */}
         <div className="bg-white rounded-lg shadow-lg p-8">
@@ -737,7 +737,7 @@ const Register = () => {
           )}
 
           {/* Step 3: Review & Payment */}
-          {/* {step === 3 && (
+          {step === 3 && (
             <div className="space-y-6">
               <h3 className="text-xl font-semibold mb-4">समीक्षा और भुगतान / Review & Payment</h3>
               <div className="bg-gray-50 p-6 rounded-lg mb-6">
@@ -771,7 +771,7 @@ const Register = () => {
                 </button>
               </div>
             </div>
-          )} */}
+          )}
 
           <div className="mt-6 text-center text-sm text-gray-600">
             पहले से ही एक खाता है?{' '}
