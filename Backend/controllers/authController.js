@@ -536,6 +536,45 @@ exports.updateMembershipStatus = async (req, res) => {
   }
 }
 
+// Update user role (Admin only)
+exports.updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body
+    const userId = req.params.id
+
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role provided',
+      })
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true, runValidators: true }
+    ).select('-password')
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User role updated to ${role}`,
+      data: user,
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating user role',
+    })
+  }
+}
+
 // Notify user by email (Admin only)
 exports.notifyUser = async (req, res) => {
   try {

@@ -338,6 +338,23 @@ const AdminDashboard = () => {
     }
   }
 
+  const handleToggleAdmin = async (userId, makeAdmin) => {
+    try {
+      await client(`${api.endpoints.users}/${userId}/role`, {
+        method: 'PUT',
+        body: { role: makeAdmin ? 'admin' : 'user' },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+      alert(`User role updated ${makeAdmin ? 'to admin' : 'to user'}`)
+      fetchData()
+      setSelectedUser(null)
+    } catch (error) {
+      alert(error.message || 'Error updating user role')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader username={user?.username} onLogout={handleLogout} />
@@ -458,6 +475,7 @@ const AdminDashboard = () => {
           onClose={() => setSelectedUser(null)}
           onUpdateStatus={handleUpdateMembershipStatus}
           onNotify={handleNotifyUser}
+          onToggleAdmin={handleToggleAdmin}
         />
       )}
     </div>

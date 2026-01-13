@@ -13,6 +13,7 @@ const {
   updateProfile,
   getAllUsers,
   getUserById,
+  updateUserRole,
   updateMembershipStatus,
   notifyUser,
 } = require('../controllers/authController')
@@ -47,6 +48,7 @@ router.put('/profile', protect, upload.single('photo'), updateProfile)
 router.get('/users', protect, restrictToAdmin, getAllUsers)
 router.get('/users/:id', protect, restrictToAdmin, getUserById)
 router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
+router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole)
 router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
 
 module.exports = router

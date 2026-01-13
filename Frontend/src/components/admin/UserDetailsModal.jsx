@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getImageUrl } from '../../utils/imageUrl.js'
 
-const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify }) => {
+const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin }) => {
   const [notificationForm, setNotificationForm] = useState({
     subject: '',
     message: '',
@@ -232,6 +232,37 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify }) => {
               >
                 📧 Send Email Notification
               </button>
+
+              {/* Toggle Admin Role */}
+              {onToggleAdmin && (
+                user.role !== 'admin' ? (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Make ${user.username} an admin? This will grant full admin privileges.`)) return
+                      setLoading(true)
+                      await onToggleAdmin(user._id, true)
+                      setLoading(false)
+                    }}
+                    disabled={loading}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    👑 Make Admin
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Revoke admin access from ${user.username}?`)) return
+                      setLoading(true)
+                      await onToggleAdmin(user._id, false)
+                      setLoading(false)
+                    }}
+                    disabled={loading}
+                    className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ⛔ Revoke Admin
+                  </button>
+                )
+              )}
             </div>
 
             {/* Notification Form */}
