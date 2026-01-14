@@ -6,26 +6,24 @@ import api from '../api/config.js'
 import AuthHeader from '../components/AuthHeader.jsx'
 
 const MEMBERSHIP_PLANS = {
-  annual: {
-    name: 'वार्षिक सदस्यता / Annual Membership',
+  ordinary: {
+    name: 'साधारण सदस्यता / Ordinary Membership',
     amount: 500,
     features: [
-      '1 वर्ष की सदस्यता / 1 Year Membership',
       'सभी कार्यक्रमों में भागीदारी / Participation in all events',
       'नियमित अपडेट्स / Regular updates',
       'स्वयंसेवक प्रमाणपत्र / Volunteer certificate',
     ],
   },
-  lifetime: {
-    name: 'जीवनकाल सदस्यता / Lifetime Membership',
-    amount: 2999,
+  annual: {
+    name: 'वार्षिक सदस्यता / Annual Membership',
+    amount: 2555,
     features: [
-
-      'जीवनकाल सदस्यता / Lifetime Membership',
       'सभी कार्यक्रमों में प्राथमिकता / Priority in all events',
       'विशेष अपडेट्स / Special updates',
       'स्वर्ण प्रमाणपत्र / Gold certificate',
       'विशेष बैज / Special badge',
+      'मेले के दौरान रहने एवं भोजन की व्यवस्था / Arrangement of accommodation and meals during the fair'
     ],
   },
 }
@@ -49,6 +47,7 @@ const Register = () => {
     contactNo: '',
     password: '',
     confirmPassword: '',
+  referralCode: '',
     // Personal Details
     dob: '',
     gender: '',
@@ -443,6 +442,7 @@ const Register = () => {
       payload.append('username', formData.username)
       payload.append('email', formData.email)
       payload.append('contactNo', formData.contactNo)
+  if (formData.referralCode) payload.append('referralCode', formData.referralCode)
       payload.append('password', formData.password)
       payload.append('dob', formData.dob || '')
       payload.append('gender', formData.gender || '')
@@ -630,6 +630,18 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Referral Code (optional)</label>
+                  <input
+                    type="text"
+                    name="referralCode"
+                    value={formData.referralCode}
+                    onChange={handleChange}
+                    placeholder="Enter 5-digit code"
+                    maxLength={5}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>

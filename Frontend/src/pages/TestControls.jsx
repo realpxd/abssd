@@ -409,6 +409,74 @@ const TestControls = () => {
     setLoading(false)
   }
 
+  // Backfill: set position of all users to 'Member'
+  const backfillPositionsToMember = async () => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      alert('Please login as admin to run this operation')
+      return
+    }
+
+    if (!confirm('This will set the position of ALL users to "Member". Proceed?')) return
+
+    setLoading(true)
+    setResults(prev => ({ ...prev, backfill_positions: { running: true, progress: 0 } }))
+
+    try {
+      // Fetch positions to find 'Member'
+      let positionsRes = await client(api.endpoints.positions)
+      let positions = positionsRes.data || []
+
+      let memberPosition = positions.find(p => (p.name || '').toLowerCase() === 'member')
+
+      // If not found, create the Member position (requires admin token)
+      if (!memberPosition) {
+        const createRes = await client(api.endpoints.positions, {
+          method: 'POST',
+          body: { name: 'Member', description: 'Default member position' },
+        })
+        memberPosition = createRes.data
+      }
+
+      if (!memberPosition || !memberPosition._id) throw new Error('Failed to resolve or create Member position')
+
+      const memberPositionId = memberPosition._id
+
+      // Fetch all users
+      const res = await client(api.endpoints.users)
+      const users = res.data || []
+      const total = users.length
+      let successCount = 0
+      let failCount = 0
+
+      for (let i = 0; i < users.length; i++) {
+        const u = users[i]
+        try {
+          await client(`${api.endpoints.users}/${u._id}/position`, {
+            method: 'PUT',
+            body: { positionId: memberPositionId },
+          })
+          successCount++
+        } catch (err) {
+          failCount++
+          setResults(prev => ({
+            ...prev,
+            [`backfill_positions_error_${u._id}`]: { success: false, error: err.message || String(err), user: u },
+          }))
+        }
+
+        setResults(prev => ({ ...prev, backfill_positions: { running: true, progress: Math.round(((i + 1) / total) * 100), successCount, failCount, total } }))
+      }
+
+      setResults(prev => ({ ...prev, backfill_positions: { running: false, progress: 100, successCount, failCount, total } }))
+      alert(`Positions backfill completed. Success: ${successCount}, Failed: ${failCount}`)
+    } catch (error) {
+      setResults(prev => ({ ...prev, backfill_positions: { running: false, error: error.message } }))
+      alert(`Positions backfill failed: ${error.message}`)
+    }
+
+    setLoading(false)
+  }
+
   // Auto-expand results when new results are added
   useEffect(() => {
     if (Object.keys(results).length > 0) {
@@ -462,6 +530,13 @@ const TestControls = () => {
                   className="bg-indigo-600 px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
                 >
                   Run Backfill
+                </button>
+                <button
+                  onClick={backfillPositionsToMember}
+                  disabled={loading}
+                  className="bg-emerald-600 px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  Set All Positions to Member
                 </button>
                 <button
                   onClick={() => {

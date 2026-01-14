@@ -269,7 +269,7 @@ console.log({user})
                     <div className="bg-white p-4 rounded shadow-sm">
                       <div className="text-gray-600">Membership Type</div>
                       <div className="font-semibold">
-                        {user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}
+                        {user.membershipType === 'annual' ? 'Annual' : 'Ordinary'}
                       </div>
                     </div>
 
@@ -279,6 +279,20 @@ console.log({user})
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}
                       </div>
                     </div>
+
+                    {user.isTeamLeader && (
+                      <div className="bg-white p-4 rounded shadow-sm">
+                        <div className="text-gray-600">Referral Code</div>
+                        <div className="font-semibold">{user.referralCode || 'N/A'}</div>
+                      </div>
+                    )}
+
+                    {user.referredBy && (
+                      <div className="bg-white p-4 rounded shadow-sm">
+                        <div className="text-gray-600">Team Leader</div>
+                        <div className="font-semibold">{user.referredBy.username} {user.referredBy.referralCode ? `(${user.referredBy.referralCode})` : ''}</div>
+                      </div>
+                    )}
 
                     <div className="flex flex-col gap-3 mt-auto">
                       {/* <button

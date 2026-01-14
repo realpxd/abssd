@@ -16,7 +16,7 @@ const MEMBERS = [
   {
     id: 3,
     name: 'Umesh Gupta',
-    role: 'केशियर (cashier)',
+    role: 'कोषाध्यक्ष (cashier)',
     image: '/images/cashier.jpeg',
   },
 ]

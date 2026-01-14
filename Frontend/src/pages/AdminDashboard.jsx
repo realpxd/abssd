@@ -22,6 +22,7 @@ const AdminDashboard = () => {
   const [galleryItems, setGalleryItems] = useState([])
   const [newsItems, setNewsItems] = useState([])
   const [users, setUsers] = useState([])
+  const [positions, setPositions] = useState([])
   const [selectedUser, setSelectedUser] = useState(null)
   const [userSearchQuery, setUserSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
@@ -77,13 +78,20 @@ const AdminDashboard = () => {
           },
         })
         setNewsItems(response.data || [])
-      } else if (activeTab === 'users' || activeTab === 'create-user') {
+      } else if (activeTab === 'users' || activeTab === 'create-user' || activeTab === 'positions') {
         const response = await client(api.endpoints.users, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         })
         setUsers(response.data || [])
+        // Fetch positions for admin to assign
+        try {
+          const posResp = await client(api.endpoints.positions)
+          if (posResp && posResp.data) setPositions(posResp.data)
+        } catch (err) {
+          // ignore
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -355,6 +363,40 @@ const AdminDashboard = () => {
     }
   }
 
+  const handleToggleTeamLeader = async (userId, makeLeader) => {
+    try {
+      await client(`${api.endpoints.auth}/users/${userId}/team-leader`, {
+        method: 'PUT',
+        body: { isTeamLeader: !!makeLeader },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+      alert(`User ${makeLeader ? 'marked as' : 'removed from'} team leader`)
+      fetchData()
+      setSelectedUser(null)
+    } catch (error) {
+      alert(error.message || 'Error updating team leader status')
+    }
+  }
+
+  const handleAssignPosition = async (userId, positionId) => {
+    try {
+      await client(`${api.endpoints.auth}/users/${userId}/position`, {
+        method: 'PUT',
+        body: { positionId },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+      alert('User position updated')
+      fetchData()
+      setSelectedUser(null)
+    } catch (error) {
+      alert(error.message || 'Error assigning position')
+    }
+  }
+
   const handleDeleteUser = async (userId) => {
     if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return
     try {
@@ -370,6 +412,164 @@ const AdminDashboard = () => {
     } catch (error) {
       alert(error.message || 'Error deleting user')
     }
+  }
+
+  // Position management (create/delete)
+  const [newPositionName, setNewPositionName] = useState('')
+  const [newPositionDescription, setNewPositionDescription] = useState('')
+
+  const handleCreatePosition = async (e) => {
+    e.preventDefault()
+    if (!newPositionName.trim()) return alert('Please provide a position name')
+    try {
+      await client(api.endpoints.positions, {
+        method: 'POST',
+        body: { name: newPositionName.trim(), description: newPositionDescription.trim() },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      })
+      setNewPositionName('')
+      setNewPositionDescription('')
+      fetchData()
+    } catch (err) {
+      alert(err.message || 'Error creating position')
+    }
+  }
+
+  const handleDeletePosition = async (pos) => {
+    if (!pos) return
+    if (pos.name && pos.name.toLowerCase() === 'member') {
+      return alert('Default "Member" position cannot be deleted')
+    }
+    if (!confirm(`Delete position "${pos.name}"? This will remove the position from all users.`)) return
+    try {
+      await client(api.endpoints.positions + `/${pos._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      })
+      fetchData()
+    } catch (err) {
+      alert(err.message || 'Error deleting position')
+    }
+  }
+
+  // Prepare content area based on activeTab
+  let content = null
+  if (loading) {
+    content = <LoadingSpinner />
+  } else if (activeTab === 'gallery') {
+    content = (
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {galleryItems.map((item) => (
+          <GalleryCard
+            key={item._id}
+            item={item}
+            onEdit={(item) => startEdit(item, 'gallery')}
+            onDelete={(id) => handleDelete(id, 'gallery')}
+          />
+        ))}
+      </div>
+    )
+  } else if (activeTab === 'news') {
+    content = (
+      <div className="space-y-4">
+        {newsItems.map((item) => (
+          <NewsCard
+            key={item._1d}
+            item={item}
+            onEdit={(item) => startEdit(item, 'news')}
+            onDelete={(id) => handleDelete(id, 'news')}
+          />
+        ))}
+      </div>
+    )
+  } else if (activeTab === 'positions') {
+    content = (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Create Position</h2>
+          <form onSubmit={handleCreatePosition} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Position Name</label>
+              <input
+                value={newPositionName}
+                onChange={(e) => setNewPositionName(e.target.value)}
+                className="w-full px-3 py-2 border rounded"
+                placeholder="e.g. President"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description (optional)</label>
+              <textarea
+                value={newPositionDescription}
+                onChange={(e) => setNewPositionDescription(e.target.value)}
+                className="w-full px-3 py-2 border rounded"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button className="bg-green-600 text-white px-4 py-2 rounded" type="submit">Create</button>
+              <button
+                type="button"
+                onClick={() => { setNewPositionName(''); setNewPositionDescription('') }}
+                className="bg-gray-200 px-4 py-2 rounded"
+              >
+                Clear
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Existing Positions</h2>
+          <div className="space-y-2">
+            {positions.length === 0 ? (
+              <p className="text-sm text-gray-500">No positions found.</p>
+            ) : (
+              positions.map((pos) => (
+                <div key={pos._id} className="flex items-center justify-between p-3 border rounded">
+                  <div>
+                    <div className="font-medium">{pos.name}</div>
+                    {pos.description && <div className="text-sm text-gray-500">{pos.description}</div>}
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => handleDeletePosition(pos)}
+                      className="bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                      disabled={pos.name && pos.name.toLowerCase() === 'member'}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  } else {
+    content = (
+      <>
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search by User ID, Username, or Email..."
+            value={userSearchQuery}
+            onChange={(e) => setUserSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <UsersList
+          users={users.filter(
+            (user) =>
+              user._id.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+              user.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+              user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+          )}
+          onViewDetails={handleViewUserDetails}
+        />
+      </>
+    )
   }
 
   return (
@@ -437,52 +637,7 @@ const AdminDashboard = () => {
           </button>
         )}
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : activeTab === 'gallery' ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryItems.map((item) => (
-              <GalleryCard
-                key={item._id}
-                item={item}
-                onEdit={(item) => startEdit(item, 'gallery')}
-                onDelete={(id) => handleDelete(id, 'gallery')}
-              />
-            ))}
-          </div>
-        ) : activeTab === 'news' ? (
-          <div className="space-y-4">
-            {newsItems.map((item) => (
-              <NewsCard
-                key={item._id}
-                item={item}
-                onEdit={(item) => startEdit(item, 'news')}
-                onDelete={(id) => handleDelete(id, 'news')}
-              />
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <input
-                type="text"
-                placeholder="Search by User ID, Username, or Email..."
-                value={userSearchQuery}
-                onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <UsersList
-              users={users.filter(
-                (user) =>
-                  user._id.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                  user.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                  user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
-              )}
-              onViewDetails={handleViewUserDetails}
-            />
-          </>
-        )}
+        {content}
       </div>
 
       {/* User Details Modal */}
@@ -494,6 +649,9 @@ const AdminDashboard = () => {
           onNotify={handleNotifyUser}
           onToggleAdmin={handleToggleAdmin}
           onDelete={handleDeleteUser}
+            onToggleTeamLeader={handleToggleTeamLeader}
+            positions={positions}
+            onTogglePosition={handleAssignPosition}
         />
       )}
     </div>

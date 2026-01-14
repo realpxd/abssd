@@ -4,6 +4,24 @@ const { validationResult } = require('express-validator')
 const crypto = require('crypto')
 const path = require('path')
 const fs = require('fs')
+const Position = require('../models/Position')
+
+// Helper to generate a unique 5-digit numeric referral code
+const generateUniqueReferralCode = async () => {
+  const pad = (n) => String(n).padStart(5, '0')
+  for (let i = 0; i < 10; i++) {
+    const code = pad(Math.floor(Math.random() * 100000))
+    const exists = await User.findOne({ referralCode: code })
+    if (!exists) return code
+  }
+  // Fallback: try sequential search (unlikely)
+  for (let n = 0; n < 100000; n++) {
+    const code = pad(n)
+    const exists = await User.findOne({ referralCode: code })
+    if (!exists) return code
+  }
+  throw new Error('Unable to generate unique referral code')
+}
 
 // Register new user
 exports.register = async (req, res) => {
@@ -34,6 +52,7 @@ exports.register = async (req, res) => {
       moreDetails,
       membershipType,
       membershipAmount,
+      referralCode,
     } = req.body
 
     // Normalize address if sent as JSON string (multipart/form-data sends strings)
@@ -151,7 +170,39 @@ exports.register = async (req, res) => {
       membershipStatus: 'pending',
       memberNumber,
       photo: photoPath,
+      // If referral was provided and validated below, referredBy is set later
     })
+
+    // Ensure default 'Member' position exists and assign to new user if no position provided
+    try {
+      let defaultPos = await Position.findOne({ name: { $regex: /^member$/i } })
+      if (!defaultPos) {
+        defaultPos = await Position.create({ name: 'Member', slug: 'member', description: 'Default member position' })
+      }
+      user.position = defaultPos._id
+      await user.save()
+    } catch (posErr) {
+      // non-fatal - log and continue
+      console.warn('Failed to assign default position to user', posErr)
+    }
+
+    // If a referral code was provided, attempt to resolve and set referredBy
+    if (referralCode) {
+      try {
+        const leader = await User.findOne({ referralCode: String(referralCode).trim(), isTeamLeader: true })
+        if (leader) {
+          user.referredBy = leader._id
+          await user.save()
+        } else {
+          // If referral code provided but invalid, remove created user and return error
+          await User.findByIdAndDelete(user._id)
+          return res.status(400).json({ success: false, message: 'Invalid referral code' })
+        }
+      } catch (e) {
+        // ignore but log
+        console.warn('Referral processing error', e)
+      }
+    }
 
     // Generate token
     const token = user.generateToken()
@@ -285,6 +336,8 @@ exports.checkContactNo = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
+      .populate('referredBy', 'username memberNumber referralCode')
+      .populate('position', 'name')
 
     res.status(200).json({
       success: true,
@@ -550,7 +603,10 @@ exports.getAllUsers = async (req, res) => {
 // Get single user by ID (Admin only)
 exports.getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password')
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('referredBy', 'username memberNumber referralCode')
+      .populate('position', 'name')
 
     if (!user) {
       return res.status(404).json({
@@ -568,6 +624,37 @@ exports.getUserById = async (req, res) => {
       success: false,
       message: error.message || 'Error fetching user',
     })
+  }
+}
+
+// Admin: mark/unmark a user as team leader. When marking, generate a unique 5-digit referral code if not present.
+exports.updateTeamLeader = async (req, res) => {
+  try {
+    const { isTeamLeader } = req.body
+    const userId = req.params.id
+
+    if (typeof isTeamLeader === 'undefined') {
+      return res.status(400).json({ success: false, message: 'isTeamLeader flag is required' })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    user.isTeamLeader = !!isTeamLeader
+
+    if (user.isTeamLeader && !user.referralCode) {
+      // generate and set unique 5-digit numeric code
+      const code = await generateUniqueReferralCode()
+      user.referralCode = code
+    }
+
+    await user.save()
+
+    res.status(200).json({ success: true, message: 'Team leader status updated', data: user })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Error updating team leader status' })
   }
 }
 
@@ -646,6 +733,38 @@ exports.updateUserRole = async (req, res) => {
       success: false,
       message: error.message || 'Error updating user role',
     })
+  }
+}
+
+// Assign or clear a user's position (admin only)
+exports.updateUserPosition = async (req, res) => {
+  try {
+    const { positionId } = req.body
+    const userId = req.params.id
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    if (!positionId) {
+      // Clear position
+      user.position = undefined
+    } else {
+      const pos = await Position.findById(positionId)
+      if (!pos) {
+        return res.status(404).json({ success: false, message: 'Position not found' })
+      }
+      user.position = pos._id
+    }
+
+    await user.save()
+
+    const out = await User.findById(userId).select('-password').populate('position', 'name')
+
+    res.status(200).json({ success: true, message: 'User position updated', data: out })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Error updating user position' })
   }
 }
 

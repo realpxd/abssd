@@ -7,7 +7,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
   const photoSrc = photoPreview || (user.photo ? getImageUrl(user.photo) : null)
 
   return (
-    <div ref={ref} className="relative w-full bg-white border rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ borderColor: 'rgba(35,48,63,0.08)', width: '340px', height: '380px' }}>
+    <div ref={ref} className="relative w-full bg-white border rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ borderColor: 'rgba(35,48,63,0.08)', width: '350px', height: '380px' }}>
       {/* Watermark overlay when requested (e.g., sample preview) */}
       {watermarkText && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 40 }}>
@@ -15,7 +15,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
         </div>
       )}
       <div className="h-[56px] px-4 flex items-center gap-3" style={{ background: 'linear-gradient(90deg,#2b5b8f,#3b66a9)' }}>
-        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: '1px solid white' }}>
+       <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: '1px solid white' }}>
           <img src="/images/logo.png" alt="logo" className="w-10 h-10 object-cover rounded-full" />
         </div>
         <div>
@@ -37,18 +37,13 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
             )}
           </div>
 
-          <div className="bg-[#133b6b] text-white text-[10px] font-bold px-3 py-[4px] rounded-full">MEMBER</div>
+          <div className="bg-[#133b6b] text-white text-[10px] font-bold px-3 py-[4px] rounded-full">{user.position?.name || 'Member'}</div>
         </div>
 
         <div className="flex-1 text-[12px]">
           <div>
             <span className="text-gray-600 font-semibold">नाम:</span>
             <span className="text-[#133b6b] font-bold ml-1">{user.username}</span>
-          </div>
-          <div style={{ height: 6 }}></div>
-          <div>
-            <span className="text-gray-600 font-semibold">पद:</span>
-            <span className="text-[#133b6b] ml-1">Member</span>
           </div>
           <div style={{ height: 6 }}></div>
           <div>
@@ -65,6 +60,23 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
             <span className="text-gray-600 font-semibold">ईमेल:</span>
             <span className="text-[#133b6b] ml-1">{user.email}</span>
           </div>
+          {typeof user.referredBy  === 'object' && <> 
+            <div style={{ height: 6 }}></div>
+            <div>
+              <span className="text-gray-600 font-bold">टीम प्रभारी:</span>
+              <span className="text-[#133b6b] ml-1 font-bold">
+                {user.referredBy ? (
+                  typeof user.referredBy === 'object' ? (
+                    `${user.referredBy.username || 'N/A'}${user.referredBy.referralCode ? ` (${user.referredBy.referralCode})` : ''}`
+                  ) : (
+                    // could be an id or a string fallback
+                    String(user.referredBy)
+                  )
+                ) : 'N/A'}
+            </span>
+            </div>
+          </>
+          }
           <div className="pt-2 border-t border-gray-100 mt-2"></div>
         </div>
       </div>

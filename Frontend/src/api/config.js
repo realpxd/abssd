@@ -10,6 +10,7 @@ export const api = {
     members: '/members',
     payment: '/payment',
     users: '/auth/users',
+    positions: '/positions',
     geo: '/geo',
   },
 }

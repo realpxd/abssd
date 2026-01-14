@@ -95,7 +95,7 @@ const userSchema = new mongoose.Schema(
     },
     membershipType: {
       type: String,
-      enum: ['annual', 'lifetime'],
+      enum: ['annual', 'ordinary', 'lifetime'],
     },
     membershipAmount: {
       type: Number,
@@ -123,6 +123,26 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    // Team / referral system
+    isTeamLeader: {
+      type: Boolean,
+      default: false,
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    // Assigned position (optional) - references Position collection
+    position: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Position',
     },
     // Sequential member number (1, 2, 3 ...). Assigned at registration.
     memberNumber: {

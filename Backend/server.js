@@ -13,6 +13,7 @@ const eventRoutes = require('./routes/eventRoutes')
 const authRoutes = require('./routes/authRoutes')
 const geoRoutes = require('./routes/geoRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
+const positionsRoutes = require('./routes/positionsRoutes')
 
 const app = express()
 
@@ -99,6 +100,7 @@ app.use('/api/payment', paymentRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/gallery', galleryRoutes)
 app.use('/api/events', eventRoutes)
+app.use('/api/positions', positionsRoutes)
 app.use(
   "/api/uploads",
   express.static(path.join(process.cwd(), "uploads"))

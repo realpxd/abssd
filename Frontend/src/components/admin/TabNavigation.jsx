@@ -41,6 +41,16 @@ const TabNavigation = ({ activeTab, onTabChange }) => {
       >
         Create User
       </button>
+      <button
+        onClick={() => onTabChange('positions')}
+        className={`px-6 py-3 font-medium ${
+          activeTab === 'positions'
+            ? 'border-b-2 border-orange-600 text-orange-600'
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        Positions
+      </button>
     </div>
   )
 }

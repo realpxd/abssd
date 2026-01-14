@@ -2,11 +2,12 @@ import { useState, useRef } from 'react'
 import { getImageUrl } from '../../utils/imageUrl.js'
 import IDCard from '../IDCard.jsx'
 
-const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin, onDelete}) => {
+const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin, onDelete, onToggleTeamLeader, positions = [], onTogglePosition }) => {
   const [notificationForm, setNotificationForm] = useState({
     subject: '',
     message: '',
   })
+  const [selectedPosition, setSelectedPosition] = useState(user?.position?._id || '')
   const [showNotificationForm, setShowNotificationForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showIdCard, setShowIdCard] = useState(false)
@@ -200,7 +201,7 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
                 <div>
                   <span className="text-gray-500">Membership Type:</span>
                   <span className="ml-2 text-gray-900">
-                    {user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}
+                    {user.membershipType === 'annual' ? 'Annual' : 'Ordinary'}
                   </span>
                 </div>
                 <div>
@@ -281,6 +282,26 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
           <div className="space-y-4">
             <h4 className="font-semibold text-gray-700">Actions</h4>
             
+            {/* Position assignment (admin) */}
+            {Array.isArray(positions) && positions.length > 0 && typeof onTogglePosition === 'function' && (
+              <div className="mb-4 bg-gray-50 p-3 rounded">
+                <label className="block text-sm text-gray-700 mb-2">Assign Position</label>
+                <div className="flex items-center gap-2">
+                  <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)} className="px-3 py-2 border rounded-lg">
+                    <option value="">-- None --</option>
+                    {positions.map((p) => (
+                      <option key={p._id} value={p._id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <button onClick={async () => {
+                    setLoading(true)
+                    await onTogglePosition(user._id, selectedPosition || undefined)
+                    setLoading(false)
+                  }} className="bg-indigo-600 text-white px-3 py-2 rounded">Save</button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3">
               {!showIdCard && (
                 <button
@@ -299,6 +320,36 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
                 >
                   ✓ Approve Membership
                 </button>
+              )}
+              {/* Team Leader toggle (admin only) */}
+              {typeof onToggleTeamLeader === 'function' && (
+                user.isTeamLeader ? (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Revoke team leader status from ${user.username}?`)) return
+                      setLoading(true)
+                      await onToggleTeamLeader(user._id, false)
+                      setLoading(false)
+                    }}
+                    disabled={loading}
+                    className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ✖ Revoke Team Leader
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Make ${user.username} a team leader? This will generate a referral code for them.`)) return
+                      setLoading(true)
+                      await onToggleTeamLeader(user._id, true)
+                      setLoading(false)
+                    }}
+                    disabled={loading}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ⭐ Make Team Leader
+                  </button>
+                )
               )}
               
               {user.membershipStatus === 'active' && (

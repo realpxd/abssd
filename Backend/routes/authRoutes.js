@@ -15,9 +15,11 @@ const {
   getUserById,
   updateMemberNumber,
   updateUserRole,
+  updateTeamLeader,
   updateMembershipStatus,
   deleteUser,
   notifyUser,
+  updateUserPosition
 } = require('../controllers/authController')
 const { protect, restrictToAdmin } = require('../middleware/auth')
 const upload = require('../middleware/upload')
@@ -58,7 +60,9 @@ router.get('/users', protect, restrictToAdmin, getAllUsers)
 router.get('/users/:id', protect, restrictToAdmin, getUserById)
 router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
 router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole)
+router.put('/users/:id/team-leader', protect, restrictToAdmin, updateTeamLeader)
 router.put('/users/:id/member-number', protect, restrictToAdmin, updateMemberNumber)
+router.put('/users/:id/position', protect, restrictToAdmin, updateUserPosition)
 router.delete('/users/:id', protect, restrictToAdmin, deleteUser)
 router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
 

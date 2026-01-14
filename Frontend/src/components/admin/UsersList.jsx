@@ -91,7 +91,7 @@ const UsersList = ({ users, onViewDetails }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {user.membershipType === 'annual' ? 'Annual' : 'Lifetime'}
+                    {user.membershipType === 'annual' ? 'Annual' : 'Ordinary'}
                   </div>
                   {user.membershipAmount && (
                     <div className="text-xs text-gray-500">₹{user.membershipAmount}</div>
