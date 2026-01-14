@@ -36,6 +36,19 @@ exports.register = async (req, res) => {
       membershipAmount,
     } = req.body
 
+    // Normalize address if sent as JSON string (multipart/form-data sends strings)
+    let parsedAddress = address
+    if (address && typeof address === 'string') {
+      try {
+        parsedAddress = JSON.parse(address)
+      } catch (e) {
+        parsedAddress = undefined
+      }
+    }
+
+    // Normalize aadharConfirmed flag
+    const aadharConfirmed = req.body.aadharConfirmed === 'true' || req.body.aadharConfirmed === true
+
     // Check if email already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() })
     if (existingUser) {
@@ -100,6 +113,16 @@ exports.register = async (req, res) => {
     }
 
     // Create user
+    // Handle uploaded files (if any)
+    const files = req.files || {}
+    const photoFile = files.photo && files.photo[0]
+    const aadharFrontFile = files.aadharFront && files.aadharFront[0]
+    const aadharBackFile = files.aadharBack && files.aadharBack[0]
+
+    const photoPath = photoFile ? `/uploads/${photoFile.filename}` : undefined
+    const aadharFrontPath = aadharFrontFile ? `/uploads/${aadharFrontFile.filename}` : undefined
+    const aadharBackPath = aadharBackFile ? `/uploads/${aadharBackFile.filename}` : undefined
+
     const user = await User.create({
       username: username.trim(),
       email: email.toLowerCase().trim(),
@@ -109,14 +132,17 @@ exports.register = async (req, res) => {
       gender,
       fatherName: fatherName?.trim(),
       motherName: motherName?.trim(),
-      address: address ? {
-        street: address.street?.trim(),
-        city: address.city?.trim(),
-        state: address.state?.trim(),
-        pincode: address.pincode?.trim(),
-        country: address.country?.trim() || 'India',
+      address: parsedAddress ? {
+        street: parsedAddress.street?.trim(),
+        city: parsedAddress.city?.trim(),
+        state: parsedAddress.state?.trim(),
+        pincode: parsedAddress.pincode?.trim(),
+        country: parsedAddress.country?.trim() || 'India',
       } : undefined,
-      aadharNo: aadharNo?.trim(),
+  aadharNo: aadharNo?.trim(),
+  aadharVerified: aadharConfirmed ? true : false,
+      aadharFront: aadharFrontPath,
+      aadharBack: aadharBackPath,
       qualification: qualification?.trim(),
       occupation: occupation?.trim(),
       moreDetails: moreDetails?.trim(),
@@ -124,6 +150,7 @@ exports.register = async (req, res) => {
       membershipAmount,
       membershipStatus: 'pending',
       memberNumber,
+      photo: photoPath,
     })
 
     // Generate token

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import client from '../api/client.js'
 import api from '../api/config.js'
 import Logo from '../components/Logo.jsx'
+import IDCard from '../components/IDCard.jsx'
 import { getImageUrl } from '../utils/imageUrl.js'
 
 const Profile = () => {
@@ -258,128 +259,9 @@ console.log({user})
                 </div>
               )}
                 <div className="flex flex-col md:flex-row gap-6">
-                  {/* Left: ID card */}
+                  {/* Left: ID card (shared component) */}
                   <div className="md:w-[340px]">
-                    <div
-                      ref={printRef}
-                      className="w-full bg-white border rounded-xl shadow-md overflow-hidden flex flex-col"
-                      style={{ borderColor: 'rgba(35,48,63,0.08)', width: '340px', height: '380px' }}
-                    >
-                      {/* Top Dark Blue Header */}
-                      <div className="h-[56px] px-4 flex items-center gap-3" style={{ background: 'linear-gradient(90deg,#2b5b8f,#3b66a9)' }}>
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: '1px solid white' }}>
-                          <img src="/images/logo.png" alt="logo" className="w-10 h-10 object-cover rounded-full" />
-                        </div>
-
-                        <div>
-                          <div className="text-white text-[16px] font-bold leading-tight">
-                            अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* White Content Area */}
-                      <div className="flex gap-4 px-4 pl-6 py-6 relative">
-                        <div className="absolute top-4 right-4 text-gray-600 text-sm">
-                          <p>{user.memberNumber ? `#${user.memberNumber}` : 'N/A'}</p>
-                        </div>
-                        {/* Left: Photo Section */}
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-22 h-22" style={{ width: 86, height: 86, borderRadius: 9999, overflow: 'hidden', border: '3px solid rgba(35,48,63,0.08)', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {photoPreview || photoUrl ? (
-                              <img src={photoPreview || photoUrl} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-3xl font-bold text-gray-400">
-                                {user.username?.[0]?.toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="bg-[#133b6b] text-white text-[10px] font-bold px-3 py-[4px] rounded-full">
-                            MEMBER
-                          </div>
-                        </div>
-
-                        {/* Right: Details Section */}
-                        <div className="flex-1 text-[12px]">
-                          <div>
-                            <span className="text-gray-600 font-semibold">नाम:</span>
-                            <span className="text-[#133b6b] font-bold ml-1">{user.username}</span>
-                          </div>
-
-                          <div style={{ height: 6 }}></div>
-
-                          <div>
-                            <span className="text-gray-600 font-semibold">पद:</span>
-                            <span className="text-[#133b6b] ml-1">Member</span>
-                          </div>
-
-                          <div style={{ height: 6 }}></div>
-
-                          <div>
-                            <span className="text-gray-600 font-semibold">स्थान:</span>
-                            <span className="text-[#133b6b] ml-1">{user.address?.city}{user.address?.state ? ', ' + user.address?.state : ''}</span>
-                          </div>
-
-                          <div style={{ height: 6 }}></div>
-
-                          <div>
-                            <span className="text-gray-600 font-semibold">मोबाइल:</span>
-                            <span className="text-[#133b6b] ml-1">{user.contactNo}</span>
-                          </div>
-                          
-                          <div style={{ height: 6 }}></div>
-
-                          <div>
-                            <span className="text-gray-600 font-semibold">ईमेल:</span>
-                            <span className="text-[#133b6b] ml-1">{user.email}</span>
-                          </div>
-
-                          <div className="pt-2 border-t border-gray-100 mt-2"></div>
-                        </div>
-                      </div>
-
-                      {user.membershipStatus && (
-                        <div className="flex justify-center mt-auto">
-                          {user.membershipStatus === 'pending' && (
-                            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
-                              Pending Verification
-                            </span>
-                          )}
-
-                          {user.membershipStatus === 'active' && (
-                            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-green-100 text-green-800 border border-green-200">
-                              Active Member
-                            </span>
-                          )}
-
-                          {user.membershipStatus === 'inactive' && (
-                            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-red-100 text-red-800 border border-red-200">
-                              Inactive Member
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Bottom Section with Signature and Seal */}
-                      <div className="mt-2 flex border-t border-gray-100 bg-white px-3 py-4 items-center">
-                        {/* Left: Signature Area (empty) */}
-                        <div className="w-1/2 pr-2">
-                          <div className="text-[#133b6b] font-bold text-sm">राष्ट्रीय अध्यक्ष</div>
-                          <div className="h-9 border-b border-dashed border-gray-300 my-2"></div>
-                        </div>
-
-                        {/* Right: QR and small id */}
-                        <div className="w-1/2 flex items-center justify-end pr-2">
-                          <div style={{ width: 78, height: 78 }} className="flex flex-col items-center">
-                            <div style={{ width: 72, height: 72 }} className="bg-white flex items-center justify-center">
-                              <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`} alt="Member QR Code" style={{ width: 72, height: 72 }} />
-                            </div>
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
+                    <IDCard ref={printRef} user={user} photoPreview={photoPreview} watermarkText="sample sample sample sample sample sample sample sample sample sample sample" />
                   </div>
 
                   {/* Right: membership panel */}
@@ -399,7 +281,7 @@ console.log({user})
                     </div>
 
                     <div className="flex flex-col gap-3 mt-auto">
-                      <button
+                      {/* <button
                         onClick={handlePrintCard}
                         className="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
                       >
@@ -407,7 +289,7 @@ console.log({user})
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
                         प्रिंट करें / Print
-                      </button>
+                      </button> */}
 
                       <button
                         onClick={handleLogout}

@@ -1,15 +1,30 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import client from '../../api/client.js'
 import api from '../../api/config.js'
+import { getImageUrl } from '../../utils/imageUrl.js'
+import IDCard from '../IDCard.jsx'
 
 const MEMBERSHIP_PLANS = {
   annual: {
     name: 'वार्षिक सदस्यता / Annual Membership',
     amount: 500,
+    features: [
+      '1 वर्ष की सदस्यता / 1 Year Membership',
+      'सभी कार्यक्रमों में भागीदारी / Participation in all events',
+      'नियमित अपडेट्स / Regular updates',
+      'स्वयंसेवक प्रमाणपत्र / Volunteer certificate',
+    ],
   },
   lifetime: {
     name: 'जीवनकाल सदस्यता / Lifetime Membership',
-    amount: 5000,
+    amount: 2999,
+    features: [
+      'जीवनकाल सदस्यता / Lifetime Membership',
+      'सभी कार्यक्रमों में प्राथमिकता / Priority in all events',
+      'विशेष अपडेट्स / Special updates',
+      'स्वर्ण प्रमाणपत्र / Gold certificate',
+      'विशेष बैज / Special badge',
+    ],
   },
 }
 
@@ -29,24 +44,65 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     email: '',
     contactNo: '',
     password: '',
+    confirmPassword: '',
     dob: '',
     gender: '',
     fatherName: '',
     motherName: '',
     address: { street: '', city: '', state: '', pincode: '', country: 'India' },
     aadharNo: '',
+    aadharFront: null,
+    aadharBack: null,
+    aadharConfirmed: false,
     qualification: '',
     occupation: '',
     moreDetails: '',
     photo: null,
   })
 
+  const [states, setStates] = useState([])
+  const [cityOptions, setCityOptions] = useState([])
+  const [createdUser, setCreatedUser] = useState(null)
+  const printRef = useRef(null)
+
   useEffect(() => {
-    // reset when opened
-    setStep(1)
-    setError('')
-    setSkipPayment(false)
+    let mounted = true
+    const load = async () => {
+      try {
+        const resp = await client(api.endpoints.geo + '/states')
+        if (resp && resp.data && Array.isArray(resp.data) && mounted) {
+          setStates(resp.data)
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+    load()
+    return () => { mounted = false }
   }, [])
+
+  useEffect(() => {
+    const state = formData.address.state
+    if (!state) return
+    let mounted = true
+    const load = async () => {
+      try {
+        const resp = await client(api.endpoints.geo + `/cities/${encodeURIComponent(state)}`)
+        if (resp && resp.data && Array.isArray(resp.data) && mounted) {
+          setCityOptions(resp.data)
+          if (resp.data.length && !resp.data.includes(formData.address.city)) {
+            setFormData((s) => ({ ...s, address: { ...s.address, city: resp.data[0] } }))
+          }
+        } else {
+          setCityOptions([])
+        }
+      } catch (err) {
+        setCityOptions([])
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [formData.address.state])
 
   const handleChange = (e) => {
     const { name, value, files, type, checked } = e.target
@@ -57,6 +113,8 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1]
       setFormData({ ...formData, address: { ...formData.address, [addressField]: value } })
+    } else if (name === 'aadharFront' || name === 'aadharBack' || name === 'photo') {
+      setFormData({ ...formData, [name]: files && files[0] ? files[0] : null })
     } else if (files && files[0]) {
       setFormData({ ...formData, [name]: files[0] })
     } else {
@@ -77,10 +135,7 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     setValidating(true)
     setEmailError('')
     try {
-      const response = await client(api.endpoints.auth + '/check-email', {
-        method: 'POST',
-        body: { email: formData.email },
-      })
+      const response = await client(api.endpoints.auth + '/check-email', { method: 'POST', body: { email: formData.email } })
       if (response.exists) setEmailError('Email already registered')
     } catch (e) {}
     setValidating(false)
@@ -96,10 +151,7 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     setValidating(true)
     setContactError('')
     try {
-      const response = await client(api.endpoints.auth + '/check-contact', {
-        method: 'POST',
-        body: { contactNo: formData.contactNo },
-      })
+      const response = await client(api.endpoints.auth + '/check-contact', { method: 'POST', body: { contactNo: formData.contactNo } })
       if (response.exists) setContactError('Contact already registered')
     } catch (e) {}
     setValidating(false)
@@ -110,11 +162,14 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
       setError('Please fill all required fields')
       return false
     }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      return false
+    }
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters')
       return false
     }
-
     if (!emailError && formData.email) {
       setValidating(true)
       try {
@@ -122,28 +177,55 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
         if (emailResponse.exists) { setEmailError('Email already registered'); setValidating(false); return false }
       } catch (e) { setError('Error checking email'); setValidating(false); return false }
     }
-
     if (!contactError && formData.contactNo) {
       try {
         const contactResponse = await client(api.endpoints.auth + '/check-contact', { method: 'POST', body: { contactNo: formData.contactNo } })
         if (contactResponse.exists) { setContactError('Contact already registered'); setValidating(false); return false }
       } catch (e) { setError('Error checking contact'); setValidating(false); return false }
     }
-
     if (emailError || contactError) { setValidating(false); return false }
     setValidating(false)
     return true
   }
 
-  const next = async () => {
+  const validateStep2 = () => {
+    if (!formData.photo) {
+      setError('Please upload a photo')
+      return false
+    }
+    const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
+    const aadhaarRegex = /^[0-9]{12}$/
+    if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
+      setError('Please enter a valid 12-digit Aadhaar number')
+      return false
+    }
+    setError('')
+    return true
+  }
+
+  const handleNext = async () => {
     if (step === 1) {
       const ok = await validateStep1()
       if (!ok) return
+      setStep(2)
+      return
     }
-    setStep((s) => Math.min(3, s + 1))
+    if (step === 2) {
+      const ok = validateStep2()
+      if (!ok) return
+      setStep(3)
+      return
+    }
+    if (step === 3) {
+      const ok = validateAadhaarStep()
+      if (!ok) return
+      setStep(4)
+      return
+    }
+    setStep(step + 1)
   }
 
-  const prev = () => setStep((s) => Math.max(1, s - 1))
+  const handlePrev = () => setStep(step - 1)
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -159,41 +241,54 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     setLoading(true)
     setError('')
     try {
-      const submitData = { ...formData, membershipType: selectedPlan, membershipAmount: MEMBERSHIP_PLANS[selectedPlan].amount }
-      delete submitData.photo
-      // If skipPayment is set, include flag so backend can activate without payment
-      if (skipPayment) submitData.skipPayment = true
-      const response = await client(api.endpoints.auth + '/register', { method: 'POST', body: submitData })
-      setLoading(false)
-      return { success: true, data: response }
-    } catch (err) {
-      setLoading(false)
-      return { success: false, message: err.message || 'Registration failed' }
-    }
-  }
+      const payload = new FormData()
+      payload.append('username', formData.username)
+      payload.append('email', formData.email)
+      payload.append('contactNo', formData.contactNo)
+      payload.append('password', formData.password)
+      payload.append('dob', formData.dob || '')
+      payload.append('gender', formData.gender || '')
+      payload.append('fatherName', formData.fatherName || '')
+      payload.append('motherName', formData.motherName || '')
+      payload.append('aadharNo', formData.aadharNo || '')
+      payload.append('qualification', formData.qualification || '')
+      payload.append('occupation', formData.occupation || '')
+      payload.append('moreDetails', formData.moreDetails || '')
+      payload.append('membershipType', selectedPlan)
+      payload.append('membershipAmount', MEMBERSHIP_PLANS[selectedPlan].amount)
+      payload.append('aadharConfirmed', formData.aadharConfirmed ? 'true' : 'false')
+      payload.append('address', JSON.stringify(formData.address || {}))
+      if (formData.photo) payload.append('photo', formData.photo)
+      if (formData.aadharFront) payload.append('aadharFront', formData.aadharFront)
+      if (formData.aadharBack) payload.append('aadharBack', formData.aadharBack)
+      if (skipPayment) payload.append('skipPayment', 'true')
 
-  const handleRegisterDirect = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const registerResult = await handleRegister()
-      if (!registerResult.success) {
-        setError(registerResult.message || 'Registration failed')
-        setLoading(false)
-        return
-      }
-      alert('User created successfully')
-      if (onCreated) onCreated()
+  const result = await client(api.endpoints.auth + '/register', { method: 'POST', body: payload })
+  // Return full backend result so caller can use created user id
+  if (result) return result
+  return { success: false, message: 'Registration failed' }
     } catch (err) {
-      setError(err.message || 'Registration failed')
+      return { success: false, message: err.message || 'Registration failed' }
     } finally {
       setLoading(false)
     }
   }
 
+  const validateAadhaarStep = () => {
+    if (!formData.aadharFront || !formData.aadharBack) {
+      setError('Please upload both front and back images of Aadhaar')
+      return false
+    }
+    if (!formData.aadharConfirmed) {
+      setError('Please confirm that you uploaded valid Aadhaar images')
+      return false
+    }
+    setError('')
+    return true
+  }
+
   const handlePayment = async () => {
-    const ok = await validateStep1()
-    if (!ok) return
+    if (!validateStep1()) return
     setPaymentLoading(true)
     setError('')
     try {
@@ -213,7 +308,6 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
         order_id: orderResponse.data.orderId,
         handler: async (response) => {
           try {
-            // Register user first (admin registering; backend should not auto-login admin)
             const registerResult = await handleRegister()
             if (!registerResult.success) {
               setError(registerResult.message || 'Registration failed')
@@ -221,7 +315,6 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
               return
             }
 
-            // Verify payment
             const verifyResponse = await client(api.endpoints.payment + '/verify', {
               method: 'POST',
               body: {
@@ -236,7 +329,9 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
 
             if (verifyResponse.success) {
               alert('User created and payment verified')
-              if (onCreated) onCreated()
+              // Show ID card for printing instead of immediately closing modal
+              const created = registerResult.data && registerResult.data.user
+              if (created) setCreatedUser(created)
             } else {
               setError(verifyResponse.message || 'Payment verification failed')
             }
@@ -262,6 +357,93 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     }
   }
 
+  const handleRegisterDirect = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const registerResult = await handleRegister()
+      if (!registerResult || !registerResult.success) {
+        setError(registerResult?.message || 'Registration failed')
+        setLoading(false)
+        return
+      }
+
+      // If backend returned created user, attempt to set membershipStatus -> active
+      const newUser = registerResult.data && registerResult.data.user
+      if (newUser && newUser._id) {
+        try {
+          // Admin endpoints require admin token (client will include token from localStorage)
+          await client(api.endpoints.auth + `/users/${newUser._id}/membership`, {
+            method: 'PUT',
+            body: { membershipStatus: 'active' },
+          })
+          // Reflect change locally
+          newUser.membershipStatus = 'active'
+        } catch (e) {
+          // Non-fatal: membership update failed, but user was created. Show a warning.
+          console.warn('Failed to auto-activate membership for user', e)
+        }
+      }
+
+      // Show the created user's ID card for printing instead of immediately closing modal
+      setCreatedUser(newUser || null)
+    } catch (err) {
+      setError(err.message || 'Registration failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePrintCard = () => {
+    const node = printRef.current
+    if (!node) return
+
+    try {
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        alert('Please allow popups for this site to enable printing')
+        return
+      }
+
+      const headNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      const headHtml = headNodes.map((n) => n.outerHTML).join('\n')
+      const cardHtml = node.outerHTML
+
+      printWindow.document.open()
+      printWindow.document.write(`
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Print ID Card - ${createdUser?.username}</title>
+            ${headHtml}
+            <style>
+              body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f4f6; padding:20px; }
+              .card-container { box-shadow: none !important; }
+            </style>
+          </head>
+          <body>
+            ${cardHtml}
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+        printWindow.close()
+      }, 300)
+    } catch (err) {
+      console.error('Print error', err)
+      alert('Unable to open print window')
+    }
+  }
+
+  const handleDoneAfterPrint = () => {
+    // notify parent to refresh and close modal
+    if (onCreated) onCreated()
+  }
+
   return (
     <div className="space-y-4 max-w-4xl">
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 mb-4 text-white">
@@ -279,10 +461,38 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">Create User</h2>
-          <div className="text-sm text-gray-500">Step {step} of 3</div>
+          <div className="text-sm text-gray-500">Step {step} of 4</div>
         </div>
 
         {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+
+        {/* If user was just created, show ID card and print option */}
+        {createdUser && (
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="md:w-[340px]">
+                <IDCard ref={printRef} user={createdUser} />
+              </div>
+
+              <div className="flex-1 flex flex-col justify-start gap-6">
+                <div className="bg-white p-4 rounded shadow-sm">
+                  <div className="text-gray-600">Membership Type</div>
+                  <div className="font-semibold">{createdUser.membershipType === 'annual' ? 'Annual' : 'Lifetime'}</div>
+                </div>
+
+                <div className="bg-white p-4 rounded shadow-sm">
+                  <div className="text-gray-600">Member Since</div>
+                  <div className="font-semibold">{createdUser.createdAt ? new Date(createdUser.createdAt).toLocaleDateString('en-IN') : 'N/A'}</div>
+                </div>
+
+                <div className="flex flex-col gap-3 mt-auto">
+                  <button onClick={handlePrintCard} className="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">प्रिंट करें / Print</button>
+                  <button onClick={handleDoneAfterPrint} className="w-full bg-orange-500 text-white px-4 py-3 rounded-lg hover:bg-orange-600 font-semibold">Done</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Step 1 */}
         {step === 1 && (
@@ -311,10 +521,14 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                 <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
             </div>
 
             <div className="flex justify-end">
-              <button type="button" onClick={next} disabled={validating || !!emailError || !!contactError} className="bg-orange-500 text-white px-6 py-2 rounded-lg">Next →</button>
+              <button type="button" onClick={handleNext} disabled={validating || !!emailError || !!contactError} className="bg-orange-500 text-white px-6 py-2 rounded-lg">Next →</button>
             </div>
           </div>
         )}
@@ -333,25 +547,69 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
                   <option value="">Select</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Father's Name</label>
+                <input type="text" name="fatherName" value={formData.fatherName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Mother's Name</label>
+                <input type="text" name="motherName" value={formData.motherName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address (City)</label>
-              <input type="text" name="address.city" value={formData.address.city} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Address (Street)</label>
+              <input type="text" name="address.street" value={formData.address.street} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                <select name="address.state" value={formData.address.state} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                  <option value="">Select State</option>
+                  {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <select name="address.city" value={formData.address.city} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                  <option value="">Select City</option>
+                  {cityOptions.length > 0 ? cityOptions.map((c) => <option key={c} value={c}>{c}</option>) : <option value={formData.address.city}>{formData.address.city || 'No cities available'}</option>}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
+                <input type="text" name="address.pincode" value={formData.address.pincode} onChange={handleChange} onBlur={async (e) => {
+                  const pin = e.target.value?.trim()
+                  if (!pin || pin.length < 6) return
+                  try {
+                    const resp = await client(api.endpoints.geo + `/pincode/${pin}`)
+                    if (resp && resp.data) {
+                      const { city, state } = resp.data
+                      setFormData((s) => ({ ...s, address: { ...s.address, city: city || s.address.city, state: state || s.address.state, pincode: pin } }))
+                      setCityOptions(city ? [city] : [])
+                    }
+                  } catch (err) {
+                    // ignore
+                  }
+                }} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mt-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Aadhar Number</label>
-                <input type="text" name="aadharNo" value={formData.aadharNo} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <input type="text" name="aadharNo" value={formData.aadharNo} onChange={handleChange} maxLength="12" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Qualification</label>
                 <input type="text" name="qualification" value={formData.qualification} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
+                <input type="text" name="occupation" value={formData.occupation} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
               </div>
             </div>
 
@@ -366,14 +624,40 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
             </div>
 
             <div className="flex justify-between">
-              <button type="button" onClick={prev} className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg">← Previous</button>
-              <button type="button" onClick={next} className="bg-orange-500 text-white px-6 py-2 rounded-lg">Next →</button>
+              <button type="button" onClick={handlePrev} className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg">← Previous</button>
+              <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-6 py-2 rounded-lg">Next →</button>
             </div>
           </div>
         )}
 
         {/* Step 3 */}
         {step === 3 && (
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Aadhaar Front (upload)</label>
+                <input type="file" name="aadharFront" accept="image/*" onChange={handleChange} className="w-full" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Aadhaar Back (upload)</label>
+                <input type="file" name="aadharBack" accept="image/*" onChange={handleChange} className="w-full" />
+              </div>
+            </div>
+            <div>
+              <label className="inline-flex items-center">
+                <input type="checkbox" name="aadharConfirmed" checked={!!formData.aadharConfirmed} onChange={(e) => setFormData({ ...formData, aadharConfirmed: e.target.checked })} className="mr-2" />
+                I confirm the uploaded Aadhaar images are mine
+              </label>
+            </div>
+            <div className="flex justify-between">
+              <button type="button" onClick={handlePrev} className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg">← Previous</button>
+              <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-6 py-2 rounded-lg">Next →</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Review & Payment */}
+        {step === 4 && (
           <div className="space-y-4">
             <div className="bg-gray-50 p-4 rounded mb-4">
               <h4 className="font-semibold mb-2">Review</h4>
@@ -383,23 +667,15 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
               <p><strong>City:</strong> {formData.address.city}</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Membership Type</label>
-              <select value={selectedPlan} onChange={(e) => setSelectedPlan(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                <option value="annual">Annual</option>
-                <option value="lifetime">Lifetime</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 mb-4">
               <label className="flex items-center space-x-2">
                 <input type="checkbox" name="skipPayment" checked={skipPayment} onChange={handleChange} />
-                <span className="text-sm">Skip payment (activate membership without collecting payment)</span>
+                <span className="text-sm">Skip payment (create user without collecting payment)</span>
               </label>
             </div>
 
             <div className="flex justify-between">
-              <button type="button" onClick={prev} className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg">← Previous</button>
+              <button type="button" onClick={handlePrev} className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg">← Previous</button>
               <div>
                 {!skipPayment && <button type="button" onClick={handlePayment} disabled={paymentLoading || loading} className="bg-green-600 text-white px-6 py-2 rounded-lg mr-2">{paymentLoading ? 'Processing...' : 'Pay Now'}</button>}
                 <button type="button" onClick={handleRegisterDirect} disabled={loading} className="bg-orange-500 text-white px-6 py-2 rounded-lg">{loading ? 'Creating...' : 'Create User'}</button>

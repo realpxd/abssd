@@ -15,6 +15,7 @@ const Header = () => {
     { name: 'सेवाएं', href: '#services', en: 'Services', type: 'anchor' },
     { name: 'गैलरी', href: '/gallery', en: 'Gallery', type: 'route' },
     { name: 'समाचार', href: '/news', en: 'News', type: 'route' },
+    { name: 'नेतृत्व टीम', href: '/core-team', en: 'Leadership', type: 'route' },
     { name: 'संपर्क करें', href: '#contact', en: 'Contact', type: 'anchor' },
   ]
 
@@ -63,7 +64,7 @@ const Header = () => {
                     key={item.href}
                     to={item.href}
                     onClick={() => {
-                      if(item.href === '/gallery' || item.href === '/news') {
+                      if(item.href === '/gallery' || item.href === '/news' || item.href === '/core-team') {
                         window.scrollTo({ top: 0, behavior: 'smooth' })
                       }
                     }}

@@ -38,7 +38,14 @@ const loginValidation = [
 // Routes
 router.post('/check-email', checkEmail)
 router.post('/check-contact', checkContactNo)
-router.post('/register', registerValidation, register)
+// Accept photo and aadhar uploads during registration
+// NOTE: run multer upload BEFORE validation so express-validator can see parsed
+// text fields from multipart/form-data (multer populates req.body).
+router.post('/register', upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'aadharFront', maxCount: 1 },
+  { name: 'aadharBack', maxCount: 1 },
+]), registerValidation, register)
 router.post('/login', loginValidation, login)
 router.post('/admin/login', loginValidation, adminLogin)
 router.get('/me', protect, getMe)

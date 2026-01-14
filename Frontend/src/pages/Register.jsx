@@ -18,8 +18,9 @@ const MEMBERSHIP_PLANS = {
   },
   lifetime: {
     name: 'जीवनकाल सदस्यता / Lifetime Membership',
-    amount: 5000,
+    amount: 2999,
     features: [
+
       'जीवनकाल सदस्यता / Lifetime Membership',
       'सभी कार्यक्रमों में प्राथमिकता / Priority in all events',
       'विशेष अपडेट्स / Special updates',
@@ -61,11 +62,58 @@ const Register = () => {
       country: 'India',
     },
     aadharNo: '',
+    aadharFront: null,
+    aadharBack: null,
+    aadharConfirmed: false,
     qualification: '',
     occupation: '',
     moreDetails: '',
     photo: null,
   })
+
+  const [states, setStates] = useState([])
+  const [cityOptions, setCityOptions] = useState([])
+
+  // Fetch states from backend on mount (backend will proxy to indian-cities-api if configured)
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const resp = await client(api.endpoints.geo + '/states')
+        if (resp && resp.data && Array.isArray(resp.data) && mounted) {
+          setStates(resp.data)
+        }
+      } catch (err) {
+        // If remote fetch fails, keep the hardcoded STATES
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [])
+
+  // When user selects a state, ask backend for cities for that state
+  useEffect(() => {
+    const state = formData.address.state
+    if (!state) return
+    let mounted = true
+    const load = async () => {
+      try {
+        const resp = await client(api.endpoints.geo + `/cities/${encodeURIComponent(state)}`)
+        if (resp && resp.data && Array.isArray(resp.data) && mounted) {
+          setCityOptions(resp.data)
+          if (resp.data.length && !resp.data.includes(formData.address.city)) {
+            setFormData((s) => ({ ...s, address: { ...s.address, city: resp.data[0] } }))
+          }
+        } else {
+          setCityOptions([])
+        }
+      } catch (err) {
+        setCityOptions([])
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [formData.address.state])
 
   // Redirect if already logged in
   useEffect(() => {
@@ -96,6 +144,12 @@ const Register = () => {
           ...formData.address,
           [addressField]: value,
         },
+      })
+    } else if (name === 'aadharFront' || name === 'aadharBack' || name === 'photo') {
+      // file inputs
+      setFormData({
+        ...formData,
+        [name]: files && files[0] ? files[0] : null,
       })
     } else if (files && files[0]) {
       setFormData({
@@ -233,12 +287,47 @@ const Register = () => {
     return true
   }
 
+  const validateStep2 = () => {
+    // Ensure user uploaded a photo and entered a valid Aadhaar number
+    if (!formData.photo) {
+      setError('कृपया अपनी फोटो अपलोड करें / Please upload your photo')
+      return false
+    }
+    const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
+    const aadhaarRegex = /^[0-9]{12}$/
+    if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
+      setError('कृपया 12 अंकों का वैध आधार नंबर दर्ज करें / Please enter a valid 12-digit Aadhaar number')
+      return false
+    }
+    setError('')
+    return true
+  }
+    
+
   const handleNext = async () => {
     if (step === 1) {
       const isValid = await validateStep1()
       if (!isValid) {
         return
       }
+      setStep(2)
+      return
+    }
+
+    if (step === 2) {
+      // Validate photo and Aadhaar number before moving to Aadhaar upload step
+      const ok = validateStep2()
+      if (!ok) return
+      setStep(3)
+      return
+    }
+
+    if (step === 3) {
+      // Validate Aadhaar uploads before moving to review
+      const ok = validateAadhaarStep()
+      if (!ok) return
+      setStep(4)
+      return
     }
     setStep(step + 1)
   }
@@ -255,26 +344,6 @@ const Register = () => {
       script.onerror = () => resolve(null)
       document.body.appendChild(script)
     })
-  }
-
-  const handleRegisterDirect = async () => {
-    setLoading(true)
-    setError('')
-
-    try {
-      const registerResult = await handleRegister()
-
-      if (!registerResult.success) {
-        setError(registerResult.message || 'Registration failed')
-        setLoading(false)
-        return
-      }
-
-      // Verify payment with user email
-    } catch (err) {
-      setError(err.message || 'Registration failed')
-      setLoading(false)
-    }
   }
 
   const handlePayment = async () => {
@@ -368,32 +437,39 @@ const Register = () => {
     setError('')
 
     try {
-      const submitData = {
-        ...formData,
-        membershipType: selectedPlan,
-        membershipAmount: MEMBERSHIP_PLANS[selectedPlan].amount,
-      }
+      // Build FormData to support file uploads (photo, aadhar front/back)
+      const payload = new FormData()
+      // Append simple fields
+      payload.append('username', formData.username)
+      payload.append('email', formData.email)
+      payload.append('contactNo', formData.contactNo)
+      payload.append('password', formData.password)
+      payload.append('dob', formData.dob || '')
+      payload.append('gender', formData.gender || '')
+      payload.append('fatherName', formData.fatherName || '')
+      payload.append('motherName', formData.motherName || '')
+      payload.append('aadharNo', formData.aadharNo || '')
+      payload.append('qualification', formData.qualification || '')
+      payload.append('occupation', formData.occupation || '')
+      payload.append('moreDetails', formData.moreDetails || '')
+      payload.append('membershipType', selectedPlan)
+      payload.append('membershipAmount', MEMBERSHIP_PLANS[selectedPlan].amount)
+      payload.append('aadharConfirmed', formData.aadharConfirmed ? 'true' : 'false')
+      // Address as JSON string to be parsed server-side
+      payload.append('address', JSON.stringify(formData.address || {}))
 
-      delete submitData.confirmPassword
-      delete submitData.photo
+      // Append files if present
+      if (formData.photo) payload.append('photo', formData.photo)
+      if (formData.aadharFront) payload.append('aadharFront', formData.aadharFront)
+      if (formData.aadharBack) payload.append('aadharBack', formData.aadharBack)
 
-      // Handle photo upload separately if needed
-      if (formData.photo) {
-        const photoFormData = new FormData()
-        photoFormData.append('photo', formData.photo)
-        // Photo will be uploaded after registration in profile update
-      }
-
-      const result = await register(submitData)
+      const result = await register(payload)
 
       if (result.success) {
         return { success: true }
-      } else {
-        return {
-          success: false,
-          message: result.message || 'Registration failed',
-        }
       }
+
+      return { success: false, message: result.message || 'Registration failed' }
     } catch (err) {
       return {
         success: false,
@@ -402,6 +478,19 @@ const Register = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const validateAadhaarStep = () => {
+    if (!formData.aadharFront || !formData.aadharBack) {
+      setError('कृपया दोनों आधार की छवियाँ अपलोड करें / Please upload both front and back images of your Aadhaar')
+      return false
+    }
+    if (!formData.aadharConfirmed) {
+      setError('कृपया पुष्टि करें कि आपने सही आधार छवियाँ अपलोड की हैं / Please confirm that you have uploaded valid Aadhaar images')
+      return false
+    }
+    setError('')
+    return true
   }
 
   return (
@@ -445,7 +534,7 @@ const Register = () => {
               सदस्यता के लिए पंजीकरण करें / Register for Membership
             </h2>
             <div className="text-sm text-gray-500">
-              Step {step} of 3
+              Step {step} of 4
             </div>
           </div>
 
@@ -588,8 +677,6 @@ const Register = () => {
                     <option value="">चुनें / Select</option>
                     <option value="male">पुरुष / Male</option>
                     <option value="female">महिला / Female</option>
-                    <option value="other">अन्य / Other</option>
-                    <option value="prefer-not-to-say">बताना पसंद नहीं / Prefer not to say</option>
                   </select>
                 </div>
                 <div>
@@ -629,27 +716,52 @@ const Register = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                   <div className="grid md:grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      name="address.city"
-                      value={formData.address.city}
-                      onChange={handleChange}
-                      placeholder="शहर / City"
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                    <input
-                      type="text"
+
+                    <select
                       name="address.state"
                       value={formData.address.state}
                       onChange={handleChange}
-                      placeholder="राज्य / State"
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
+                    >
+                      <option value="">Select State</option>
+                      {states.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      name="address.city"
+                      value={formData.address.city}
+                      onChange={handleChange}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      <option value="">Select City</option>
+                      {cityOptions.length > 0 ? (
+                        cityOptions.map((c) => <option key={c} value={c}>{c}</option>)
+                      ) : (
+                        <option value={formData.address.city}>{formData.address.city || 'No cities available'}</option>
+                      )}
+                    </select>
+
                     <input
                       type="text"
                       name="address.pincode"
                       value={formData.address.pincode}
                       onChange={handleChange}
+                      onBlur={async (e) => {
+                        const pin = e.target.value?.trim()
+                        if (!pin || pin.length < 6) return
+                        try {
+                          const resp = await client(api.endpoints.geo + `/pincode/${pin}`)
+                          if (resp && resp.data) {
+                            const { city, state } = resp.data
+                            setFormData((s) => ({ ...s, address: { ...s.address, city: city || s.address.city, state: state || s.address.state, pincode: pin } }))
+                            setCityOptions(city ? [city] : [])
+                          }
+                        } catch (err) {
+                          // ignore - allow manual selection
+                        }
+                      }}
                       placeholder="पिन कोड / Pincode"
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     />
@@ -665,6 +777,7 @@ const Register = () => {
                     value={formData.aadharNo}
                     onChange={handleChange}
                     maxLength="12"
+                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
@@ -701,6 +814,7 @@ const Register = () => {
                     name="photo"
                     accept="image/*"
                     onChange={handleChange}
+                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
@@ -727,17 +841,83 @@ const Register = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={handleRegisterDirect}
+                  onClick={handleNext}
                   className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
                 >
-                  पंजीकरण करें / Register
+                   अगला / Next →
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 3: Review & Payment */}
+          {/* Step 3: Aadhaar Upload & Confirmation */}
           {step === 3 && (
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold mb-4">आधार अपलोड करें / Upload Aadhaar</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Aadhaar Front (अपलोड करें)</label>
+                  <input
+                    type="file"
+                    name="aadharFront"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                  {formData.aadharFront && (
+                    <img src={URL.createObjectURL(formData.aadharFront)} alt="Aadhaar Front" className="mt-3 w-48 h-auto rounded shadow" />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Aadhaar Back (अपलोड करें)</label>
+                  <input
+                    type="file"
+                    name="aadharBack"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                  {formData.aadharBack && (
+                    <img src={URL.createObjectURL(formData.aadharBack)} alt="Aadhaar Back" className="mt-3 w-48 h-auto rounded shadow" />
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      name="aadharConfirmed"
+                      checked={!!formData.aadharConfirmed}
+                      onChange={(e) => setFormData({ ...formData, aadharConfirmed: e.target.checked })}
+                      className="mr-2"
+                    />
+                    मैं पुष्टि करता हूँ कि ऊपर अपलोड की गई आधार छवियाँ मेरी हैं / I confirm the uploaded Aadhaar images are mine
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  ← पिछला / Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                   अगला / Next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Review & Payment */}
+          {step === 4 && (
             <div className="space-y-6">
               <h3 className="text-xl font-semibold mb-4">समीक्षा और भुगतान / Review & Payment</h3>
               <div className="bg-gray-50 p-6 rounded-lg mb-6">

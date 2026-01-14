@@ -11,6 +11,7 @@ const contactRoutes = require('./routes/contactRoutes')
 const galleryRoutes = require('./routes/galleryRoutes')
 const eventRoutes = require('./routes/eventRoutes')
 const authRoutes = require('./routes/authRoutes')
+const geoRoutes = require('./routes/geoRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 
 const app = express()
@@ -93,6 +94,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 
 // Routes
 app.use('/api/auth', authRoutes)
+app.use('/api/geo', geoRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/gallery', galleryRoutes)

@@ -15,6 +15,7 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import TestControls from './pages/TestControls'
 import NotFound from './pages/NotFound'
+import MajorMembers from './pages/MajorMembers'
 
 function App() {
   return (
@@ -55,6 +56,16 @@ function App() {
             <>
               <Header />
               <Donation />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/core-team"
+          element={
+            <>
+              <Header />
+              <MajorMembers />
               <Footer />
             </>
           }

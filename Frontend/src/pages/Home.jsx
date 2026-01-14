@@ -11,6 +11,7 @@ import Contact from '../components/Contact'
 import Join from '../components/Join'
 import MembershipModal from '../components/MembershipModal'
 import { smoothScrollTo } from '../utils/smoothScroll.js'
+import MajorMembers from './MajorMembers.jsx'
 
 const Home = () => {
   const location = useLocation()
@@ -38,6 +39,7 @@ const Home = () => {
       <DonationHighlight />
       <Gallery />
       <News />
+      <MajorMembers lowHeight />
       <Join />
       <Contact />
     </main>

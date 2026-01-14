@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { getImageUrl } from '../../utils/imageUrl.js'
+import IDCard from '../IDCard.jsx'
 
 const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin, onDelete}) => {
   const [notificationForm, setNotificationForm] = useState({
@@ -8,6 +9,8 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
   })
   const [showNotificationForm, setShowNotificationForm] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showIdCard, setShowIdCard] = useState(false)
+  const printRef = useRef(null)
 
   if (!user) return null
 
@@ -61,6 +64,34 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
 
         {/* Content */}
         <div className="p-6">
+          {/* Optionally show ID card */}
+          {showIdCard && (
+            <div className="mb-16 mt-8">
+              <div className="flex justify-end mb-3 gap-2">
+                <button onClick={() => {
+                  // print
+                  try {
+                    const node = printRef.current
+                    if (!node) return
+                    const printWindow = window.open('', '_blank')
+                    if (!printWindow) { alert('Please allow popups for this site to enable printing'); return }
+                    const headNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+                    const headHtml = headNodes.map((n) => n.outerHTML).join('\n')
+                    const cardHtml = node.outerHTML
+                    printWindow.document.open()
+                    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8" />${headHtml}<style>body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f3f4f6;padding:20px}.card-container{box-shadow:none!important}</style></head><body>${cardHtml}</body></html>`)
+                    printWindow.document.close()
+                    printWindow.focus()
+                    setTimeout(() => { printWindow.print(); printWindow.close() }, 300)
+                  } catch (err) { console.error('Print error', err); alert('Unable to open print window') }
+                }} className="bg-blue-500 text-white px-3 py-2 rounded">Print</button>
+                <button onClick={() => setShowIdCard(false)} className="bg-gray-200 text-gray-800 px-3 py-2 rounded">Close</button>
+              </div>
+              <div className="flex justify-center">
+                <IDCard ref={printRef} user={user} />
+              </div>
+            </div>
+          )}
           {/* Profile Section */}
           <div className="flex items-start gap-6 mb-6 pb-6 border-b">
             <div className="flex-shrink-0">
@@ -195,11 +226,71 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
             </div>
           )}
 
+          {/* Uploaded documents (Aadhaar front/back) */}
+          {(user.aadharFront || user.aadharBack || user.photo) && (
+            <div className="mb-6 pb-6 border-b">
+              <h4 className="font-semibold text-gray-700 mb-2">Uploaded Documents</h4>
+              <div className="flex flex-wrap gap-4">
+                {user.aadharFront ? (
+                  <div className="w-44">
+                    <div className="text-sm text-gray-500 mb-1">Aadhaar Front</div>
+                    <a href={getImageUrl(user.aadharFront)} target="_blank" rel="noreferrer" className="block">
+                      <img src={getImageUrl(user.aadharFront)} alt={`${user.username}-aadhar-front`} className="w-44 h-28 object-cover rounded border" />
+                    </a>
+                    <div className="text-xs text-gray-500 mt-1">
+                      <a href={getImageUrl(user.aadharFront)} target="_blank" rel="noreferrer" className="underline">Open</a>
+                      {' • '}
+                      <a href={getImageUrl(user.aadharFront)} download className="underline">Download</a>
+                    </div>
+                  </div>
+                ) : null}
+
+                {user.aadharBack ? (
+                  <div className="w-44">
+                    <div className="text-sm text-gray-500 mb-1">Aadhaar Back</div>
+                    <a href={getImageUrl(user.aadharBack)} target="_blank" rel="noreferrer" className="block">
+                      <img src={getImageUrl(user.aadharBack)} alt={`${user.username}-aadhar-back`} className="w-44 h-28 object-cover rounded border" />
+                    </a>
+                    <div className="text-xs text-gray-500 mt-1">
+                      <a href={getImageUrl(user.aadharBack)} target="_blank" rel="noreferrer" className="underline">Open</a>
+                      {' • '}
+                      <a href={getImageUrl(user.aadharBack)} download className="underline">Download</a>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Optionally show profile photo link again for convenience */}
+                {user.photo && (
+                  <div className="w-44">
+                    <div className="text-sm text-gray-500 mb-1">Profile Photo</div>
+                    <a href={getImageUrl(user.photo)} target="_blank" rel="noreferrer" className="block">
+                      <img src={getImageUrl(user.photo)} alt={`${user.username}-photo`} className="w-44 h-28 object-cover rounded border" />
+                    </a>
+                    <div className="text-xs text-gray-500 mt-1">
+                      <a href={getImageUrl(user.photo)} target="_blank" rel="noreferrer" className="underline">Open</a>
+                      {' • '}
+                      <a href={getImageUrl(user.photo)} download className="underline">Download</a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="space-y-4">
             <h4 className="font-semibold text-gray-700">Actions</h4>
             
             <div className="flex flex-wrap gap-3">
+              {!showIdCard && (
+                <button
+                  onClick={() => setShowIdCard(true)}
+                  disabled={loading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  👀 View ID CARD
+                </button>
+              )}
               {user.membershipStatus === 'pending' && (
                 <button
                   onClick={() => handleStatusUpdate('active')}

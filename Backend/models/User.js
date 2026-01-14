@@ -58,6 +58,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       unique: true,
       sparse: true, // Allow null values but enforce uniqueness for non-null
+      required: [true, 'Aadhar number is required'],
     },
     qualification: {
       type: String,
@@ -73,6 +74,17 @@ const userSchema = new mongoose.Schema(
     },
     photo: {
       type: String, // URL or path to photo
+      required: [true, 'Photo is required'],
+    },
+    aadharFront: {
+      type: String, // path to uploaded front image
+    },
+    aadharBack: {
+      type: String, // path to uploaded back image
+    },
+    aadharVerified: {
+      type: Boolean,
+      default: false,
     },
     
     // Membership
