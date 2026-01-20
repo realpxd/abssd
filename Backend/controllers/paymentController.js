@@ -155,6 +155,20 @@ exports.verifyPayment = async (req, res) => {
     // Get updated user
     const updatedUser = await User.findById(user._id)
 
+    // Send membership activation email (best-effort)
+    try {
+      const mailer = require('../utils/mailer')
+      const subject = 'ABSSD Trust - Membership activated'
+      const html = `<p>Dear ${updatedUser.username || ''},</p>
+        <p>Your membership has been activated. Membership type: <strong>${updatedUser.membershipType}</strong>.</p>
+        <p>Start Date: ${new Date(updatedUser.membershipStartDate).toLocaleDateString('en-IN')}</p>
+        <p>End Date: ${new Date(updatedUser.membershipEndDate).toLocaleDateString('en-IN')}</p>
+        <p>Thank you for joining ABSSD Trust.</p>`
+      await mailer.sendMail({ to: updatedUser.email, subject, html })
+    } catch (mailErr) {
+      logger.warn('Failed to send membership activation email:', mailErr)
+    }
+
     res.status(200).json({
       success: true,
       message: 'Payment verified and membership activated',

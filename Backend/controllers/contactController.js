@@ -1,5 +1,6 @@
 const Contact = require('../models/Contact')
 const { getPaginationParams, getPaginationResponse } = require('../utils/pagination')
+const mailer = require('../utils/mailer')
 
 // Create new contact
 exports.createContact = async (req, res) => {
@@ -15,6 +16,22 @@ exports.createContact = async (req, res) => {
     }
     
     const contact = await Contact.create({ name, email, phone, message })
+
+    // Send notification to admin email (best-effort)
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER
+      if (adminEmail) {
+        const subject = `New contact form submission from ${name}`
+        const html = `<p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Message:</strong><br/>${(message || '').replace(/\n/g, '<br/>')}</p>`
+        await mailer.sendMail({ to: adminEmail, subject, html })
+      }
+    } catch (mailErr) {
+      // non-fatal
+      console.warn('Failed to send contact notification email:', mailErr)
+    }
     res.status(201).json({
       success: true,
       data: contact,

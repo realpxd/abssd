@@ -5,6 +5,7 @@ const crypto = require('crypto')
 const path = require('path')
 const fs = require('fs')
 const Position = require('../models/Position')
+const mailer = require('../utils/mailer')
 
 // Helper to generate a unique 5-digit numeric referral code
 const generateUniqueReferralCode = async () => {
@@ -210,6 +211,19 @@ exports.register = async (req, res) => {
     // Remove password from output
     user.password = undefined
 
+    // Send welcome email (best-effort)
+    try {
+      const mailer = require('../utils/mailer')
+      const subject = 'Welcome to ABSSD Trust'
+      const html = `<p>Hello ${user.username || ''},</p>
+        <p>Welcome to ABSSD Trust. Your membership application has been received and is currently in <strong>${user.membershipStatus}</strong> status.</p>
+        <p>We will notify you once your membership is activated.</p>
+        <p>Regards,<br/>ABSSD Trust</p>`
+      await mailer.sendMail({ to: user.email, subject, html })
+    } catch (mailErr) {
+      console.warn('Failed to send welcome email:', mailErr)
+    }
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -375,12 +389,24 @@ exports.forgotPassword = async (req, res) => {
 
     await user.save({ validateBeforeSave: false })
 
-    // In production, send email with reset token
-    // For now, return token (remove in production)
+    // Send reset email with the token (frontend will use token to render reset form)
+    try {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`
+      const subject = 'ABSSD Trust - Password reset'
+      const html = `<p>Hello ${user.username || ''},</p>
+        <p>We received a request to reset your password. Click the link below to reset it (valid for 10 minutes):</p>
+        <p><a href="${resetLink}">${resetLink}</a></p>
+        <p>If you did not request this, please ignore this email.</p>`
+
+      await mailer.sendMail({ to: user.email, subject, html })
+    } catch (mailErr) {
+      console.warn('Failed to send reset email:', mailErr)
+    }
+
     res.status(200).json({
       success: true,
-      message: 'Password reset token generated',
-      resetToken: resetToken, // Remove this in production
+      message: 'Password reset token generated and emailed if the address exists',
     })
   } catch (error) {
     res.status(500).json({
@@ -436,6 +462,19 @@ exports.resetPassword = async (req, res) => {
       success: false,
       message: error.message || 'Error resetting password',
     })
+  }
+}
+
+// Admin only: send a test email
+exports.testEmail = async (req, res) => {
+  try {
+    const { to, subject, message } = req.body
+    const mail = require('../utils/mailer')
+    if (!to) return res.status(400).json({ success: false, message: 'Recipient email is required' })
+    await mail.sendMail({ to, subject: subject || 'Test email from ABSSD', html: `<p>${(message || 'This is a test email from ABSSD').replace(/\n/g, '<br/>')}</p>` })
+    res.status(200).json({ success: true, message: `Test email sent to ${to}` })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Error sending test email' })
   }
 }
 
@@ -652,6 +691,19 @@ exports.updateTeamLeader = async (req, res) => {
 
     await user.save()
 
+    // Notify user via email about team leader status change
+    try {
+      const subject = user.isTeamLeader ? 'You are now a Team Leader' : 'Your Team Leader status has been revoked'
+      const html = user.isTeamLeader ?
+        `<p>Dear ${user.username},</p><p>Congratulations — you have been made a <strong>Team Leader</strong> for ABSSD Trust.</p>${user.referralCode ? `<p>Your referral code is <strong>${user.referralCode}</strong>. Share this code with members you recruit.</p>` : ''}<p>If you have any questions, reply to this email.</p><p>— ABSSD Trust</p>` :
+        `<p>Dear ${user.username},</p><p>Your <strong>Team Leader</strong> status has been revoked by the administration. If you believe this is a mistake, please contact the admin team.</p><p>— ABSSD Trust</p>`
+
+      await mailer.sendMail({ to: user.email, subject, html })
+    } catch (mailErr) {
+      console.error('Failed to send team leader status email:', mailErr)
+      // don't fail the request because email failed — it's best-effort
+    }
+
     res.status(200).json({ success: true, message: 'Team leader status updated', data: user })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Error updating team leader status' })
@@ -728,6 +780,14 @@ exports.updateUserRole = async (req, res) => {
       message: `User role updated to ${role}`,
       data: user,
     })
+    // Notify user about role change
+    try {
+      const subject = `Your account role has been updated to ${role}`
+      const html = `<p>Dear ${user.username},</p><p>Your account role has been changed to <strong>${role}</strong> by an administrator. If you have questions about this change, please contact the admin team.</p><p>— ABSSD Trust</p>`
+      await mailer.sendMail({ to: user.email, subject, html })
+    } catch (mailErr) {
+      console.error('Failed to send role change email:', mailErr)
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -762,9 +822,100 @@ exports.updateUserPosition = async (req, res) => {
 
     const out = await User.findById(userId).select('-password').populate('position', 'name')
 
+    // Notify user about position assignment change
+    try {
+      const posName = out.position ? out.position.name : null
+      const subject = posName ? `You have been assigned the position: ${posName}` : `Your position has been cleared`
+      const html = posName ?
+        `<p>Dear ${out.username},</p><p>You have been assigned the position <strong>${posName}</strong> by an administrator.</p><p>If you have any questions, please contact the admin team.</p><p>— ABSSD Trust</p>` :
+        `<p>Dear ${out.username},</p><p>Your assigned position has been cleared by an administrator.</p><p>If you think this is a mistake, please contact the admin team.</p><p>— ABSSD Trust</p>`
+
+      await mailer.sendMail({ to: out.email, subject, html })
+    } catch (mailErr) {
+      console.error('Failed to send position update email:', mailErr)
+    }
+
     res.status(200).json({ success: true, message: 'User position updated', data: out })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Error updating user position' })
+  }
+}
+
+// Admin: update arbitrary user fields (including photo) by ID
+exports.updateUserByAdmin = async (req, res) => {
+  try {
+    const userId = req.params.id
+
+    // Only allow specific fields to be updated by admin here
+    const allowedFields = [
+      'username', 'email', 'contactNo', 'dob', 'gender', 'fatherName', 'motherName',
+      'address', 'aadharNo', 'qualification', 'occupation', 'moreDetails', 'role'
+    ]
+
+    const updates = {}
+
+    // Handle address if sent as JSON string (multipart/form-data sends strings)
+    for (const field of allowedFields) {
+      if (typeof req.body[field] !== 'undefined') {
+        if (field === 'address') {
+          let addr = req.body.address
+          if (typeof addr === 'string') {
+            try { addr = JSON.parse(addr) } catch (e) { addr = undefined }
+          }
+          if (addr && typeof addr === 'object') {
+            updates.address = {
+              street: addr.street?.trim(),
+              city: addr.city?.trim(),
+              state: addr.state?.trim(),
+              pincode: addr.pincode?.trim(),
+              country: addr.country?.trim() || 'India',
+            }
+          }
+        } else if (field === 'dob' && req.body[field]) {
+          updates.dob = new Date(req.body.dob)
+        } else if (typeof req.body[field] === 'string') {
+          updates[field] = req.body[field].trim()
+        } else {
+          updates[field] = req.body[field]
+        }
+      }
+    }
+
+    // If email provided, ensure uniqueness
+    if (updates.email) {
+      const existing = await User.findOne({ email: updates.email.toLowerCase(), _id: { $ne: userId } })
+      if (existing) {
+        return res.status(409).json({ success: false, message: 'Email already in use by another account' })
+      }
+      updates.email = updates.email.toLowerCase()
+    }
+
+    // Handle photo upload
+    if (req.file) {
+      const oldUser = await User.findById(userId)
+      if (oldUser && oldUser.photo && oldUser.photo.startsWith('/uploads/')) {
+        const oldFilePath = path.join(__dirname, '..', oldUser.photo)
+        if (fs.existsSync(oldFilePath)) {
+          try { fs.unlinkSync(oldFilePath) } catch (unlinkError) { const logger = require('../utils/logger'); logger.warn('Failed to delete old photo:', unlinkError) }
+        }
+      }
+      updates.photo = `/uploads/${req.file.filename}`
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('-password').populate('position', 'name')
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    res.status(200).json({ success: true, message: 'User updated successfully', data: user })
+  } catch (error) {
+    console.error('updateUserByAdmin error', error)
+    res.status(500).json({ success: false, message: error.message || 'Error updating user' })
   }
 }
 
@@ -820,18 +971,18 @@ exports.notifyUser = async (req, res) => {
       })
     }
 
-    // TODO: Implement email sending logic here
-    // For now, we'll just return success
-    // You can integrate with nodemailer or any email service
+    // Send email via mailer
+    try {
+      const html = `<p>${message.replace(/\n/g, '<br/>')}</p>`
+      await mailer.sendMail({ to: user.email, subject: subject || 'Notification from ABSSD Trust', html })
+    } catch (mailErr) {
+      console.error('Failed to send notification email:', mailErr)
+      return res.status(500).json({ success: false, message: 'Failed to send email' })
+    }
 
     res.status(200).json({
       success: true,
       message: `Email sent to ${user.email}`,
-      data: {
-        to: user.email,
-        subject,
-        message,
-      },
     })
   } catch (error) {
     res.status(500).json({

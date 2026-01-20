@@ -432,7 +432,7 @@ const Register = () => {
         setPaymentLoading(false)
       })
     } catch (err) {
-      setError(err.message || 'Error initiating payment')
+      setError('initiation error: ' + (err.message || 'Error initiating payment'))
       setPaymentLoading(false)
     }
   }

@@ -114,6 +114,28 @@ const TestControls = () => {
     setLoading(false)
   }
 
+  // Send a test email (admin only)
+  const testSendEmail = async () => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      alert('Please login as admin to send test emails')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await client(api.endpoints.auth + '/test-email', {
+        method: 'POST',
+        body: { to: testData.email, subject: 'Test Email from ABSSD', message: 'This is a test email sent from Test Controls.' },
+      })
+      setResults(prev => ({ ...prev, test_email: { success: true, data: response, timestamp: new Date().toISOString() } }))
+      alert(`Test email sent to ${testData.email}`)
+    } catch (err) {
+      setResults(prev => ({ ...prev, test_email: { success: false, error: err.message, timestamp: new Date().toISOString() } }))
+      alert(`Failed to send test email: ${err.message}`)
+    }
+    setLoading(false)
+  }
+
   // Test Gallery APIs
   const testGallery = async (action, id = null) => {
     setLoading(true)
@@ -657,6 +679,13 @@ const TestControls = () => {
                 className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50"
               >
                 Get Me
+              </button>
+              <button
+                onClick={testSendEmail}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded text-sm disabled:opacity-50"
+              >
+                Send Test Email
               </button>
             </div>
           </div>

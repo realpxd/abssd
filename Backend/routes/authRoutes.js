@@ -13,6 +13,7 @@ const {
   updateProfile,
   getAllUsers,
   getUserById,
+  updateUserByAdmin,
   updateMemberNumber,
   updateUserRole,
   updateTeamLeader,
@@ -60,9 +61,16 @@ router.get('/users', protect, restrictToAdmin, getAllUsers)
 router.get('/users/:id', protect, restrictToAdmin, getUserById)
 router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
 router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole)
+// Admin update user (profile fields + photo)
+router.put('/users/:id', protect, restrictToAdmin, upload.single('photo'), updateUserByAdmin)
 router.put('/users/:id/team-leader', protect, restrictToAdmin, updateTeamLeader)
 router.put('/users/:id/member-number', protect, restrictToAdmin, updateMemberNumber)
 router.put('/users/:id/position', protect, restrictToAdmin, updateUserPosition)
+router.post('/test-email', protect, restrictToAdmin, (req, res, next) => {
+  // lightweight inline handler forwarded to controller for clarity
+  const { testEmail } = require('../controllers/authController')
+  return testEmail(req, res, next)
+})
 router.delete('/users/:id', protect, restrictToAdmin, deleteUser)
 router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
 

@@ -652,6 +652,7 @@ const AdminDashboard = () => {
             onToggleTeamLeader={handleToggleTeamLeader}
             positions={positions}
             onTogglePosition={handleAssignPosition}
+            onUserUpdated={() => { fetchData(); setSelectedUser(null) }}
         />
       )}
     </div>

@@ -20,6 +20,12 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
         </div>
         <div>
           <div className="text-white text-[16px] font-bold leading-tight">अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट</div>
+          <div className='flex gap-8'>
+            <div className="text-gray-100 text-[10px] font-bold leading-tight">8860442044</div>
+            <div className='border-r-2 h-4 w-1 border-gray-100'></div>
+            <div className="text-gray-100 text-[10px] font-bold leading-tight">abssdtrust@gmail.com</div>
+
+          </div>
         </div>
       </div>
 
@@ -47,7 +53,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
           </div>
           <div style={{ height: 6 }}></div>
           <div>
-            <span className="text-gray-600 font-semibold">स्थान:</span>
+            <span className="text-gray-600 font-semibold">पता:</span>
             <span className="text-[#133b6b] ml-1">{user.address?.city}{user.address?.state ? ', ' + user.address?.state : ''}</span>
           </div>
           <div style={{ height: 6 }}></div>
@@ -101,10 +107,11 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
           <div className="h-9 border-b border-dashed border-gray-300 my-2"></div>
         </div>
         <div className="w-1/2 flex items-center justify-end pr-2">
-          <div style={{ width: 78, height: 78 }} className="flex flex-col items-center">
+          <div style={{ width: 78, height: 78 }} className="flex flex-col items-center gap-1">
             <div style={{ width: 72, height: 72 }} className="bg-white flex items-center justify-center">
               <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`} alt="Member QR Code" style={{ width: 72, height: 72 }} />
             </div>
+            <div className="text-gray-500 text-[8px] font-bold leading-tight">https://abssd.in</div>
           </div>
         </div>
       </div>
