@@ -379,7 +379,7 @@ const Register = () => {
             const registerResult = await handleRegister()
             
             if (!registerResult.success) {
-              setError(registerResult.message || 'Registration failed')
+              setError('registration error: ' + (registerResult.message || 'Registration failed'))
               setPaymentLoading(false)
               return
             }
@@ -401,11 +401,11 @@ const Register = () => {
               // Payment verified and membership activated
               navigate('/profile')
             } else {
-              setError(verifyResponse.message || 'Payment verification failed')
+              setError('verification error: ' + (verifyResponse.message || 'Payment verification failed'))
               setPaymentLoading(false)
             }
           } catch (err) {
-            setError(err.message || 'Payment verification failed')
+            setError('payment error: ' + (err.message || 'Payment verification failed'))
             setPaymentLoading(false)
           }
         },
