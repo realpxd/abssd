@@ -193,12 +193,12 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
       setError('Please upload a photo')
       return false
     }
-    const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
-    const aadhaarRegex = /^[0-9]{12}$/
-    if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
-      setError('Please enter a valid 12-digit Aadhaar number')
-      return false
-    }
+    // const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
+    // const aadhaarRegex = /^[0-9]{12}$/
+    // if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
+    //   setError('Please enter a valid 12-digit Aadhaar number')
+    //   return false
+    // }
     setError('')
     return true
   }
@@ -362,6 +362,10 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     setLoading(true)
     setError('')
     try {
+      // Preserve current admin token — registering a new user may return tokens or cause
+      // client-side auth changes elsewhere; capture the admin token now so we can
+      // call admin-only endpoints with the original admin credentials.
+      const adminToken = localStorage.getItem('token')
       const registerResult = await handleRegister()
       if (!registerResult || !registerResult.success) {
         setError(registerResult?.message || 'Registration failed')
@@ -374,9 +378,11 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
       if (newUser && newUser._id) {
         try {
           // Admin endpoints require admin token (client will include token from localStorage)
+          // Use the preserved admin token to ensure this request is sent as admin
           await client(api.endpoints.auth + `/users/${newUser._id}/membership`, {
             method: 'PUT',
             body: { membershipStatus: 'active' },
+            headers: { Authorization: `Bearer ${adminToken}` },
           })
           // Reflect change locally
           newUser.membershipStatus = 'active'
@@ -541,7 +547,7 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
         {/* Step 2 */}
         {step === 2 && (
           <div className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
                 <input type="date" name="dob" value={formData.dob} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
@@ -562,7 +568,7 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Mother's Name</label>
                 <input type="text" name="motherName" value={formData.motherName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
               </div>
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Address (Street)</label>
@@ -584,7 +590,7 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
                   {cityOptions.length > 0 ? cityOptions.map((c) => <option key={c} value={c}>{c}</option>) : <option value={formData.address.city}>{formData.address.city || 'No cities available'}</option>}
                 </select>
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
                 <input type="text" name="address.pincode" value={formData.address.pincode} onChange={handleChange} onBlur={async (e) => {
                   const pin = e.target.value?.trim()
@@ -600,10 +606,10 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
                     // ignore
                   }
                 }} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-              </div>
+              </div> */}
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4 mt-2">
+            {/* <div className="grid md:grid-cols-3 gap-4 mt-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Aadhar Number</label>
                 <input type="text" name="aadharNo" value={formData.aadharNo} onChange={handleChange} maxLength="12" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
@@ -616,12 +622,12 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
                 <input type="text" name="occupation" value={formData.occupation} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
               </div>
-            </div>
+            </div> */}
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">More Details</label>
               <textarea name="moreDetails" value={formData.moreDetails} onChange={handleChange} rows="3" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>

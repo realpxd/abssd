@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ['male', 'female', 'other', 'prefer-not-to-say'],
+      enum: ['male', 'female', ''],
     },
     fatherName: {
       type: String,
@@ -52,13 +52,6 @@ const userSchema = new mongoose.Schema(
       state: String,
       pincode: String,
       country: { type: String, default: 'India' },
-    },
-    aadharNo: {
-      type: String,
-      trim: true,
-      unique: true,
-      sparse: true, // Allow null values but enforce uniqueness for non-null
-      required: [true, 'Aadhar number is required'],
     },
     qualification: {
       type: String,

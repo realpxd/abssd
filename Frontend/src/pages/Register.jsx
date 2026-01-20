@@ -292,12 +292,12 @@ const Register = () => {
       setError('कृपया अपनी फोटो अपलोड करें / Please upload your photo')
       return false
     }
-    const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
-    const aadhaarRegex = /^[0-9]{12}$/
-    if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
-      setError('कृपया 12 अंकों का वैध आधार नंबर दर्ज करें / Please enter a valid 12-digit Aadhaar number')
-      return false
-    }
+    // const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
+    // const aadhaarRegex = /^[0-9]{12}$/
+    // if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
+    //   setError('कृपया 12 अंकों का वैध आधार नंबर दर्ज करें / Please enter a valid 12-digit Aadhaar number')
+    //   return false
+    // }
     setError('')
     return true
   }
@@ -406,6 +406,12 @@ const Register = () => {
             }
           } catch (err) {
             setError(err.message || 'Payment verification failed')
+            setPaymentLoading(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setError('Payment cancelled.')
             setPaymentLoading(false)
           }
         },
@@ -634,7 +640,7 @@ const Register = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Referral Code (optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Referral Code (To select Team leader)</label>
                   <input
                     type="text"
                     name="referralCode"
@@ -664,7 +670,7 @@ const Register = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold mb-4">व्यक्तिगत विवरण / Personal Details</h3>
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     जन्म तिथि / Date of Birth
                   </label>
@@ -675,8 +681,8 @@ const Register = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
-                </div>
-                <div>
+                </div> */}
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     लिंग / Gender
                   </label>
@@ -690,8 +696,8 @@ const Register = () => {
                     <option value="male">पुरुष / Male</option>
                     <option value="female">महिला / Female</option>
                   </select>
-                </div>
-                <div>
+                </div> */}
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     पिता का नाम / Father's Name
                   </label>
@@ -714,7 +720,7 @@ const Register = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
-                </div>
+                </div> */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     पता / Address
@@ -755,7 +761,7 @@ const Register = () => {
                       )}
                     </select>
 
-                    <input
+                    {/* <input
                       type="text"
                       name="address.pincode"
                       value={formData.address.pincode}
@@ -776,10 +782,10 @@ const Register = () => {
                       }}
                       placeholder="पिन कोड / Pincode"
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
+                    /> */}
                   </div>
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     आधार नंबर / Aadhar Number
                   </label>
@@ -792,8 +798,8 @@ const Register = () => {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
-                </div>
-                <div>
+                </div> */}
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     योग्यता / Qualification
                   </label>
@@ -816,7 +822,7 @@ const Register = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
-                </div>
+                </div> */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     फोटो / Photo
@@ -830,7 +836,7 @@ const Register = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
-                <div className="md:col-span-2">
+                {/* <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     अधिक विवरण / More Details
                   </label>
@@ -841,7 +847,7 @@ const Register = () => {
                     rows="4"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
-                </div>
+                </div> */}
               </div>
               <div className="flex justify-between">
                 <button
