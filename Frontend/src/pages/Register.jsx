@@ -8,7 +8,7 @@ import AuthHeader from '../components/AuthHeader.jsx'
 const MEMBERSHIP_PLANS = {
   ordinary: {
     name: 'साधारण सदस्यता / Ordinary Membership',
-    amount: 1,
+    amount: 500,
     features: [
       'सभी कार्यक्रमों में भागीदारी / Participation in all events',
       'नियमित अपडेट्स / Regular updates',
