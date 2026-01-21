@@ -1,119 +1,165 @@
 import { forwardRef } from 'react'
 import { getImageUrl } from '../utils/imageUrl.js'
 
-const IDCard = forwardRef(({ user, photoPreview, watermarkText }, ref) => {
+// Decorative floral corner - small, subtle SVG
+const FloralCorner = ({ className = '', fill = '#FDE68A', stroke = '#F97316', opacity = 0.18 }) => (
+  <svg className={className} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style={{ opacity }}>
+    <g fill={fill} stroke={stroke} strokeWidth="0.6">
+      <path d="M10 80 C 20 60, 40 50, 50 40 C 60 30, 80 20, 90 10 L 100 0 L 90 0 C 80 0, 60 10, 50 20 C 40 30, 20 50, 10 80 Z" />
+      <circle cx="20" cy="20" r="3" fill={stroke} />
+    </g>
+  </svg>
+)
+
+const IDCard = forwardRef(({ user, photoPreview, watermarkText, design }, ref) => {
   if (!user) return null
 
   const photoSrc = photoPreview || (user.photo ? getImageUrl(user.photo) : null)
 
+  // Determine design: allow explicit `design` prop override, otherwise use membershipType
+  const membershipType = user.membershipType || 'ordinary'
+  const variant = design || (membershipType === 'annual' ? 'annual' : 'ordinary')
+
+  // Variant styles
+  const headerGradient = variant === 'annual'
+    ? 'linear-gradient(90deg,#f97316,#fb923c)' // warm orange-gold
+    : 'linear-gradient(90deg,#f97316,#fb7043)' // softer orange
+
+  const bodyBg = variant === 'annual'
+    ? 'radial-gradient(circle at 10% 10%, rgba(255,241,204,0.6), rgba(255,249,238,0.85))'
+    : 'radial-gradient(circle at 90% 10%, rgba(255,250,240,0.6), rgba(255,255,255,0.9))'
+
+  const headlineColor = '#ea580c' // orange for headlines
+
   return (
-    <div ref={ref} className="relative w-full bg-white border rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ borderColor: 'rgba(35,48,63,0.08)', width: '350px', height: '380px' }}>
-      {/* Watermark overlay when requested (e.g., sample preview) */}
+    <div ref={ref} className="relative w-full rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ width: '390px', height: '420px', border: '1px solid rgba(35,48,63,0.06)', fontFamily: 'ui-sans-serif, system-ui, -apple-system' }}>
+      {/* Decorative corners */}
+      <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none"><FloralCorner /></div>
+      <div className="absolute top-0 right-0 w-20 h-20 rotate-90 pointer-events-none"><FloralCorner /></div>
+      <div className="absolute bottom-0 left-0 w-20 h-20 -rotate-90 pointer-events-none"><FloralCorner /></div>
+      <div className="absolute bottom-0 right-0 w-20 h-20 rotate-180 pointer-events-none"><FloralCorner /></div>
+
+      {/* Watermark overlay when requested */}
       {watermarkText && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 40 }}>
-          <span style={{ transform: 'rotate(-30deg)', opacity: 0.12, fontSize: 42, fontWeight: 700, color: '#000', letterSpacing: '2px' }}>{watermarkText}</span>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
+          <span style={{ transform: 'rotate(-28deg)', opacity: 0.08, fontSize: 48, fontWeight: 800, color: '#000', letterSpacing: '2px' }}>{watermarkText}</span>
         </div>
       )}
-      <div className="h-[56px] px-4 flex items-center gap-3" style={{ background: 'linear-gradient(90deg,#2b5b8f,#3b66a9)' }}>
-       <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: '1px solid white' }}>
-          <img src="/images/logo.png" alt="logo" className="w-10 h-10 object-cover rounded-full" />
+
+      {/* Header */}
+      <div className="h-[118px] px-4 flex items-center gap-3" style={{ background: headerGradient }}>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ border: '2px solid rgba(255,255,255,0.25)' }}>
+          <img src="/images/logo.png" alt="logo" className="w-14 h-14 object-cover rounded-full" />
         </div>
         <div>
-          <div className="text-white text-[16px] font-bold leading-tight">अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट</div>
-          <div className='flex gap-8'>
-            <div className="text-gray-100 text-[10px] font-bold leading-tight">8860442044</div>
-            <div className='border-r-2 h-4 w-1 border-gray-100'></div>
-            <div className="text-gray-100 text-[10px] font-bold leading-tight">abssdtrust@gmail.com</div>
-
+          <div style={{ color: '#fff', fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{'अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट'}</div>
+          <div className='text-center mt-1' style={{ color: '#fff', fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{'ABSSD Trust'}</div>
+          <div className="flex gap-4 text-white text-[18px] mt-1 opacity-90 text-center items-center align-middle justify-center">
+            <div className="font-extrabold text-center">8860442044</div>
+            {/* <div className="border-r border-white/30 h-4"></div> */}
+            {/* <div className="font-semibold">abssdtrust@gmail.com</div> */}
           </div>
         </div>
       </div>
+<div className='flex flex-col justify-between' style={
+  {background:  variant === 'annual' ?'orange' : 'rgba(255, 226, 198)',
+      //  background: variant === 'annual'? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.3)), url(/images/'idcard-bg1.jpeg') center/cover no-repeat` : 
+      //  `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.3)), url(/images/'idcard-bg1.jpeg') center/cover no-repeat`,
+       height: '100%'
 
-      <div className="flex gap-4 px-4 pl-6 py-6 relative">
-        <div className="absolute top-4 right-4 text-gray-600 text-sm">
+  }
+}>
+      {/* Body with subtle patterned background */}
+      <div className="flex gap-5 px-5 py-5 relative flex-1" style={{ 
+        // background: bodyBg
+// background: 'url(/images/idcard-bg.jpeg) center/cover no-repeat'
+
+       }}>
+        <div className="absolute inset-0 opacity-10" aria-hidden>
+          {/* subtle floral pattern using svg background */}
+          <svg width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1">
+                <stop offset="0%" stopColor={variant === 'annual' ? '#fff7ed' : '#fffaf0'} />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+            </defs>
+            <rect width="200" height="200" fill="url(#g1)" />
+            <g transform="translate(10,10)" fill="none" stroke={variant === 'annual' ? '#ffd8a8' : '#ffedd5'} strokeWidth="1">
+              <path d="M20 100 C 40 80, 80 60, 120 80 C 160 100, 180 140, 200 160" />
+              <path d="M0 60 C 30 40, 70 20, 110 40 C 150 60, 170 100, 200 120" />
+            </g>
+          </svg>
+        </div>
+
+        <div className="absolute top-2 right-3 text-gray-800 text-sm font-semibold">
           <p>{user.memberNumber ? `#${user.memberNumber}` : 'N/A'}</p>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-22 h-22" style={{ width: 86, height: 86, borderRadius: 9999, overflow: 'hidden', border: '3px solid rgba(35,48,63,0.08)', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="flex flex-col items-center gap-3" style={{ width: 110 }}>
+          <div className="rounded-full overflow-hidden" style={{ width: 96, height: 96, border: `3px solid rgba(234,88,12,0.12)`, background: '#fff' }}>
             {photoSrc ? (
-              <img src={photoSrc} className="w-full h-full object-cover" />
+              <img src={photoSrc} className="w-full h-full object-cover" alt="member" />
             ) : (
-              <span className="text-3xl font-bold text-gray-400">{user.username?.[0]?.toUpperCase()}</span>
+              <div className="w-full h-full flex items-center justify-center bg-orange-50">
+                <span className="text-4xl font-extrabold text-orange-300">{user.username?.[0]?.toUpperCase()}</span>
+              </div>
             )}
           </div>
 
-          <div className="bg-[#133b6b] text-white text-[10px] font-bold px-3 py-[4px] rounded-full">{user.position?.name || 'Member'}</div>
+          <div style={{ background: variant === 'annual' ? '#fff7e2' : '#fffaf0' }} className="text-[12px] font-bold px-3 py-1 rounded-full text-orange-700">{user.position?.name || 'Member'}</div>
         </div>
 
-        <div className="flex-1 text-[12px]">
-          <div>
-            <span className="text-gray-600 font-semibold">नाम:</span>
-            <span className="text-[#133b6b] font-bold ml-1">{user.username}</span>
+        <div className="flex-1 text-[14px]" style={{ paddingTop: 6 }}>
+          <div className="mb-2 flex gap-1 items-center">
+            <div className="text-gray-700 text-[14px] font-semibold">नाम: </div>
+            <div style={{ color: headlineColor }} className="text-[16px] font-extrabold">{user.username}</div>
           </div>
-          <div style={{ height: 6 }}></div>
-          <div>
-            <span className="text-gray-600 font-semibold">पता:</span>
-            <span className="text-[#133b6b] ml-1">{user.address?.city}{user.address?.state ? ', ' + user.address?.state : ''}</span>
+
+          <div className="mb-2 flex gap-1 items-center">
+            <div className="text-gray-700 text-[14px] font-semibold">पता: </div>
+            <div className="text-gray-800 text-[15px]">{user.address?.city || 'N/A'}{user.address?.state ? ', ' + user.address?.state : ''}</div>
           </div>
-          <div style={{ height: 6 }}></div>
-          <div>
-            <span className="text-gray-600 font-semibold">मोबाइल:</span>
-            <span className="text-[#133b6b] ml-1">{user.contactNo}</span>
-          </div>
-          <div style={{ height: 6 }}></div>
-          <div>
-            <span className="text-gray-600 font-semibold">ईमेल:</span>
-            <span className="text-[#133b6b] ml-1">{user.email}</span>
-          </div>
-          {typeof user.referredBy  === 'object' && <> 
-            <div style={{ height: 6 }}></div>
-            <div>
-              <span className="text-gray-600 font-bold">टीम प्रभारी:</span>
-              <span className="text-[#133b6b] ml-1 font-bold">
-                {user.referredBy ? (
-                  typeof user.referredBy === 'object' ? (
-                    `${user.referredBy.username || 'N/A'}${user.referredBy.referralCode ? ` (${user.referredBy.referralCode})` : ''}`
-                  ) : (
-                    // could be an id or a string fallback
-                    String(user.referredBy)
-                  )
-                ) : 'N/A'}
-            </span>
+
+            <div className="mb-2 flex gap-1 items-center">
+              <div className="text-gray-700 text-[14px] font-semibold">मोबाइल: </div>
+              <div className="text-gray-800 text-[15px]">{user.contactNo || 'N/A'}</div>
             </div>
-          </>
-          }
-          <div className="pt-2 border-t border-gray-100 mt-2"></div>
+          <div className="mb-2 flex gap-1 items-center">
+              <div className="text-gray-700 text-[14px] font-semibold">ईमेल: </div>
+              <div className="text-gray-800 text-[15px]">{user.email || 'N/A'}</div>
+          </div>
+
+          {user.referredBy && (
+            <div className="mt-1 flex gap-1 items-center">
+              <div className="text-gray-700 text-[14px] font-semibold">टीम प्रभारी: </div>
+              <div className="text-gray-800 text-[15px] font-semibold">{typeof user.referredBy === 'object' ? (user.referredBy.username || 'N/A') : String(user.referredBy)}</div>
+            </div>
+          )}
+
+          <div className="pt-6">
+            <div className="inline-block px-3 py-1 rounded-full text-sm font-semibold" style={{ background: user.membershipStatus === 'active' ? '#dcfce7' : '#fff7cc', color: user.membershipStatus === 'active' ? '#166534' : '#92400e' }}>{user.membershipStatus === 'active' ? 'Active Member' : (user.membershipStatus || 'Pending')}</div>
+          </div>
         </div>
       </div>
 
-      {user.membershipStatus && (
-        <div className="flex justify-center mt-auto">
-          {user.membershipStatus === 'pending' && (
-            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">Pending Verification</span>
-          )}
-          {user.membershipStatus === 'active' && (
-            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-green-100 text-green-800 border border-green-200">Active Member</span>
-          )}
-          {user.membershipStatus === 'inactive' && (
-            <span className="inline-flex items-center px-2 py-0 rounded-full text-[9px] font-semibold bg-red-100 text-red-800 border border-red-200">Inactive Member</span>
-          )}
-        </div>
-      )}
-
-      <div className="mt-2 flex border-t border-gray-100 bg-white px-3 py-4 items-center">
+      {/* Footer / signature and QR */}
+      <div className="mt-2 flex items-center px-4 py-3" style={{ 
+        // background: variant === 'annual' ? '#fff7ed' : '#fffaf0'
+        }}>
         <div className="w-1/2 pr-2">
-          <div className="text-[#133b6b] font-bold text-sm">राष्ट्रीय अध्यक्ष</div>
-          <div className="h-9 border-b border-dashed border-gray-300 my-2"></div>
+          <div style={{ color: headlineColor, fontWeight: 700, fontSize: 18 }}>राष्ट्रीय अध्यक्ष</div>
+          <div className="h-7 border-b border-dashed border-gray-300 my-2 mr-8"></div>
         </div>
-        <div className="w-1/2 flex items-center justify-end pr-2">
-          <div style={{ width: 78, height: 78 }} className="flex flex-col items-center gap-1">
-            <div style={{ width: 72, height: 72 }} className="bg-white flex items-center justify-center">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`} alt="Member QR Code" style={{ width: 72, height: 72 }} />
+        <div className="w-1/2 flex items-center justify-end pr-8">
+          <div style={{ width: 76, height: 84 }} className="flex flex-col items-center gap-1">
+            <div style={{ width: 68, height: 68 }} className="bg-white flex items-center justify-center rounded-sm overflow-hidden">
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(user._id)}&size=100x100`} alt="Member QR Code" style={{ width: 68, height: 68 }} />
             </div>
-            <div className="text-gray-500 text-[8px] font-bold leading-tight">https://abssd.in</div>
+            <div className="text-gray-800 text-[10px] font-bold leading-tight">https://abssd.in</div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
