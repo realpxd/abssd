@@ -401,12 +401,12 @@ const Register = () => {
               // Payment verified and membership activated
               navigate('/profile')
             } else {
-              setError('verification error: ' + (verifyResponse.message || 'Payment verification failed'))
-              setPaymentLoading(false)
+              // If verification failed or returned pending, show status page so webhook/reconcile can finish
+              navigate(`/payment-status?orderId=${response.razorpay_order_id}`)
             }
           } catch (err) {
-            setError('payment error: ' + (err.message || 'Payment verification failed'))
-            setPaymentLoading(false)
+            // Network or load error after payment - send user to status/recovery page
+            navigate(`/payment-status?orderId=${response?.razorpay_order_id || orderResponse.data.orderId}`)
           }
         },
         modal: {

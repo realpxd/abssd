@@ -17,6 +17,11 @@ const positionsRoutes = require('./routes/positionsRoutes')
 
 const app = express()
 
+// Detect if running in a serverless environment. Default is long-lived server.
+// Set SERVERLESS=true in environments like Vercel or other serverless hosts
+// to opt out of starting long-lived processes such as the DB connect or reconciler.
+const isServerless = process.env.SERVERLESS === 'true' || process.env.SERVERLESS === '1'
+
 // Validate required environment variables
 const requiredEnvVars = ['JWT_SECRET']
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
@@ -28,7 +33,7 @@ if (missingEnvVars.length > 0 && process.env.NODE_ENV !== 'test') {
 
 // Connect to database (async, don't block server startup)
 // In serverless, connection will be established on first request via middleware
-if (!process.env.VERCEL) {
+if (!isServerless) {
   connectDB().catch((error) => {
     logger.error('Database connection error:', error)
   })
@@ -61,8 +66,8 @@ const corsOptions = {
       return false
     })
     
-    // In production/Vercel, be more permissive if FRONTEND_URL is not set
-    if (isAllowed || !process.env.FRONTEND_URL || process.env.VERCEL) {
+    // In production/serverless environments, be more permissive if FRONTEND_URL is not set
+    if (isAllowed || !process.env.FRONTEND_URL || isServerless) {
       callback(null, true)
     } else {
       logger.warn(`CORS blocked request from origin: ${origin}`)
@@ -197,14 +202,24 @@ app.use((err, req, res, next) => {
   })
 })
 
-// Only start server if not in Vercel serverless environment
-// Vercel will handle the serverless function invocation
-if (!process.env.VERCEL) {
+// Only start server if not running in a serverless environment
+// Serverless platforms should invoke the exported app instead of starting a listener.
+if (!isServerless) {
   const PORT = process.env.PORT || 5000
   app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`)
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
   })
+}
+
+// Start payment reconcile job when running in long-lived server
+try {
+  if (!isServerless) {
+    const reconciler = require('./utils/paymentReconcile')
+    reconciler.start()
+  }
+} catch (err) {
+  logger.warn('Failed to start payment reconciler:', err)
 }
 
 module.exports = app

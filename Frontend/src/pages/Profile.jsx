@@ -18,6 +18,8 @@ const Profile = () => {
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [verifyEmailLoading, setVerifyEmailLoading] = useState(false)
+  const [verifyEmailMessage, setVerifyEmailMessage] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -682,10 +684,26 @@ console.log({user})
                     Status: {user.isEmailVerified ? 'Verified' : 'Not Verified'}
                   </p>
                   {!user.isEmailVerified && (
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                      Verify Email
+                    <button
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      onClick={async () => {
+                        setVerifyEmailLoading(true)
+                        setVerifyEmailMessage('')
+                        try {
+                          await client(api.endpoints.auth + '/send-email-verification', {
+                            method: 'POST',
+                          })
+                          setVerifyEmailMessage('Verification email sent. Please check your inbox.')
+                        } catch (err) {
+                          setVerifyEmailMessage(err.message || 'Failed to send verification email')
+                        }
+                        setVerifyEmailLoading(false)
+                      }}
+                    >
+                      {verifyEmailLoading ? 'Sending...' : 'Verify Email'}
                     </button>
                   )}
+                  {verifyEmailMessage && <div className="text-sm mt-2 text-gray-600">{verifyEmailMessage}</div>}
                 </div>
                 {user.membershipStatus === 'pending' && (
                   <div className="border-b pb-4">

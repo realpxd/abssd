@@ -416,6 +416,61 @@ exports.forgotPassword = async (req, res) => {
   }
 }
 
+// Send email verification (protected) - sends a verification link to logged-in user
+exports.sendEmailVerification = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+    // Generate verification token
+    const verificationToken = require('crypto').randomBytes(20).toString('hex')
+    user.emailVerificationToken = require('crypto').createHash('sha256').update(verificationToken).digest('hex')
+    user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+
+    await user.save({ validateBeforeSave: false })
+
+    try {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+      const link = `${frontendUrl}/verify-email?token=${verificationToken}`
+      const subject = 'ABSSD Trust - Verify your email'
+      const html = `<p>Hello ${user.username || ''},</p>
+        <p>Please verify your email by clicking the link below (valid for 24 hours):</p>
+        <p><a href="${link}">${link}</a></p>`
+      const mailer = require('../utils/mailer')
+      await mailer.sendMail({ to: user.email, subject, html })
+    } catch (mailErr) {
+      console.warn('Failed to send verification email:', mailErr)
+    }
+
+    res.status(200).json({ success: true, message: 'Verification email sent' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Error sending verification email' })
+  }
+}
+
+// Verify email using token (public) - marks user email as verified
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body
+    if (!token) return res.status(400).json({ success: false, message: 'Token required' })
+
+    const hashed = require('crypto').createHash('sha256').update(token).digest('hex')
+    const user = await User.findOne({ emailVerificationToken: hashed, emailVerificationExpire: { $gt: Date.now() } })
+    if (!user) return res.status(400).json({ success: false, message: 'Invalid or expired token' })
+
+    user.isEmailVerified = true
+    user.emailVerificationToken = undefined
+    user.emailVerificationExpire = undefined
+    await user.save()
+
+    // Optionally generate auth token to log user in after verification
+    const authToken = user.generateToken()
+    res.status(200).json({ success: true, message: 'Email verified', data: { user, token: authToken } })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Error verifying email' })
+  }
+}
+
 // Reset password
 exports.resetPassword = async (req, res) => {
   try {

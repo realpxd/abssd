@@ -53,6 +53,14 @@ router.post('/login', loginValidation, login)
 router.post('/admin/login', loginValidation, adminLogin)
 router.get('/me', protect, getMe)
 router.post('/forgot-password', forgotPassword)
+router.post('/send-email-verification', protect, (req, res, next) => {
+  const { sendEmailVerification } = require('../controllers/authController')
+  return sendEmailVerification(req, res, next)
+})
+router.post('/verify-email', (req, res, next) => {
+  const { verifyEmail } = require('../controllers/authController')
+  return verifyEmail(req, res, next)
+})
 router.post('/reset-password', resetPassword)
 router.put('/profile', protect, upload.single('photo'), updateProfile)
 

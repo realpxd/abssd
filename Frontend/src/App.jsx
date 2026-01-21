@@ -7,6 +7,8 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail'
 import Profile from './pages/Profile'
 import GalleryPage from './pages/GalleryPage'
 import NewsPage from './pages/NewsPage'
@@ -16,6 +18,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import TestControls from './pages/TestControls'
 import NotFound from './pages/NotFound'
 import MajorMembers from './pages/MajorMembers'
+import PaymentStatus from './pages/PaymentStatus'
 
 function App() {
   return (
@@ -34,6 +37,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/reset-password" element={<ResetPassword />} />
+  <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/gallery"
           element={
@@ -80,6 +85,13 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/payment-status" element={
+          <>
+            <Header />
+            <PaymentStatus />
+            <Footer />
+          </>
+        } />
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
