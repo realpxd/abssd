@@ -208,8 +208,11 @@ exports.register = async (req, res) => {
   // Generate token
   const token = user.generateToken()
 
-  // Ensure we return populated position (name + id) to the client
-  const outUser = await User.findById(user._id).select('-password').populate('position', 'name')
+  // Ensure we return populated position (name + id) and referredBy to the client
+  const outUser = await User.findById(user._id)
+    .select('-password')
+    .populate('position', 'name')
+    .populate('referredBy', 'username memberNumber referralCode')
 
   // Send welcome email (best-effort)
     try {
@@ -275,8 +278,11 @@ exports.login = async (req, res) => {
     // Generate token
     const token = user.generateToken()
 
-    // Ensure we return populated position (name + id)
-    const outUser = await User.findById(user._id).select('-password').populate('position', 'name')
+    // Ensure we return populated position (name + id) and referredBy
+    const outUser = await User.findById(user._id)
+      .select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     res.status(200).json({
       success: true,
@@ -465,7 +471,13 @@ exports.verifyEmail = async (req, res) => {
 
     // Optionally generate auth token to log user in after verification
     const authToken = user.generateToken()
-    res.status(200).json({ success: true, message: 'Email verified', data: { user, token: authToken } })
+
+    const outUser = await User.findById(user._id)
+      .select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
+
+    res.status(200).json({ success: true, message: 'Email verified', data: { user: outUser, token: authToken } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message || 'Error verifying email' })
   }
@@ -504,11 +516,16 @@ exports.resetPassword = async (req, res) => {
     // Generate new token
     const authToken = user.generateToken()
 
+    const outUser = await User.findById(user._id)
+      .select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
+
     res.status(200).json({
       success: true,
       message: 'Password reset successful',
       data: {
-        user,
+        user: outUser,
         token: authToken,
       },
     })
@@ -576,14 +593,17 @@ exports.adminLogin = async (req, res) => {
     // Generate token
     const token = user.generateToken()
 
-    // Remove password from output
-    user.password = undefined
+    // Return populated user (position + referredBy) without password
+    const outUser = await User.findById(user._id)
+      .select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     res.status(200).json({
       success: true,
       message: 'Admin login successful',
       data: {
-        user,
+        user: outUser,
         token,
       },
     })
@@ -659,7 +679,9 @@ exports.updateProfile = async (req, res) => {
         new: true,
         runValidators: true,
       }
-    ).select('-password').populate('position', 'name')
+    ).select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     res.status(200).json({
       success: true,
@@ -680,6 +702,7 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.find()
       .select('-password')
       .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
       .sort({ createdAt: -1 })
 
     res.status(200).json({
@@ -748,7 +771,10 @@ exports.updateTeamLeader = async (req, res) => {
     await user.save()
 
     // Ensure we return populated position
-    const out = await User.findById(user._id).select('-password').populate('position', 'name')
+    const out = await User.findById(user._id)
+      .select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     // Notify user via email about team leader status change
     try {
@@ -786,7 +812,9 @@ exports.updateMembershipStatus = async (req, res) => {
       userId,
       { membershipStatus },
       { new: true, runValidators: true }
-    ).select('-password').populate('position', 'name')
+    ).select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     if (!user) {
       return res.status(404).json({
@@ -825,7 +853,9 @@ exports.updateUserRole = async (req, res) => {
       userId,
       { role },
       { new: true, runValidators: true }
-    ).select('-password').populate('position', 'name')
+    ).select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     if (!user) {
       return res.status(404).json({
@@ -879,7 +909,10 @@ exports.updateUserPosition = async (req, res) => {
 
     await user.save()
 
-    const out = await User.findById(userId).select('-password').populate('position', 'name')
+    const out = await User.findById(userId)
+      .select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     // Notify user about position assignment change
     try {
@@ -965,7 +998,9 @@ exports.updateUserByAdmin = async (req, res) => {
       userId,
       { $set: updates },
       { new: true, runValidators: true }
-    ).select('-password').populate('position', 'name')
+    ).select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' })
@@ -1003,7 +1038,9 @@ exports.updateMemberNumber = async (req, res) => {
       userId,
       { memberNumber: num },
       { new: true, runValidators: true }
-    ).select('-password').populate('position', 'name')
+    ).select('-password')
+      .populate('position', 'name')
+      .populate('referredBy', 'username memberNumber referralCode')
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' })

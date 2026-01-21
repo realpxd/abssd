@@ -32,7 +32,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText, design }, ref) =
   const headlineColor = '#ea580c' // orange for headlines
 
   return (
-    <div ref={ref} className="relative w-full rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ width: '390px', height: '430px', border: '1px solid rgba(35,48,63,0.06)', fontFamily: 'ui-sans-serif, system-ui, -apple-system' }}>
+    <div ref={ref} className="relative w-full rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ width: '390px', height: user.referredBy ? '450px':'430px', border: '1px solid rgba(35,48,63,0.06)', fontFamily: 'ui-sans-serif, system-ui, -apple-system' }}>
       {/* Decorative corners */}
       <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none"><FloralCorner /></div>
       <div className="absolute top-0 right-0 w-20 h-20 rotate-90 pointer-events-none"><FloralCorner /></div>
