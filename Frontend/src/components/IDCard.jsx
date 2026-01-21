@@ -149,7 +149,14 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText, design }, ref) =
         }}>
         <div className="w-1/2 pr-2">
           <div style={{ color: headlineColor, fontWeight: 700, fontSize: 18 }}>राष्ट्रीय अध्यक्ष</div>
-          <div className="h-7 border-b border-dashed border-gray-300 my-2 mr-8"></div>
+         {!watermarkText && <div className="mt-2">
+            <img
+              src="/images/signature.png"
+              alt="Signature"
+              style={{ width: 100, height: 40, objectFit: 'contain', display: 'block' }}
+            />
+         </div>}
+          <div className={`${watermarkText ? 'h-7' : 'h-2'} border-b border-dashed border-gray-300 my-0 mr-8`}></div>
         </div>
         <div className="w-1/2 flex items-center justify-end pr-8">
           <div style={{ width: 76, height: 84 }} className="flex flex-col items-center gap-1">

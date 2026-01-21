@@ -262,7 +262,7 @@ console.log({user})
               )}
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Left: ID card (shared component) */}
-                  <div className="md:w-[340px]">
+                  <div className="md:w-[380px]">
                     <IDCard ref={printRef} user={user} photoPreview={photoPreview} watermarkText="sample sample sample sample sample sample sample sample sample sample sample" />
                   </div>
 
