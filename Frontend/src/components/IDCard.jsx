@@ -32,7 +32,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText, design }, ref) =
   const headlineColor = '#ea580c' // orange for headlines
 
   return (
-    <div ref={ref} className="relative w-full rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ width: '390px', height: '420px', border: '1px solid rgba(35,48,63,0.06)', fontFamily: 'ui-sans-serif, system-ui, -apple-system' }}>
+    <div ref={ref} className="relative w-full rounded-xl shadow-md overflow-hidden flex flex-col card-container" style={{ width: '390px', height: '430px', border: '1px solid rgba(35,48,63,0.06)', fontFamily: 'ui-sans-serif, system-ui, -apple-system' }}>
       {/* Decorative corners */}
       <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none"><FloralCorner /></div>
       <div className="absolute top-0 right-0 w-20 h-20 rotate-90 pointer-events-none"><FloralCorner /></div>
@@ -47,7 +47,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText, design }, ref) =
       )}
 
       {/* Header */}
-      <div className="h-[118px] px-4 flex items-center gap-3" style={{ background: headerGradient }}>
+      <div className="h-[120px] px-4 flex items-center gap-3" style={{ background: headerGradient }}>
         <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ border: '2px solid rgba(255,255,255,0.25)' }}>
           <img src="/images/logo.png" alt="logo" className="w-14 h-14 object-cover rounded-full" />
         </div>
@@ -107,7 +107,7 @@ const IDCard = forwardRef(({ user, photoPreview, watermarkText, design }, ref) =
             )}
           </div>
 
-          <div style={{ background: variant === 'annual' ? '#fff7e2' : '#fffaf0' }} className="text-[12px] font-bold px-3 py-1 rounded-full text-orange-700">{user.position?.name || 'Member'}</div>
+          <div style={{ background: variant === 'annual' ? '#fff7e2' : '#fffaf0' }} className="text-[12px] text-center font-bold px-3 py-1 rounded-full text-orange-700">{user.position?.name || 'Member'}</div>
         </div>
 
         <div className="flex-1 text-[14px]" style={{ paddingTop: 6 }}>
