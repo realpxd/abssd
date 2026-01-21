@@ -205,13 +205,13 @@ exports.register = async (req, res) => {
       }
     }
 
-    // Generate token
-    const token = user.generateToken()
+  // Generate token
+  const token = user.generateToken()
 
-    // Remove password from output
-    user.password = undefined
+  // Ensure we return populated position (name + id) to the client
+  const outUser = await User.findById(user._id).select('-password').populate('position', 'name')
 
-    // Send welcome email (best-effort)
+  // Send welcome email (best-effort)
     try {
       const mailer = require('../utils/mailer')
       const subject = 'Welcome to ABSSD Trust'
@@ -228,7 +228,7 @@ exports.register = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       data: {
-        user,
+        user: outUser,
         token,
       },
     })
@@ -275,14 +275,14 @@ exports.login = async (req, res) => {
     // Generate token
     const token = user.generateToken()
 
-    // Remove password from output
-    user.password = undefined
+    // Ensure we return populated position (name + id)
+    const outUser = await User.findById(user._id).select('-password').populate('position', 'name')
 
     res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
-        user,
+        user: outUser,
         token,
       },
     })
@@ -652,19 +652,19 @@ exports.updateProfile = async (req, res) => {
       updates.photo = `/uploads/${req.file.filename}`
     }
 
-    const user = await User.findByIdAndUpdate(
+    const updated = await User.findByIdAndUpdate(
       userId,
       { $set: updates },
       {
         new: true,
         runValidators: true,
       }
-    )
+    ).select('-password').populate('position', 'name')
 
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      data: user,
+      data: updated,
     })
   } catch (error) {
     res.status(500).json({
@@ -679,6 +679,7 @@ exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
       .select('-password')
+      .populate('position', 'name')
       .sort({ createdAt: -1 })
 
     res.status(200).json({
@@ -746,6 +747,9 @@ exports.updateTeamLeader = async (req, res) => {
 
     await user.save()
 
+    // Ensure we return populated position
+    const out = await User.findById(user._id).select('-password').populate('position', 'name')
+
     // Notify user via email about team leader status change
     try {
       const subject = user.isTeamLeader ? 'You are now a Team Leader' : 'Your Team Leader status has been revoked'
@@ -759,7 +763,7 @@ exports.updateTeamLeader = async (req, res) => {
       // don't fail the request because email failed — it's best-effort
     }
 
-    res.status(200).json({ success: true, message: 'Team leader status updated', data: user })
+  res.status(200).json({ success: true, message: 'Team leader status updated', data: out })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Error updating team leader status' })
   }
@@ -782,7 +786,7 @@ exports.updateMembershipStatus = async (req, res) => {
       userId,
       { membershipStatus },
       { new: true, runValidators: true }
-    ).select('-password')
+    ).select('-password').populate('position', 'name')
 
     if (!user) {
       return res.status(404).json({
@@ -821,7 +825,7 @@ exports.updateUserRole = async (req, res) => {
       userId,
       { role },
       { new: true, runValidators: true }
-    ).select('-password')
+    ).select('-password').populate('position', 'name')
 
     if (!user) {
       return res.status(404).json({
@@ -999,7 +1003,7 @@ exports.updateMemberNumber = async (req, res) => {
       userId,
       { memberNumber: num },
       { new: true, runValidators: true }
-    ).select('-password')
+    ).select('-password').populate('position', 'name')
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' })

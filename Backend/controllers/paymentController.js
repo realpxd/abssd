@@ -187,8 +187,8 @@ exports.verifyPayment = async (req, res) => {
       logger.warn('Failed to persist paymentId to PaymentAttempt:', err)
     }
 
-    // Get updated user
-    const updatedUser = await User.findById(user._id)
+  // Get updated user (populate position for frontend display)
+  const updatedUser = await User.findById(user._id).select('-password').populate('position', 'name')
 
     // Send membership activation email (best-effort)
     try {
