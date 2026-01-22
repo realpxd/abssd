@@ -1,7 +1,7 @@
 const Event = require('../models/Event')
 const path = require('path')
 const fs = require('fs')
-const { getPaginationParams, getPaginationResponse } = require('../utils/pagination')
+// Pagination removed for events/news: return full list
 const logger = require('../utils/logger')
 
 // Get all events (public - only active)
@@ -12,16 +12,9 @@ exports.getEvents = async (req, res) => {
     const isAdmin = req.user && req.user.role === 'admin'
     const query = isAdmin ? {} : { isActive: true }
     
-    // Get pagination parameters
-    const { page, limit, skip } = getPaginationParams(req)
-    
-    // Get total count and paginated results
-    const [events, total] = await Promise.all([
-      Event.find(query).sort({ date: -1 }).skip(skip).limit(limit),
-      Event.countDocuments(query),
-    ])
-    
-    res.status(200).json(getPaginationResponse(page, limit, total, events))
+    // Return full events list (no pagination)
+    const events = await Event.find(query).sort({ date: -1 })
+    res.status(200).json({ success: true, count: events.length, data: events })
   } catch (error) {
     res.status(500).json({
       success: false,

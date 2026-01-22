@@ -245,7 +245,7 @@ const Contact = () => {
               <div className="w-full h-[500px] bg-gray-100 rounded overflow-hidden relative">
                   <iframe
                     className="w-full h-full"
-                    src={`https://www.youtube.com/embed/sOpFTK-QIzU?si=wKEcFEDOqrYy75Vo`}
+                    src={`https://www.youtube.com/embed/sOpFTK-QIzU?si=C7Rewd5H4Mja1-2d`}
                     title="YouTube - latest uploads"
                     frameBorder="0"
                     allowFullScreen
@@ -254,7 +254,7 @@ const Contact = () => {
                   {!youtubeLoaded && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 p-4">
                       <p className="text-center text-sm text-gray-600 mb-3">This video/embed may be unavailable due to provider restrictions.</p>
-                      <a href="https://youtube.com/@akhilbhartiyeswachhtasew-fu1kt" target="_blank" rel="noreferrer" className="inline-block bg-orange-500 text-white px-4 py-2 rounded">Open on YouTube</a>
+                      <a href="https://www.youtube.com/embed/sOpFTK-QIzU?si=C7Rewd5H4Mja1-2d" target="_blank" rel="noreferrer" className="inline-block bg-orange-500 text-white px-4 py-2 rounded">Open on YouTube</a>
                     </div>
                   )}
               </div>

@@ -1,7 +1,7 @@
 const Gallery = require('../models/Gallery')
 const path = require('path')
 const fs = require('fs')
-const { getPaginationParams, getPaginationResponse } = require('../utils/pagination')
+// Pagination removed for gallery: return full list
 const logger = require('../utils/logger')
 
 // Get all gallery items (public - only active)
@@ -12,16 +12,9 @@ exports.getGallery = async (req, res) => {
     const isAdmin = req.user && req.user.role === 'admin'
     const query = isAdmin ? {} : { isActive: true }
     
-    // Get pagination parameters
-    const { page, limit, skip } = getPaginationParams(req)
-    
-    // Get total count and paginated results
-    const [gallery, total] = await Promise.all([
-      Gallery.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Gallery.countDocuments(query),
-    ])
-    
-    res.status(200).json(getPaginationResponse(page, limit, total, gallery))
+    // Return full gallery list (no pagination)
+    const gallery = await Gallery.find(query).sort({ createdAt: -1 })
+    res.status(200).json({ success: true, count: gallery.length, data: gallery })
   } catch (error) {
     res.status(500).json({
       success: false,
