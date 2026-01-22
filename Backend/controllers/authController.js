@@ -78,13 +78,10 @@ exports.register = async (req, res) => {
       })
     }
 
-    // Check if username already exists
-    const existingUsername = await User.findOne({ username })
-    if (existingUsername) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username already taken. Please choose a different username.',
-      })
+    // Accept provided username (allow duplicates). Trim whitespace and validate presence.
+    const uname = (username || '').trim()
+    if (!uname) {
+      return res.status(400).json({ success: false, message: 'Username is required' })
     }
 
     // Generate sequential memberNumber atomically.
@@ -144,7 +141,7 @@ exports.register = async (req, res) => {
     const aadharBackPath = aadharBackFile ? `/uploads/${aadharBackFile.filename}` : undefined
 
     const user = await User.create({
-      username: username.trim(),
+      username: uname,
       email: email.toLowerCase().trim(),
       contactNo: contactNo.trim(),
       password,
@@ -236,6 +233,14 @@ exports.register = async (req, res) => {
       },
     })
   } catch (error) {
+    // Handle duplicate key errors (race conditions) gracefully
+    if (error && (error.code === 11000 || error.name === 'MongoServerError')) {
+      const dupField = error.keyValue ? Object.keys(error.keyValue)[0] : 'field'
+      if (dupField === 'username') {
+        return res.status(409).json({ success: false, message: 'Username already exists at the database level (unique index). If you want duplicate usernames, remove the unique index on the username field in the database.' })
+      }
+      return res.status(409).json({ success: false, message: `${dupField} already exists` })
+    }
     res.status(500).json({
       success: false,
       message: error.message || 'Error registering user',
@@ -652,6 +657,11 @@ exports.updateProfile = async (req, res) => {
     if (updates.role && !['user', 'admin'].includes(updates.role)) {
       delete updates.role
     }
+        
+    // If username provided, just trim it (duplicates allowed)
+    if (updates.username) {
+      updates.username = String(updates.username).trim()
+    }
 
     // Handle photo upload
     if (req.file) {
@@ -980,6 +990,11 @@ exports.updateUserByAdmin = async (req, res) => {
         return res.status(409).json({ success: false, message: 'Email already in use by another account' })
       }
       updates.email = updates.email.toLowerCase()
+    }
+
+    // If username provided, just trim it (duplicates allowed)
+    if (updates.username) {
+      updates.username = String(updates.username).trim()
     }
 
     // Handle photo upload

@@ -1,4 +1,10 @@
 require('dotenv').config()
+// Provide a global fallback for escapeRegExp in case some modules reference it
+if (typeof global.escapeRegExp === 'undefined') {
+  global.escapeRegExp = function (str = '') {
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  }
+}
 const express = require('express')
 const cors = require('cors')
 const path = require('path')

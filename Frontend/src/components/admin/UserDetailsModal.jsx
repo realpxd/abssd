@@ -226,6 +226,7 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
           <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
           <div className="flex items-center gap-3">
             <button onClick={() => setEditMode(!editMode)} className="text-sm bg-gray-100 px-3 py-1 rounded">{editMode ? 'Cancel Edit' : 'Edit'}</button>
+            {editMode && <button onClick={handleSaveChanges} className="text-sm bg-blue-200 px-3 py-1 rounded">Save Changes</button>}
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -394,6 +395,14 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
                   <span className="text-gray-500">Aadhar No:</span>
                   <span className="ml-2 text-gray-900">{user.aadharNo || 'N/A'}</span>
                 </div>
+                {user.referralCode && (<div>
+                  <span className="text-gray-500">Refferal Code:</span>
+                  <span className="ml-2 text-gray-900">{user.referralCode || 'N/A'}</span>
+                </div>)}
+                {user?.referredBy?.username && (<div>
+                  <span className="text-gray-500">Team Leader:</span>
+                  <span className="ml-2 text-gray-900">{user.referredBy.username || 'N/A'}</span>
+                </div>)}
               </div>
             </div>
 
