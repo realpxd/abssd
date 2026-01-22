@@ -1,35 +1,35 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext.jsx'
-import { useNavigate } from 'react-router-dom'
-import client from '../api/client.js'
-import api from '../api/config.js'
-import AdminHeader from '../components/admin/AdminHeader.jsx'
-import TabNavigation from '../components/admin/TabNavigation.jsx'
-import FormModal from '../components/admin/FormModal.jsx'
-import GalleryForm from '../components/admin/GalleryForm.jsx'
-import AdminCreateUser from '../components/admin/AdminCreateUser.jsx'
-import NewsForm from '../components/admin/NewsForm.jsx'
-import GalleryCard from '../components/admin/GalleryCard.jsx'
-import NewsCard from '../components/admin/NewsCard.jsx'
-import LoadingSpinner from '../components/admin/LoadingSpinner.jsx'
-import UsersList from '../components/admin/UsersList.jsx'
-import UserDetailsModal from '../components/admin/UserDetailsModal.jsx'
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
+import client from '../api/client.js';
+import api from '../api/config.js';
+import AdminHeader from '../components/admin/AdminHeader.jsx';
+import TabNavigation from '../components/admin/TabNavigation.jsx';
+import FormModal from '../components/admin/FormModal.jsx';
+import GalleryForm from '../components/admin/GalleryForm.jsx';
+import AdminCreateUser from '../components/admin/AdminCreateUser.jsx';
+import NewsForm from '../components/admin/NewsForm.jsx';
+import GalleryCard from '../components/admin/GalleryCard.jsx';
+import NewsCard from '../components/admin/NewsCard.jsx';
+import LoadingSpinner from '../components/admin/LoadingSpinner.jsx';
+import UsersList from '../components/admin/UsersList.jsx';
+import UserDetailsModal from '../components/admin/UserDetailsModal.jsx';
 
 const AdminDashboard = () => {
-  const { user, logout, isAdmin } = useAuth()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('gallery')
-  const [galleryItems, setGalleryItems] = useState([])
-  const [newsItems, setNewsItems] = useState([])
-  const [users, setUsers] = useState([])
-  const [positions, setPositions] = useState([])
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [userSearchQuery, setUserSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [gallerySubmitting, setGallerySubmitting] = useState(false)
-  const [newsSubmitting, setNewsSubmitting] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [showAddForm, setShowAddForm] = useState(false)
+  const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('gallery');
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [newsItems, setNewsItems] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [gallerySubmitting, setGallerySubmitting] = useState(false);
+  const [newsSubmitting, setNewsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // Admin create-user handled inside AdminCreateUser component
 
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
     category: 'cleanliness',
     imageUrl: '',
     imageFile: null,
-  })
+  });
 
   const [newsForm, setNewsForm] = useState({
     title: '',
@@ -51,86 +51,235 @@ const AdminDashboard = () => {
     location: '',
     imageUrl: '',
     imageFile: null,
-  })
+  });
 
   useEffect(() => {
     if (!isAdmin) {
-      navigate('/admin/login')
-      return
+      navigate('/admin/login');
+      return;
     }
-    fetchData()
-  }, [activeTab, isAdmin, navigate])
+    fetchData();
+  }, [activeTab, isAdmin, navigate]);
 
   const fetchData = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       if (activeTab === 'gallery') {
         const response = await client(api.endpoints.gallery, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
-        setGalleryItems(response.data || [])
+        });
+        setGalleryItems(response.data || []);
       } else if (activeTab === 'news') {
         const response = await client(api.endpoints.events, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
-        setNewsItems(response.data || [])
-      } else if (activeTab === 'users' || activeTab === 'create-user' || activeTab === 'positions') {
+        });
+        setNewsItems(response.data || []);
+      } else if (
+        activeTab === 'users' ||
+        activeTab === 'create-user' ||
+        activeTab === 'positions'
+      ) {
         const response = await client(api.endpoints.users, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
-        setUsers(response.data || [])
+        });
+        setUsers(response.data || []);
         // Fetch positions for admin to assign
         try {
-          const posResp = await client(api.endpoints.positions)
-          if (posResp && posResp.data) setPositions(posResp.data)
+          const posResp = await client(api.endpoints.positions);
+          if (posResp && posResp.data) setPositions(posResp.data);
         } catch (err) {
           // ignore
         }
       }
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error('Error fetching data:', error);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
+
+  // Export users to CSV or Excel
+  const handleExportUsers = async (format = 'csv') => {
+    try {
+      setLoading(true);
+      // Fetch latest users from server to ensure complete list
+      const resp = await client(api.endpoints.users, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      const allUsers = resp.data || [];
+
+      if (!allUsers.length) {
+        alert('No users to export');
+        return;
+      }
+
+      // Prepare headers and rows as arrays (AOA)
+      const headers = [
+        'User ID',
+        'Username',
+        'Email',
+        'Contact No',
+        'Member Number',
+        'Membership Status',
+        'Position',
+        'Referred By',
+        'Referral Code',
+        'Is Team Leader',
+        'Role',
+        'DOB',
+        'Address',
+        'Qualification',
+        'Occupation',
+        'Aadhar Verified',
+        'Membership Amount',
+        'Payment ID',
+        'Is Email Verified',
+        'Created At',
+      ];
+
+      const makeAddress = (u) => {
+        if (!u.address) return '';
+        if (typeof u.address === 'string') return u.address;
+        const parts = [];
+        if (u.address.street) parts.push(u.address.street);
+        if (u.address.city) parts.push(u.address.city);
+        if (u.address.state) parts.push(u.address.state);
+        if (u.address.pincode) parts.push(u.address.pincode);
+        return parts.join(', ');
+      };
+
+      const rows = allUsers.map((u) => {
+        const pos =
+          u.position && typeof u.position === 'object'
+            ? u.position.name || ''
+            : u.position || '';
+        const referred =
+          u.referredBy && typeof u.referredBy === 'object'
+            ? u.referredBy.username || ''
+            : u.referredBy || '';
+        return [
+          u._id,
+          u.username,
+          u.email,
+          u.contactNo,
+          u.memberNumber || '',
+          u.membershipStatus || '',
+          pos,
+          referred,
+          u.referralCode || '',
+          u.isTeamLeader ? 'Yes' : 'No',
+          u.role || '',
+          u.dob ? new Date(u.dob).toISOString().split('T')[0] : '',
+          makeAddress(u),
+          u.qualification || '',
+          u.occupation || '',
+          u.aadharVerified ? 'Yes' : 'No',
+          typeof u.membershipAmount !== 'undefined' &&
+          u.membershipAmount !== null
+            ? u.membershipAmount
+            : '',
+          u.paymentId || '',
+          u.isEmailVerified ? 'Yes' : 'No',
+          u.createdAt ? new Date(u.createdAt).toISOString() : '',
+        ];
+      });
+
+      if (format === 'csv') {
+        // CSV (Excel-friendly)
+        const escapeCell = (v) => {
+          if (v === null || typeof v === 'undefined') return '';
+          const s = String(v);
+          return '"' + s.replace(/"/g, '""') + '"';
+        };
+        const csvContent =
+          '\uFEFF' +
+          [
+            headers.map(escapeCell).join(','),
+            ...rows.map((r) => r.map(escapeCell).join(',')),
+          ].join('\n');
+        const blob = new Blob([csvContent], {
+          type: 'text/csv;charset=utf-8;',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `abssd_users_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } else {
+        // Excel (.xlsx) using SheetJS (dynamic import)
+        let XLSX;
+        try {
+          XLSX = await import('xlsx');
+        } catch (e) {
+          alert(
+            'Excel export requires the "xlsx" package. Run "npm install xlsx" in the Frontend folder and rebuild.'
+          );
+          return;
+        }
+        const aoa = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Users');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `abssd_users_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Export users failed', err);
+      alert(err.message || 'Failed to export users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGallerySubmit = async (e, id = null) => {
-    e.preventDefault()
-    setGallerySubmitting(true)
+    e.preventDefault();
+    setGallerySubmitting(true);
     try {
-      const formData = new FormData()
-      formData.append('title', galleryForm.title)
-      formData.append('titleEn', galleryForm.titleEn)
-      formData.append('description', galleryForm.description)
-      formData.append('category', galleryForm.category)
+      const formData = new FormData();
+      formData.append('title', galleryForm.title);
+      formData.append('titleEn', galleryForm.titleEn);
+      formData.append('description', galleryForm.description);
+      formData.append('category', galleryForm.category);
       if (galleryForm.imageFile) {
-        formData.append('image', galleryForm.imageFile)
+        formData.append('image', galleryForm.imageFile);
       } else if (galleryForm.imageUrl && !id) {
-        formData.append('imageUrl', galleryForm.imageUrl)
+        formData.append('imageUrl', galleryForm.imageUrl);
       } else if (galleryForm.imageUrl && id) {
-        // For updates, send imageUrl in body if no new file
         const updateData = {
           title: galleryForm.title,
           titleEn: galleryForm.titleEn,
           description: galleryForm.description,
           category: galleryForm.category,
           imageUrl: galleryForm.imageUrl,
-        }
+        };
         await client(api.endpoints.gallery + `/${id}`, {
           method: 'PUT',
           body: updateData,
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
-        resetGalleryForm()
-        fetchData()
-        return
+        });
+        resetGalleryForm();
+        fetchData();
+        return;
       }
 
       if (id) {
@@ -140,7 +289,7 @@ const AdminDashboard = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
+        });
       } else {
         await client(api.endpoints.gallery, {
           method: 'POST',
@@ -148,32 +297,32 @@ const AdminDashboard = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
+        });
       }
 
-      resetGalleryForm()
-      fetchData()
+      resetGalleryForm();
+      fetchData();
     } catch (error) {
-      alert(error.message || 'Error saving gallery item')
+      alert(error.message || 'Error saving gallery item');
     } finally {
-      setGallerySubmitting(false)
+      setGallerySubmitting(false);
     }
-  }
+  };
 
   const handleNewsSubmit = async (e, id = null) => {
-    e.preventDefault()
-    setNewsSubmitting(true)
+    e.preventDefault();
+    setNewsSubmitting(true);
     try {
-      const formData = new FormData()
-      formData.append('title', newsForm.title)
-      formData.append('titleEn', newsForm.titleEn)
-      formData.append('description', newsForm.description)
-      formData.append('date', newsForm.date)
-      formData.append('location', newsForm.location)
+      const formData = new FormData();
+      formData.append('title', newsForm.title);
+      formData.append('titleEn', newsForm.titleEn);
+      formData.append('description', newsForm.description);
+      formData.append('date', newsForm.date);
+      formData.append('location', newsForm.location);
       if (newsForm.imageFile) {
-        formData.append('image', newsForm.imageFile)
+        formData.append('image', newsForm.imageFile);
       } else if (newsForm.imageUrl && !id) {
-        formData.append('imageUrl', newsForm.imageUrl)
+        formData.append('imageUrl', newsForm.imageUrl);
       } else if (newsForm.imageUrl && id) {
         // For updates, send imageUrl in body if no new file
         const updateData = {
@@ -183,17 +332,17 @@ const AdminDashboard = () => {
           date: newsForm.date,
           location: newsForm.location,
           imageUrl: newsForm.imageUrl,
-        }
+        };
         await client(api.endpoints.events + `/${id}`, {
           method: 'PUT',
           body: updateData,
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
-        resetNewsForm()
-        fetchData()
-        return
+        });
+        resetNewsForm();
+        fetchData();
+        return;
       }
 
       if (id) {
@@ -203,7 +352,7 @@ const AdminDashboard = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
+        });
       } else {
         await client(api.endpoints.events, {
           method: 'POST',
@@ -211,34 +360,35 @@ const AdminDashboard = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        })
+        });
       }
 
-      resetNewsForm()
-      fetchData()
+      resetNewsForm();
+      fetchData();
     } catch (error) {
-      alert(error.message || 'Error saving news item')
+      alert(error.message || 'Error saving news item');
     } finally {
-      setNewsSubmitting(false)
+      setNewsSubmitting(false);
     }
-  }
+  };
 
   const handleDelete = async (id, type) => {
-    if (!confirm(`Are you sure you want to delete this ${type} item?`)) return
+    if (!confirm(`Are you sure you want to delete this ${type} item?`)) return;
 
     try {
-      const endpoint = type === 'gallery' ? api.endpoints.gallery : api.endpoints.events
+      const endpoint =
+        type === 'gallery' ? api.endpoints.gallery : api.endpoints.events;
       await client(endpoint + `/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      fetchData()
+      });
+      fetchData();
     } catch (error) {
-      alert(error.message || 'Error deleting item')
+      alert(error.message || 'Error deleting item');
     }
-  }
+  };
 
   const startEdit = (item, type) => {
     if (type === 'gallery') {
@@ -249,8 +399,8 @@ const AdminDashboard = () => {
         category: item.category || 'cleanliness',
         imageUrl: item.imageUrl || '',
         imageFile: null,
-      })
-      setEditingId(item._id)
+      });
+      setEditingId(item._id);
     } else {
       setNewsForm({
         title: item.title || '',
@@ -260,11 +410,11 @@ const AdminDashboard = () => {
         location: item.location || '',
         imageUrl: item.imageUrl || '',
         imageFile: null,
-      })
-      setEditingId(item._id)
+      });
+      setEditingId(item._id);
     }
-    setShowAddForm(true)
-  }
+    setShowAddForm(true);
+  };
 
   const resetGalleryForm = () => {
     setGalleryForm({
@@ -274,10 +424,10 @@ const AdminDashboard = () => {
       category: 'cleanliness',
       imageUrl: '',
       imageFile: null,
-    })
-    setEditingId(null)
-    setShowAddForm(false)
-  }
+    });
+    setEditingId(null);
+    setShowAddForm(false);
+  };
 
   // Admin create-user is handled inside AdminCreateUser component; no parent reset required
 
@@ -290,29 +440,29 @@ const AdminDashboard = () => {
       location: '',
       imageUrl: '',
       imageFile: null,
-    })
-    setEditingId(null)
-    setShowAddForm(false)
-  }
+    });
+    setEditingId(null);
+    setShowAddForm(false);
+  };
 
   const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+    logout();
+    navigate('/');
+  };
 
   const handleTabChange = (tab) => {
-    setActiveTab(tab)
+    setActiveTab(tab);
     if (tab === 'gallery') {
-      resetGalleryForm()
+      resetGalleryForm();
     } else if (tab === 'news') {
-      resetNewsForm()
+      resetNewsForm();
     }
-  }
+  };
 
   // User management functions
   const handleViewUserDetails = (user) => {
-    setSelectedUser(user)
-  }
+    setSelectedUser(user);
+  };
 
   const handleUpdateMembershipStatus = async (userId, newStatus) => {
     try {
@@ -322,14 +472,14 @@ const AdminDashboard = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      alert('Membership status updated successfully')
-      fetchData()
-      setSelectedUser(null)
+      });
+      alert('Membership status updated successfully');
+      fetchData();
+      setSelectedUser(null);
     } catch (error) {
-      alert(error.message || 'Error updating membership status')
+      alert(error.message || 'Error updating membership status');
     }
-  }
+  };
 
   const handleNotifyUser = async (userId, notificationData) => {
     try {
@@ -339,12 +489,12 @@ const AdminDashboard = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      alert('Notification sent successfully')
+      });
+      alert('Notification sent successfully');
     } catch (error) {
-      alert(error.message || 'Error sending notification')
+      alert(error.message || 'Error sending notification');
     }
-  }
+  };
 
   const handleToggleAdmin = async (userId, makeAdmin) => {
     try {
@@ -354,14 +504,14 @@ const AdminDashboard = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      alert(`User role updated ${makeAdmin ? 'to admin' : 'to user'}`)
-      fetchData()
-      setSelectedUser(null)
+      });
+      alert(`User role updated ${makeAdmin ? 'to admin' : 'to user'}`);
+      fetchData();
+      setSelectedUser(null);
     } catch (error) {
-      alert(error.message || 'Error updating user role')
+      alert(error.message || 'Error updating user role');
     }
-  }
+  };
 
   const handleToggleTeamLeader = async (userId, makeLeader) => {
     try {
@@ -371,14 +521,14 @@ const AdminDashboard = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      alert(`User ${makeLeader ? 'marked as' : 'removed from'} team leader`)
-      fetchData()
-      setSelectedUser(null)
+      });
+      alert(`User ${makeLeader ? 'marked as' : 'removed from'} team leader`);
+      fetchData();
+      setSelectedUser(null);
     } catch (error) {
-      alert(error.message || 'Error updating team leader status')
+      alert(error.message || 'Error updating team leader status');
     }
-  }
+  };
 
   const handleAssignPosition = async (userId, positionId) => {
     try {
@@ -388,77 +538,90 @@ const AdminDashboard = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      alert('User position updated')
-      fetchData()
-      setSelectedUser(null)
+      });
+      alert('User position updated');
+      fetchData();
+      setSelectedUser(null);
     } catch (error) {
-      alert(error.message || 'Error assigning position')
+      alert(error.message || 'Error assigning position');
     }
-  }
+  };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return
+    if (
+      !confirm(
+        'Are you sure you want to permanently delete this user? This action cannot be undone.'
+      )
+    )
+      return;
     try {
       await client(`${api.endpoints.users}/${userId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-      alert('User deleted successfully')
-      fetchData()
-      setSelectedUser(null)
+      });
+      alert('User deleted successfully');
+      fetchData();
+      setSelectedUser(null);
     } catch (error) {
-      alert(error.message || 'Error deleting user')
+      alert(error.message || 'Error deleting user');
     }
-  }
+  };
 
   // Position management (create/delete)
-  const [newPositionName, setNewPositionName] = useState('')
-  const [newPositionDescription, setNewPositionDescription] = useState('')
+  const [newPositionName, setNewPositionName] = useState('');
+  const [newPositionDescription, setNewPositionDescription] = useState('');
 
   const handleCreatePosition = async (e) => {
-    e.preventDefault()
-    if (!newPositionName.trim()) return alert('Please provide a position name')
+    e.preventDefault();
+    if (!newPositionName.trim()) return alert('Please provide a position name');
     try {
       await client(api.endpoints.positions, {
         method: 'POST',
-        body: { name: newPositionName.trim(), description: newPositionDescription.trim() },
+        body: {
+          name: newPositionName.trim(),
+          description: newPositionDescription.trim(),
+        },
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      })
-      setNewPositionName('')
-      setNewPositionDescription('')
-      fetchData()
+      });
+      setNewPositionName('');
+      setNewPositionDescription('');
+      fetchData();
     } catch (err) {
-      alert(err.message || 'Error creating position')
+      alert(err.message || 'Error creating position');
     }
-  }
+  };
 
   const handleDeletePosition = async (pos) => {
-    if (!pos) return
+    if (!pos) return;
     if (pos.name && pos.name.toLowerCase() === 'member') {
-      return alert('Default "Member" position cannot be deleted')
+      return alert('Default "Member" position cannot be deleted');
     }
-    if (!confirm(`Delete position "${pos.name}"? This will remove the position from all users.`)) return
+    if (
+      !confirm(
+        `Delete position "${pos.name}"? This will remove the position from all users.`
+      )
+    )
+      return;
     try {
       await client(api.endpoints.positions + `/${pos._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      })
-      fetchData()
+      });
+      fetchData();
     } catch (err) {
-      alert(err.message || 'Error deleting position')
+      alert(err.message || 'Error deleting position');
     }
-  }
+  };
 
   // Prepare content area based on activeTab
-  let content = null
+  let content = null;
   if (loading) {
-    content = <LoadingSpinner />
+    content = <LoadingSpinner />;
   } else if (activeTab === 'gallery') {
     content = (
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
         {galleryItems.map((item) => (
           <GalleryCard
             key={item._id}
@@ -468,10 +631,10 @@ const AdminDashboard = () => {
           />
         ))}
       </div>
-    )
+    );
   } else if (activeTab === 'news') {
     content = (
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {newsItems.map((item) => (
           <NewsCard
             key={item._1d}
@@ -481,37 +644,49 @@ const AdminDashboard = () => {
           />
         ))}
       </div>
-    )
+    );
   } else if (activeTab === 'positions') {
     content = (
-      <div className="space-y-6">
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Create Position</h2>
-          <form onSubmit={handleCreatePosition} className="space-y-4">
+      <div className='space-y-6'>
+        <div className='bg-white p-6 rounded shadow'>
+          <h2 className='text-xl font-semibold mb-4'>Create Position</h2>
+          <form onSubmit={handleCreatePosition} className='space-y-4'>
             <div>
-              <label className="block text-sm font-medium mb-1">Position Name</label>
+              <label className='block text-sm font-medium mb-1'>
+                Position Name
+              </label>
               <input
                 value={newPositionName}
                 onChange={(e) => setNewPositionName(e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                placeholder="e.g. President"
+                className='w-full px-3 py-2 border rounded'
+                placeholder='e.g. President'
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description (optional)</label>
+              <label className='block text-sm font-medium mb-1'>
+                Description (optional)
+              </label>
               <textarea
                 value={newPositionDescription}
                 onChange={(e) => setNewPositionDescription(e.target.value)}
-                className="w-full px-3 py-2 border rounded"
+                className='w-full px-3 py-2 border rounded'
                 rows={3}
               />
             </div>
-            <div className="flex gap-2">
-              <button className="bg-green-600 text-white px-4 py-2 rounded" type="submit">Create</button>
+            <div className='flex gap-2'>
               <button
-                type="button"
-                onClick={() => { setNewPositionName(''); setNewPositionDescription('') }}
-                className="bg-gray-200 px-4 py-2 rounded"
+                className='bg-green-600 text-white px-4 py-2 rounded'
+                type='submit'
+              >
+                Create
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  setNewPositionName('');
+                  setNewPositionDescription('');
+                }}
+                className='bg-gray-200 px-4 py-2 rounded'
               >
                 Clear
               </button>
@@ -519,22 +694,29 @@ const AdminDashboard = () => {
           </form>
         </div>
 
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Existing Positions</h2>
-          <div className="space-y-2">
+        <div className='bg-white p-6 rounded shadow'>
+          <h2 className='text-xl font-semibold mb-4'>Existing Positions</h2>
+          <div className='space-y-2'>
             {positions.length === 0 ? (
-              <p className="text-sm text-gray-500">No positions found.</p>
+              <p className='text-sm text-gray-500'>No positions found.</p>
             ) : (
               positions.map((pos) => (
-                <div key={pos._id} className="flex items-center justify-between p-3 border rounded">
+                <div
+                  key={pos._id}
+                  className='flex items-center justify-between p-3 border rounded'
+                >
                   <div>
-                    <div className="font-medium">{pos.name}</div>
-                    {pos.description && <div className="text-sm text-gray-500">{pos.description}</div>}
+                    <div className='font-medium'>{pos.name}</div>
+                    {pos.description && (
+                      <div className='text-sm text-gray-500'>
+                        {pos.description}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <button
                       onClick={() => handleDeletePosition(pos)}
-                      className="bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                      className='bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50'
                       disabled={pos.name && pos.name.toLowerCase() === 'member'}
                     >
                       Delete
@@ -546,50 +728,72 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    )
+    );
   } else {
     content = (
       <>
-        <div className="mb-6">
+        <div className='mb-6 flex items-center gap-3'>
           <input
-            type="text"
-            placeholder="Search by User ID, Username, or Email..."
+            type='text'
+            placeholder='Search by User ID, Username, or Email...'
             value={userSearchQuery}
             onChange={(e) => setUserSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
           />
+          <div className='flex gap-2'>
+            <button
+              onClick={() => handleExportUsers('csv')}
+              disabled={loading}
+              className='bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700'
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={() => handleExportUsers('xlsx')}
+              disabled={loading}
+              className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
+            >
+              Export Excel
+            </button>
+          </div>
         </div>
         <UsersList
           users={users.filter(
             (user) =>
               user._id.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-              user.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+              user.username
+                .toLowerCase()
+                .includes(userSearchQuery.toLowerCase()) ||
               user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
           )}
           onViewDetails={handleViewUserDetails}
         />
       </>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className='min-h-screen bg-gray-50'>
       <AdminHeader username={user?.username} onLogout={handleLogout} />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className='container mx-auto px-4 py-8'>
         <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
         <FormModal
           show={showAddForm && activeTab !== 'users'}
           title={
-            activeTab === 'gallery' ? `${editingId ? 'Edit' : 'Add New'} Gallery Item` :
-            activeTab === 'news' ? `${editingId ? 'Edit' : 'Add New'} News Item` :
-            activeTab === 'create-user' ? 'Create User' : ''
+            activeTab === 'gallery'
+              ? `${editingId ? 'Edit' : 'Add New'} Gallery Item`
+              : activeTab === 'news'
+              ? `${editingId ? 'Edit' : 'Add New'} News Item`
+              : activeTab === 'create-user'
+              ? 'Create User'
+              : ''
           }
           onClose={() => {
-            if (activeTab === 'gallery') resetGalleryForm()
-            else if (activeTab === 'news') resetNewsForm()
-            else if (activeTab === 'create-user') setShowAddForm(false)
+            if (activeTab === 'gallery') resetGalleryForm();
+            else if (activeTab === 'news') resetNewsForm();
+            else if (activeTab === 'create-user') setShowAddForm(false);
           }}
         >
           {activeTab === 'gallery' && (
@@ -615,8 +819,8 @@ const AdminDashboard = () => {
           {activeTab === 'create-user' && (
             <AdminCreateUser
               onCreated={() => {
-                fetchData()
-                setShowAddForm(false)
+                fetchData();
+                setShowAddForm(false);
               }}
               onCancel={() => setShowAddForm(false)}
             />
@@ -626,14 +830,18 @@ const AdminDashboard = () => {
         {!showAddForm && activeTab !== 'users' && (
           <button
             onClick={() => {
-              if (activeTab === 'gallery') resetGalleryForm()
-              else if (activeTab === 'news') resetNewsForm()
+              if (activeTab === 'gallery') resetGalleryForm();
+              else if (activeTab === 'news') resetNewsForm();
               // create-user handled by AdminCreateUser component; just open modal
-              setShowAddForm(true)
+              setShowAddForm(true);
             }}
-            className="mb-6 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-medium"
+            className='mb-6 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-medium'
           >
-            {activeTab === 'create-user' ? '+ Create User' : `+ Add New ${activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}`}
+            {activeTab === 'create-user'
+              ? '+ Create User'
+              : `+ Add New ${
+                  activeTab === 'gallery' ? 'Gallery Item' : 'News Item'
+                }`}
           </button>
         )}
 
@@ -649,15 +857,17 @@ const AdminDashboard = () => {
           onNotify={handleNotifyUser}
           onToggleAdmin={handleToggleAdmin}
           onDelete={handleDeleteUser}
-            onToggleTeamLeader={handleToggleTeamLeader}
-            positions={positions}
-            onTogglePosition={handleAssignPosition}
-            onUserUpdated={() => { fetchData(); setSelectedUser(null) }}
+          onToggleTeamLeader={handleToggleTeamLeader}
+          positions={positions}
+          onTogglePosition={handleAssignPosition}
+          onUserUpdated={() => {
+            fetchData();
+            setSelectedUser(null);
+          }}
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default AdminDashboard
-
+export default AdminDashboard;
