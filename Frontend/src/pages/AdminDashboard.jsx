@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client.js';
@@ -25,11 +25,19 @@ const AdminDashboard = () => {
   const [positions, setPositions] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [gallerySubmitting, setGallerySubmitting] = useState(false);
   const [newsSubmitting, setNewsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Filters for users list
+  const [filterPosition, setFilterPosition] = useState('');
+  const [filterReferredBy, setFilterReferredBy] = useState('');
+  const [filterMembershipType, setFilterMembershipType] = useState('');
+  const [filterMembershipStatus, setFilterMembershipStatus] = useState('');
+  const [filterRole, setFilterRole] = useState('');
 
   // Admin create-user handled inside AdminCreateUser component
 
@@ -53,30 +61,22 @@ const AdminDashboard = () => {
     imageFile: null,
   });
 
-  useEffect(() => {
-    if (!isAdmin) {
-      navigate('/admin/login');
-      return;
-    }
-    fetchData();
-  }, [activeTab, isAdmin, navigate]);
-
-  const fetchData = async () => {
+  // stable fetchData to avoid re-creating on every render
+  const mountedRef = useRef(true);
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       if (activeTab === 'gallery') {
         const response = await client(api.endpoints.gallery, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
+        if (!mountedRef.current) return;
         setGalleryItems(response.data || []);
       } else if (activeTab === 'news') {
         const response = await client(api.endpoints.events, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
+        if (!mountedRef.current) return;
         setNewsItems(response.data || []);
       } else if (
         activeTab === 'users' ||
@@ -84,14 +84,14 @@ const AdminDashboard = () => {
         activeTab === 'positions'
       ) {
         const response = await client(api.endpoints.users, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
+        if (!mountedRef.current) return;
         setUsers(response.data || []);
         // Fetch positions for admin to assign
         try {
           const posResp = await client(api.endpoints.positions);
+          if (!mountedRef.current) return;
           if (posResp && posResp.data) setPositions(posResp.data);
         } catch (err) {
           // ignore
@@ -99,9 +99,77 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      if (mountedRef.current) setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    if (!isAdmin) {
+      navigate('/admin/login');
+      return;
+    }
+    fetchData();
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [activeTab, isAdmin, navigate, fetchData]);
+
+  // debounce search to avoid excessive filtering on every keystroke
+  useEffect(() => {
+    const t = setTimeout(
+      () => setDebouncedSearch(userSearchQuery.trim().toLowerCase()),
+      300
+    );
+    return () => clearTimeout(t);
+  }, [userSearchQuery]);
+
+  // memoized filtered users list
+  const filteredUsers = useMemo(() => {
+    const q = debouncedSearch || '';
+    return users.filter((u) => {
+      if (q) {
+        const matches =
+          (u._id || '').toLowerCase().includes(q) ||
+          (u.username || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+      if (filterPosition) {
+        const posId =
+          u.position && typeof u.position === 'object'
+            ? u.position._id
+            : u.position;
+        if (String(posId) !== String(filterPosition)) return false;
+      }
+      if (filterReferredBy) {
+        const refId =
+          u.referredBy && typeof u.referredBy === 'object'
+            ? u.referredBy._id
+            : u.referredBy;
+        if (String(refId) !== String(filterReferredBy)) return false;
+      }
+      if (filterMembershipType) {
+        if ((u.membershipType || '') !== filterMembershipType) return false;
+      }
+      if (filterMembershipStatus) {
+        if ((u.membershipStatus || '') !== filterMembershipStatus) return false;
+      }
+      if (filterRole) {
+        if ((u.role || '') !== filterRole) return false;
+      }
+      return true;
+    });
+  }, [
+    users,
+    debouncedSearch,
+    filterPosition,
+    filterReferredBy,
+    filterMembershipType,
+    filterMembershipStatus,
+    filterRole,
+  ]);
 
   // Export users to CSV or Excel
   const handleExportUsers = async (format = 'csv') => {
@@ -120,11 +188,11 @@ const AdminDashboard = () => {
 
       // Prepare headers and rows as arrays (AOA)
       const headers = [
+        'Member Number',
         'User ID',
         'Username',
         'Email',
         'Contact No',
-        'Member Number',
         'Membership Status',
         'Position',
         'Referred By',
@@ -163,11 +231,11 @@ const AdminDashboard = () => {
             ? u.referredBy.username || ''
             : u.referredBy || '';
         return [
+          u.memberNumber || '',
           u._id,
           u.username,
           u.email,
           u.contactNo,
-          u.memberNumber || '',
           u.membershipStatus || '',
           pos,
           referred,
@@ -732,40 +800,141 @@ const AdminDashboard = () => {
   } else {
     content = (
       <>
-        <div className='mb-6 flex items-center gap-3'>
-          <input
-            type='text'
-            placeholder='Search by User ID, Username, or Email...'
-            value={userSearchQuery}
-            onChange={(e) => setUserSearchQuery(e.target.value)}
-            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
-          />
-          <div className='flex gap-2'>
-            <button
-              onClick={() => handleExportUsers('csv')}
-              disabled={loading}
-              className='bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700'
-            >
-              Export CSV
-            </button>
-            <button
-              onClick={() => handleExportUsers('xlsx')}
-              disabled={loading}
-              className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
-            >
-              Export Excel
-            </button>
+        <div className='mb-4'>
+          <div className='flex items-center gap-3'>
+            <input
+              type='text'
+              placeholder='Search by User ID, Username, or Email...'
+              value={userSearchQuery}
+              onChange={(e) => setUserSearchQuery(e.target.value)}
+              className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
+            />
+            <div className='flex gap-2'>
+              <button
+                onClick={() => handleExportUsers('csv')}
+                disabled={loading}
+                className='bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700'
+              >
+                Export CSV
+              </button>
+              <button
+                onClick={() => handleExportUsers('xlsx')}
+                disabled={loading}
+                className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
+              >
+                Export Excel
+              </button>
+            </div>
+          </div>
+
+          {/* Filters row */}
+          <div className='mt-3 bg-white p-4 rounded-lg shadow-sm'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'>
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Position
+                </label>
+                <select
+                  value={filterPosition}
+                  onChange={(e) => setFilterPosition(e.target.value)}
+                  className='w-full px-3 py-2 border rounded bg-white'
+                >
+                  <option value=''>All</option>
+                  {positions.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Referred By (Team Leaders)
+                </label>
+                <select
+                  value={filterReferredBy}
+                  onChange={(e) => setFilterReferredBy(e.target.value)}
+                  className='w-full px-3 py-2 border rounded bg-white'
+                >
+                  <option value=''>All</option>
+                  {users
+                    .filter((u) => !!u.isTeamLeader)
+                    .map((u) => (
+                      <option key={u._id} value={u._id}>
+                        {u.username || u.email}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Membership Type
+                </label>
+                <select
+                  value={filterMembershipType}
+                  onChange={(e) => setFilterMembershipType(e.target.value)}
+                  className='w-full px-3 py-2 border rounded bg-white'
+                >
+                  <option value=''>All</option>
+                  <option value='annual'>Annual</option>
+                  <option value='ordinary'>Ordinary</option>
+                </select>
+              </div>
+
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Membership Status
+                </label>
+                <select
+                  value={filterMembershipStatus}
+                  onChange={(e) => setFilterMembershipStatus(e.target.value)}
+                  className='w-full px-3 py-2 border rounded bg-white'
+                >
+                  <option value=''>All</option>
+                  <option value='active'>Active</option>
+                  <option value='pending'>Pending</option>
+                  <option value='cancelled'>Cancelled</option>
+                </select>
+              </div>
+
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Role
+                </label>
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
+                  className='w-full px-3 py-2 border rounded bg-white'
+                >
+                  <option value=''>All</option>
+                  <option value='admin'>Admin</option>
+                  <option value='user'>User</option>
+                </select>
+              </div>
+
+              <div className='flex items-end'>
+                <div className='w-full'>
+                  <button
+                    onClick={() => {
+                      setFilterPosition('');
+                      setFilterReferredBy('');
+                      setFilterMembershipType('');
+                      setFilterMembershipStatus('');
+                      setFilterRole('');
+                    }}
+                    className='w-full bg-gray-100 px-3 py-2 rounded text-sm'
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <UsersList
-          users={users.filter(
-            (user) =>
-              user._id.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-              user.username
-                .toLowerCase()
-                .includes(userSearchQuery.toLowerCase()) ||
-              user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
-          )}
+          users={filteredUsers}
           onViewDetails={handleViewUserDetails}
         />
       </>

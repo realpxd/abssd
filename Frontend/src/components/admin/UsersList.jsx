@@ -33,6 +33,9 @@ const UsersList = ({ users, onViewDetails }) => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                M.No.
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 User
               </th>
@@ -56,6 +59,9 @@ const UsersList = ({ users, onViewDetails }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
               <tr key={user._id} className="hover:bg-gray-50">
+                <td className='flex whitespace-nowrap h-full px-3 py-6'>
+                    <span className='h-full text-center'># {user.memberNumber}</span>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
@@ -73,12 +79,24 @@ const UsersList = ({ users, onViewDetails }) => {
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                      <div className="text-sm text-gray-500">
-                        {user.role === 'admin' && (
-                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                            Admin
-                          </span>
-                        )}
+                      <div className='flex gap-1'>
+                        <div className="text-sm text-gray-500">
+                          {user.role === 'admin' && (
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        {user.position?.name !== 'Member' && <div className="text-sm text-gray-500">
+                            <span className="text-xs bg-orange-100 text-black px-2 py-1 rounded">
+                              {user.position?.name}
+                            </span>
+                        </div>}
+                        {user.isTeamLeader && <div className="text-sm text-gray-500">
+                            <span className="text-xs bg-green-100 text-black px-2 py-1 rounded">
+                              {user.isTeamLeader ? 'Team Leader' : ''}
+                            </span>
+                        </div>}
                       </div>
                     </div>
                   </div>
