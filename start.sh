@@ -14,6 +14,8 @@ NC='\033[0m' # No Color
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PID_FILE="$SCRIPT_DIR/.server_pids"
+LOG_DIR="$SCRIPT_DIR/logs"
+mkdir -p "$LOG_DIR"
 
 # Function to cleanup on exit
 cleanup() {
@@ -63,11 +65,16 @@ if [ ! -f ".env" ]; then
     echo -e "${YELLOW}Please create .env file with required environment variables.${NC}"
 fi
 
-npm run dev > ../backend.log 2>&1 &
+# Choose command based on NODE_ENV; use nohup so process persists on VPS after logout
+if [ "${NODE_ENV}" = "production" ]; then
+  nohup npm start > "$LOG_DIR/backend.log" 2>&1 &
+else
+  nohup npm run dev > "$LOG_DIR/backend.log" 2>&1 &
+fi
 BACKEND_PID=$!
-echo "$BACKEND_PID" >> "$PID_FILE"
+echo "backend:$BACKEND_PID" >> "$PID_FILE"
 echo -e "${GREEN}Backend started with PID: $BACKEND_PID${NC}"
-echo -e "${BLUE}Backend logs: backend.log${NC}"
+echo -e "${BLUE}Backend logs: $LOG_DIR/backend.log${NC}"
 
 # Wait a bit for backend to start
 sleep 2
@@ -80,11 +87,13 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-npm run dev > ../frontend.log 2>&1 &
+# Run dev server bound to all interfaces so it's reachable on VPS; use nohup to persist
+# Pass -- --host 0.0.0.0 to forward to Vite if package accepts extra args
+nohup npm run dev -- --host 0.0.0.0 > "$LOG_DIR/frontend.log" 2>&1 &
 FRONTEND_PID=$!
-echo "$FRONTEND_PID" >> "$PID_FILE"
+echo "frontend:$FRONTEND_PID" >> "$PID_FILE"
 echo -e "${GREEN}Frontend started with PID: $FRONTEND_PID${NC}"
-echo -e "${BLUE}Frontend logs: frontend.log${NC}"
+echo -e "${BLUE}Frontend logs: $LOG_DIR/frontend.log${NC}"
 
 # Wait a bit for frontend to start
 sleep 3

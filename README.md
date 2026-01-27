@@ -8,207 +8,196 @@ A professional, modern website for Akhil Bhartiya Swachta Sewa Dal Trust, built 
 NGO/
 ├── Frontend/          # React + Vite + Tailwind CSS v4
 └── Backend/           # Node.js + Express + MongoDB
+ # अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट (ABSSD) — Website & Admin
+
+This repository contains the codebase for the ABSSD website and admin portal:
+
+- Frontend: React + Vite + Tailwind CSS
+- Backend: Node.js + Express + MongoDB (Mongoose)
+
+This README documents how to run, develop, and deploy the project locally and lists important behaviors, environment variables and troubleshooting notes.
+
+## Repository layout
+
+```
+/Frontend        # React (Vite) app, Tailwind CSS, admin pages
+/Backend         # Express API, Mongoose models, controllers & jobs
+README.md
+start.sh
+stop.sh
+PROJECT.md
 ```
 
-## Features
+## Features (overview)
 
-- 🎨 Modern, responsive design with Tailwind CSS v4
-- 🌐 Bilingual support (Hindi/English)
-- 📱 Fully responsive for all devices
-- 🖼️ Gallery with image modal
-- 📧 Contact form with backend integration
-- 📰 News/Events section
-- ⚡ Fast performance with React Query
-- 🎯 SEO optimized
+- Public website: Home, About, Services, Gallery, News, Contact
+- Admin portal: user management, gallery & news management, membership exports (CSV / XLSX)
+- User flows: registration, email verification, password reset (backend + frontend pages)
+- Payments: payment attempts persistence and reconcile job (Razorpay integration)
+- ID Cards: printable membership ID cards from the admin UI
+- Admin utilities: export users (CSV/XLSX), filters, and print ID directly from users list
 
-## Tech Stack
+## Prerequisites
 
-### Frontend
-- **React 19** - UI library
-- **Vite** - Build tool
-- **Tailwind CSS v4** - Styling
-- **React Query** - Data fetching and caching
-- **Heroicons** - Icons
+- Node.js >= 18
+- npm (or yarn)
+- MongoDB (local or cloud URI)
+- Optional: `xlsx` package in Frontend for Excel export (if using Excel export)
 
-### Backend
-- **Node.js** - Runtime
-- **Express** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM
+## Environment variables
 
-## Getting Started
+Create `.env` files in both `Frontend/` and `Backend/` as needed. Example entries:
 
-### Prerequisites
-
-- Node.js (v18 or higher)
-- MongoDB (local or cloud instance)
-- npm or yarn
-
-### Quick Start (Recommended)
-
-Use the provided bash scripts to start/stop both servers:
-
-```bash
-# Start both Frontend and Backend
-./start.sh
-
-# Stop both servers
-./stop.sh
-```
-
-The scripts will:
-- Check and install dependencies if needed
-- Start both servers in the background
-- Save process IDs for easy stopping
-- Display server URLs and logs location
-
-**Note**: Make sure MongoDB is running before starting the backend.
-
-### Manual Setup
-
-#### Frontend Setup
-
-1. Navigate to the Frontend directory:
-```bash
-cd Frontend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file:
-```bash
-cp .env.example .env
-```
-
-4. Update `.env` with your API URL:
-```
-VITE_API_BASE_URL=http://localhost:5000/api
-```
-
-5. Start the development server:
-```bash
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`
-
-### Backend Setup
-
-1. Navigate to the Backend directory:
-```bash
-cd Backend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file:
-```bash
-cp .env.example .env
-```
-
-4. Update `.env` with your configuration:
+Backend (`Backend/.env`)
 ```
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/abssd
 NODE_ENV=development
+JWT_SECRET=your_jwt_secret_here
 FRONTEND_URL=http://localhost:5173
+EMAIL_SMTP_HOST=smtp.example.com
+EMAIL_SMTP_PORT=587
+EMAIL_SMTP_USER=your_smtp_user
+EMAIL_SMTP_PASS=your_smtp_pass
+RAZORPAY_KEY=your_razorpay_key
+RAZORPAY_SECRET=your_razorpay_secret
 ```
 
-5. Start MongoDB (if running locally):
-```bash
-mongod
+Frontend (`Frontend/.env`)
+```
+VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-6. Start the backend server:
+Notes:
+- Keep secrets out of source control. Use `.env.example` as a template.
+- If you use a cloud MongoDB provider (Atlas), set `MONGODB_URI` accordingly.
+
+## Quick start — development
+
+You can use the helper scripts or run servers manually.
+
+Using helper scripts (recommended for local dev):
+
 ```bash
-# Development mode (with nodemon)
+# from repo root
+./start.sh
+
+# to stop
+./stop.sh
+```
+
+Manual (frontend + backend in separate terminals):
+
+Frontend:
+```bash
+cd Frontend
+npm install
+# if you plan to use Excel export in-browser, install xlsx
+npm install xlsx
 npm run dev
-
-# Production mode
-npm start
+# Default dev URL: http://localhost:5173
 ```
 
-The backend API will be available at `http://localhost:5000`
+Backend:
+```bash
+cd Backend
+npm install
+# copy .env.example -> .env and update values
+npm run dev   # uses nodemon in development
+# or `npm start` for production
+# Default API URL: http://localhost:5000
+```
 
-## API Endpoints
+Open the frontend in your browser and sign in to the admin area to test admin flows.
 
-### Contact
-- `POST /api/contact` - Submit contact form
-- `GET /api/contact` - Get all contacts (admin)
-- `GET /api/contact/:id` - Get single contact
+## Admin flows & notes
 
-### Gallery
-- `GET /api/gallery` - Get all gallery items
-- `POST /api/gallery` - Create gallery item (admin)
-- `PUT /api/gallery/:id` - Update gallery item (admin)
-- `DELETE /api/gallery/:id` - Delete gallery item (admin)
+- User listing supports filtering (position, referredBy limited to team leaders, membership type/status, role) and debounced search.
+- Export users: CSV (built-in) and Excel (.xlsx) — Excel uses dynamic import of `xlsx` and works if the package is installed in `Frontend`.
+- Print ID: Admin Users table includes a "Print ID" action; this opens the user details modal and prints the ID card in a popup window. Popups must be allowed.
+- Press `Esc` to close the user details modal or the ID card preview.
 
-### Events
-- `GET /api/events` - Get all events
-- `POST /api/events` - Create event (admin)
-- `PUT /api/events/:id` - Update event (admin)
-- `DELETE /api/events/:id` - Delete event (admin)
+## Important implementation details and known issues
 
-### Health Check
-- `GET /api/health` - Server health check
+- Reconcile job: The backend runs a reconcile job for payments. If you see transient errors on server start indicating the job ran before DB connection, move the reconcile start into the DB-connected callback (this is recommended for production deployments).
+- Dynamic imports: Excel export uses a dynamic import so the frontend doesn't hard-depend on the `xlsx` package unless the user triggers an Excel export.
+- ID card scaling: The ID card component contains logic to fit long names into two lines by computing a safe font-size at runtime using ResizeObserver. This relies on browser DOM (no server side rendering for the ID card print).
 
-## Development
+## API quick reference
 
-### Using Scripts (Recommended)
-- `./start.sh` - Start both Frontend and Backend servers
-- `./stop.sh` - Stop both servers
+Base URL: `${VITE_API_BASE_URL || http://localhost:5000}/api`
 
-### Frontend Scripts
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+Selected endpoints (see controllers for more):
 
-### Backend Scripts
-- `npm run dev` - Start development server with nodemon
-- `npm start` - Start production server
+- `POST /api/auth/register` — create user
+- `POST /api/auth/login` — login (returns JWT)
+- `POST /api/auth/forgot-password` — request password reset
+- `POST /api/auth/reset-password` — reset password with token
+- `GET /api/users` — list users (admin)
+- `GET /api/gallery` — list gallery
+- `POST /api/gallery` — create gallery (admin)
+- `GET /api/events` — list events
+- `POST /api/contact` — submit contact
 
-### Logs
-When using `./start.sh`, logs are saved to:
-- `backend.log` - Backend server logs
-- `frontend.log` - Frontend server logs
+For full list see `Backend/controllers` and `Backend/routes` folders.
 
-## Project Information
+## Running tests & linters
 
-### Organization Details
-- **Name**: अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट (Akhil Bhartiya Swachta Sewa Dal Trust)
-- **Founded**: 2017
-- **Founder & National President**: श्री जीतू माली (Shri Jeetu Mali)
-- **Contact**: +91 8860442044
+- Frontend linting (ESLint):
 
-### Services
-- स्वच्छता अभियान (Cleanliness Campaigns)
-- जलसेवा (Water Service)
-- शोचालय प्रबंधन (Toilet Management)
-- मेले सेवा (Fair Service)
-- एकादशी सेवा (Ekadashi Service)
-- पर्यावरण जागरूकता (Environmental Awareness)
+```bash
+cd Frontend
+npm run lint
+```
+
+- Backend: unit tests are not included by default. Add Jest/Mocha if you plan to add test suites.
+
+## Build & deploy
+
+Frontend production build:
+
+```bash
+cd Frontend
+npm run build
+# serve the `dist` directory with any static server or integrate with your preferred hosting provider
+```
+
+Backend production:
+
+```bash
+cd Backend
+npm install --production
+NODE_ENV=production node server.js
+```
+
+Deployment notes:
+
+- This project previously included Vercel configuration but can be deployed to any Node+Mongo hosting (Heroku, Railway, DigitalOcean App Platform, AWS, etc.).
+- Ensure environment variables are configured on the host and that the reconcile job starts only after the DB connection is established.
+
+## Troubleshooting
+
+- "Popup blocked" when printing ID: allow popups for the domain or use the browser's Print dialog instead (open the ID card modal and click the Print button).
+- Excel export says `xlsx` is missing: install the package in the `Frontend` folder: `npm install xlsx`.
+- Backend reconcile job errors on startup: see "Important implementation details" above.
+- CORS issues: ensure `FRONTEND_URL` in backend `.env` matches your frontend origin.
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Implement changes and add tests where possible
+4. Open a pull request describing the change and rationale
+
+## Contact & support
+
+For help or questions, reach out to project maintainers:
+
+- Phone: +91 8860442044
+- Email: info@abssd.org
 
 ## License
 
 ISC
-
-## Support
-
-For support, contact:
-- Phone: +91 8860442044
-- Email: info@abssd.org
+4. Submit a pull request
 
