@@ -4,7 +4,7 @@ import IDCard from '../IDCard.jsx'
 import client from '../../api/client.js'
 import Cropper from 'react-easy-crop'
 
-const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin, onDelete, onToggleTeamLeader, positions = [], onTogglePosition, onUserUpdated }) => {
+const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdmin, onDelete, onToggleTeamLeader, positions = [], onTogglePosition, onUserUpdated, autoPrint = false, onAutoPrinted = () => {} }) => {
   const [notificationForm, setNotificationForm] = useState({
     subject: '',
     message: '',
@@ -24,6 +24,24 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
   const [loading, setLoading] = useState(false)
   const [showIdCard, setShowIdCard] = useState(false)
   const printRef = useRef(null)
+
+  // helper to print the ID card node referenced by printRef
+  const doPrint = async () => {
+    try {
+      const node = printRef.current
+      if (!node) return
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) { alert('Please allow popups for this site to enable printing'); return }
+      const headNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      const headHtml = headNodes.map((n) => n.outerHTML).join('\n')
+      const cardHtml = node.outerHTML
+      printWindow.document.open()
+      printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8" />${headHtml}<style>body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f3f4f6;padding:20px}.card-container{box-shadow:none!important}</style></head><body>${cardHtml}</body></html>`)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => { try { printWindow.print(); printWindow.close() } catch (e) { console.error('Auto print error', e) } }, 300)
+    } catch (err) { console.error('Print error', err); alert('Unable to open print window') }
+  }
 
   if (!user) return null
 
@@ -46,6 +64,32 @@ const UserDetailsModal = ({ user, onClose, onUpdateStatus, onNotify, onToggleAdm
       setEditMode(false)
     }
   }, [user])
+
+  // handle Escape key: if ID card is open, close it; otherwise close the modal
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (showIdCard) setShowIdCard(false)
+        else onClose()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showIdCard, onClose])
+
+  // auto-print when requested by parent: open ID card and trigger print once visible
+  useEffect(() => {
+    if (!autoPrint || !user) return
+    // open ID card UI
+    setShowIdCard(true)
+    // wait a tick for render then trigger print
+    const t = setTimeout(async () => {
+      await doPrint()
+      // notify parent that auto-print action completed so it can clear its flag
+      try { onAutoPrinted() } catch (e) {}
+    }, 250)
+    return () => clearTimeout(t)
+  }, [autoPrint, user])
 
   const handleStatusUpdate = async (newStatus) => {
     if (confirm(`Are you sure you want to ${newStatus} this membership?`)) {

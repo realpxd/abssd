@@ -1,6 +1,6 @@
 import { getImageUrl } from '../../utils/imageUrl.js'
 
-const UsersList = ({ users, onViewDetails }) => {
+const UsersList = ({ users, onViewDetails, onPrintID }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -34,6 +34,9 @@ const UsersList = ({ users, onViewDetails }) => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sr.No.
+              </th>
+              <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 M.No.
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -52,13 +55,19 @@ const UsersList = ({ users, onViewDetails }) => {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Print
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
+            {users.map((user, index) => (
               <tr key={user._id} className="hover:bg-gray-50">
+        <td className='whitespace-nowrap h-full px-3 py-6'>
+          <span className='h-full text-center'>{users.length - index}.</span>
+        </td>
                 <td className='flex whitespace-nowrap h-full px-3 py-6'>
                     <span className='h-full text-center'># {user.memberNumber}</span>
                 </td>
@@ -123,6 +132,14 @@ const UsersList = ({ users, onViewDetails }) => {
                   >
                     {getStatusText(user.membershipStatus)}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    onClick={() => onPrintID && onPrintID(user)}
+                    className="text-blue-600 hover:text-blue-900 mr-3"
+                  >
+                    Print ID
+                  </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button

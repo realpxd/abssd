@@ -24,6 +24,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [positions, setPositions] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [autoPrint, setAutoPrint] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -532,6 +533,12 @@ const AdminDashboard = () => {
     setSelectedUser(user);
   };
 
+  const handlePrintUser = (user) => {
+    // open details modal and request auto-print
+    setSelectedUser(user);
+    setAutoPrint(true);
+  };
+
   const handleUpdateMembershipStatus = async (userId, newStatus) => {
     try {
       await client(`${api.endpoints.auth}/users/${userId}/membership`, {
@@ -936,6 +943,7 @@ const AdminDashboard = () => {
         <UsersList
           users={filteredUsers}
           onViewDetails={handleViewUserDetails}
+          onPrintID={handlePrintUser}
         />
       </>
     );
@@ -1021,7 +1029,9 @@ const AdminDashboard = () => {
       {selectedUser && (
         <UserDetailsModal
           user={selectedUser}
-          onClose={() => setSelectedUser(null)}
+          autoPrint={autoPrint}
+          onAutoPrinted={() => setAutoPrint(false)}
+          onClose={() => { setSelectedUser(null); setAutoPrint(false); }}
           onUpdateStatus={handleUpdateMembershipStatus}
           onNotify={handleNotifyUser}
           onToggleAdmin={handleToggleAdmin}
