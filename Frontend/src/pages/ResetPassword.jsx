@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import client from '../api/client.js'
 import api from '../api/config.js'
 import AuthHeader from '../components/AuthHeader.jsx'
+import SEO from '../components/SEO.jsx'
 
 const ResetPassword = () => {
   const location = useLocation()
@@ -55,6 +56,11 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+      <SEO 
+        title="Reset Password - Set New Password"
+        description="अपने खाते के लिए नया पासवर्ड सेट करें। अपने ईमेल से प्राप्त रीसेट टोकन का उपयोग करें।"
+        canonical="/reset-password"
+      />
       <AuthHeader showBack={true} />
 
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] py-12 px-4 sm:px-6 lg:px-8">

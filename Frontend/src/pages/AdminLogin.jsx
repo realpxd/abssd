@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import AuthHeader from '../components/AuthHeader.jsx'
+import SEO from '../components/SEO.jsx'
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -38,6 +39,12 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+      <SEO 
+        title="Admin Login"
+        description="Administrator login page for managing gallery, news, and member content."
+        canonical="/admin/login"
+        robots="noindex, nofollow"
+      />
       <AuthHeader showBack={true} />
       
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] py-12 px-4 sm:px-6 lg:px-8">

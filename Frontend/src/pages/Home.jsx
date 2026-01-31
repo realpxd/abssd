@@ -10,6 +10,7 @@ import News from '../components/News'
 import Contact from '../components/Contact'
 import Join from '../components/Join'
 import MembershipModal from '../components/MembershipModal'
+import SEO from '../components/SEO'
 import { smoothScrollTo } from '../utils/smoothScroll.js'
 import MajorMembers from './MajorMembers.jsx'
 
@@ -32,6 +33,12 @@ const Home = () => {
 
   return (
     <main>
+      <SEO 
+        title="Home"
+        description="अखिल भारतीय स्वच्छता सेवा दल - स्वच्छता अभियान, जल सेवा, एकादशी सेवा में भाग लें। Khatu, Rajasthan में स्थित राष्ट्रीय समाजिक संगठन। दान करें और स्वयंसेवक बनें।"
+        canonical="/"
+        ogImage="https://abssd.in/images/logo.png"
+      />
       <MembershipModal isLoggedIn={!!user} />
       <Hero />
       <About />

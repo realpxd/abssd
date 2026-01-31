@@ -14,6 +14,7 @@ import NewsCard from '../components/admin/NewsCard.jsx';
 import LoadingSpinner from '../components/admin/LoadingSpinner.jsx';
 import UsersList from '../components/admin/UsersList.jsx';
 import UserDetailsModal from '../components/admin/UserDetailsModal.jsx';
+import SEO from '../components/SEO.jsx';
 
 const AdminDashboard = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -951,6 +952,12 @@ const AdminDashboard = () => {
 
   return (
     <div className='min-h-screen bg-gray-50'>
+      <SEO 
+        title="Admin Dashboard"
+        description="Administrator dashboard for managing gallery items, news articles, members, and positions."
+        canonical="/admin/dashboard"
+        robots="noindex, nofollow"
+      />
       <AdminHeader username={user?.username} onLogout={handleLogout} />
 
       <div className='container mx-auto px-4 py-8'>

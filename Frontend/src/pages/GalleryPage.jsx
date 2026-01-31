@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useGallery } from '../hooks/useGallery.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import { getImageUrl } from '../utils/imageUrl.js'
 
 const GalleryPage = () => {
@@ -40,6 +41,12 @@ const GalleryPage = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="Gallery - Photo Gallery"
+        description="अखिल भारतीय स्वच्छता सेवा दल की तस्वीरें देखें। स्वच्छता अभियान, जल सेवा, एकादशी सेवा, मेला सेवा और सामाजिक कार्यक्रमों की फोटो गैलरी। Khatu, Rajasthan।"
+        canonical="/gallery"
+        ogImage="https://abssd.in/images/logo.png"
+      />
       <Header />
       <main className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">

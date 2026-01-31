@@ -1,3 +1,32 @@
+# Robots.txt for Akhil Bhartiya Swachhta Sewa Dal Trust
+# SEO Optimized - Block admin and unnecessary resources
+
+# Default rules for all bots
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /node_modules/
+Disallow: /*.json$
+Disallow: /src/
+
+# Google Specific
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Crawl-delay: 0
+
+# Bing Specific
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Crawl-delay: 1
+
+# Block known bad/aggressive bots
+User-agent: MJ12bot
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+Disallow: /
+
+# Sitemap
 Sitemap: https://abssd.in/sitemap.xml

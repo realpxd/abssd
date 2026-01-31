@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 
 const NotFound = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+      <SEO 
+        title="Page Not Found - 404 Error"
+        description="यह पृष्ठ नहीं मिला। आप गलत URL में हो सकते हैं या पृष्ठ स्थानांतरित किया गया है।"
+        canonical="*"
+        robots="noindex, follow"
+      />
       <div className="text-center max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-gray-800 mb-4">404</h1>

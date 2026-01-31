@@ -5,6 +5,7 @@ import client from '../api/client.js'
 import api from '../api/config.js'
 import Logo from '../components/Logo.jsx'
 import IDCard from '../components/IDCard.jsx'
+import SEO from '../components/SEO.jsx'
 import { getImageUrl } from '../utils/imageUrl.js'
 
 const Profile = () => {
@@ -205,11 +206,17 @@ const Profile = () => {
       </div>
     )
   }
-console.log({user})
+
   const photoUrl = user.photo ? getImageUrl(user.photo) : null
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
+      <SEO 
+        title="My Profile - Member Dashboard"
+        description="अपनी सदस्य प्रोफाइल देखें और प्रबंधित करें। अपना ID कार्ड डाउनलोड करें और दान का इतिहास देखें।"
+        canonical="/profile"
+        robots="noindex, follow"
+      />
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">

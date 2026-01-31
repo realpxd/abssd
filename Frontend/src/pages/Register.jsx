@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import client from '../api/client.js'
 import api from '../api/config.js'
 import AuthHeader from '../components/AuthHeader.jsx'
+import SEO from '../components/SEO.jsx'
 
 const MEMBERSHIP_PLANS = {
   ordinary: {
@@ -501,6 +502,11 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+      <SEO 
+        title="Register - Become Member"
+        description="अखिल भारतीय स्वच्छता सेवा दल का सदस्य बनें। साधारण या वार्षिक सदस्यता चुनें। स्वच्छता अभियान में भाग लें और स्वयंसेवक बनें।"
+        canonical="/register"
+      />
       <AuthHeader showBack={true} />
       <div className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">

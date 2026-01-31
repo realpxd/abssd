@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import AuthHeader from '../components/AuthHeader.jsx'
+import SEO from '../components/SEO.jsx'
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -39,6 +40,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+      <SEO 
+        title="Login - Member Portal"
+        description="अपने सदस्य खाते में लॉगिन करें। अपनी प्रोफाइल, दान का इतिहास और स्वयंसेवक रिकॉर्ड देखें।"
+        canonical="/login"
+      />
       <AuthHeader showBack={false} />
       
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] py-12 px-4 sm:px-6 lg:px-8">

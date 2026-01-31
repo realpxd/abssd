@@ -1,6 +1,14 @@
+import SEO from '../components/SEO'
+
 const Donation = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white py-12">
+      <SEO 
+        title="Donations - Help Our Mission"
+        description="अखिल भारतीय स्वच्छता सेवा दल को दान दें। 80G/12A के तहत कर-मुक्त दान। आपका योगदान स्वच्छता और सामाजिक सेवा कार्यों में मदद करेगा। Secure Online Donation।"
+        canonical="/donation"
+        ogImage="https://abssd.in/images/logo.png"
+      />
       <div className="container mx-auto px-4">
         {/* Header Section */}
         <div className="text-center mb-12">

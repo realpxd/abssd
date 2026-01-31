@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useEvents } from '../hooks/useEvents.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import { getImageUrl } from '../utils/imageUrl.js'
 
 const NewsPage = () => {
@@ -41,6 +42,12 @@ const NewsPage = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="News & Updates - ABSSD"
+        description="अखिल भारतीय स्वच्छता सेवा दल की ताजी खबरें और अपडेट। स्वच्छता अभियान, जल सेवा कार्यक्रम, एकादशी सेवा और सामाजिक पहल की जानकारी।"
+        canonical="/news"
+        ogImage="https://abssd.in/images/logo.png"
+      />
       <Header />
       <main className="py-20 bg-white">
         <div className="container mx-auto px-4">

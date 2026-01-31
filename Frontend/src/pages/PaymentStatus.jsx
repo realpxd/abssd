@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import client from '../api/client.js'
 import api from '../api/config.js'
+import SEO from '../components/SEO.jsx'
 
 const PaymentStatus = () => {
   const [search] = useSearchParams()
@@ -48,6 +49,12 @@ const PaymentStatus = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <SEO 
+        title="Payment Status - Check Membership"
+        description="अपनी भुगतान और सदस्यता सक्रियण स्थिति जांचें।"
+        canonical="/payment-status"
+        robots="noindex, follow"
+      />
       <div className="max-w-xl w-full bg-white p-6 rounded shadow text-center">
         {status === 'captured' && userInfo && userInfo.membershipStatus === 'active' ? (
           <>

@@ -1,4 +1,5 @@
 import React from 'react'
+import SEO from '../components/SEO'
 
 const MEMBERS = [
   {
@@ -26,6 +27,11 @@ const fallbackImageUrl = '/images/logo.jpg'
 const MajorMembers = ({ lowHeight }) => {
   return (
     <div className={`bg-gradient-to-b from-orange-50 via-white to-orange-50 pt-16 pb-16 md:pb-0 ${lowHeight ? 'min-h-[50vh]' : 'min-h-[70vh]'}`}>
+      {!lowHeight && <SEO 
+        title="Core Team - Leadership"
+        description="अखिल भारतीय स्वच्छता सेवा दल की नेतृत्व टीम से मिलें। राष्ट्रीय अध्यक्ष, महासचिव और मुख्य सदस्यों के बारे में जानें। Jeetu Mali, Akanksha Mali, Umesh Gupta।"
+        canonical="/core-team"
+      />}
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">नेतृत्व टीम</h1>
