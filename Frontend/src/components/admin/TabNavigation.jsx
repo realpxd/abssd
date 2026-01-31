@@ -1,56 +1,34 @@
+import { FiImage, FiFileText, FiUsers, FiTarget } from 'react-icons/fi';
+
 const TabNavigation = ({ activeTab, onTabChange }) => {
+  const tabs = [
+    { id: 'gallery', label: 'Gallery', icon: FiImage },
+    { id: 'news', label: 'News', icon: FiFileText },
+    { id: 'users', label: 'Users', icon: FiUsers },
+    { id: 'positions', label: 'Positions', icon: FiTarget },
+  ];
+
   return (
-    <div className='flex space-x-4 mb-8 border-b'>
-      <button
-        onClick={() => onTabChange('gallery')}
-        className={`px-6 py-3 font-medium ${
-          activeTab === 'gallery'
-            ? 'border-b-2 border-orange-600 text-orange-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Gallery Management
-      </button>
-      <button
-        onClick={() => onTabChange('news')}
-        className={`px-6 py-3 font-medium ${
-          activeTab === 'news'
-            ? 'border-b-2 border-orange-600 text-orange-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        News Management
-      </button>
-      <button
-        onClick={() => onTabChange('users')}
-        className={`px-6 py-3 font-medium ${
-          activeTab === 'users'
-            ? 'border-b-2 border-orange-600 text-orange-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        User Management
-      </button>
-      <button
-        onClick={() => onTabChange('create-user')}
-        className={`px-6 py-3 font-medium ${
-          activeTab === 'create-user'
-            ? 'border-b-2 border-orange-600 text-orange-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Create User
-      </button>
-      <button
-        onClick={() => onTabChange('positions')}
-        className={`px-6 py-3 font-medium ${
-          activeTab === 'positions'
-            ? 'border-b-2 border-orange-600 text-orange-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Positions
-      </button>
+    <div className='mb-8 bg-white border-b border-gray-200 rounded-lg shadow-sm'>
+      <div className='flex items-center gap-1 overflow-x-auto px-2'>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`flex items-center gap-2 px-5 py-4 font-medium whitespace-nowrap transition-all duration-200 rounded-t-lg border-b-2 ${
+                activeTab === tab.id
+                  ? 'border-orange-600 text-orange-600 bg-orange-50'
+                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <Icon size={20} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };

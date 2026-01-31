@@ -562,46 +562,49 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
 
         {/* If user was just created, show ID card and print option */}
         {createdUser && (
-          <div className='space-y-4'>
-            <div className='flex flex-col md:flex-row gap-6'>
-              <div className='md:w-[340px]'>
-                <IDCard ref={printRef} user={createdUser} />
-              </div>
-
-              <div className='flex-1 flex flex-col justify-start gap-6'>
-                <div className='bg-white p-4 rounded shadow-sm'>
-                  <div className='text-gray-600'>Membership Type</div>
-                  <div className='font-semibold'>
-                    {createdUser.membershipType === 'annual'
-                      ? 'Annual'
-                      : 'Ordinary'}
-                  </div>
+          <div className='space-y-4 h-full w-full bg-white absolute top-0 left-0 flex flex-col items-center justify-center p-6 gap-12'>
+            <p className='text-3xl font-bold '>User Created Successfully!!</p>
+            <div className='space-y-4 w-3/4'>
+              <div className='flex flex-col md:flex-row gap-6'>
+                <div className='md:w-[340px]'>
+                  <IDCard ref={printRef} user={createdUser} />
                 </div>
 
-                <div className='bg-white p-4 rounded shadow-sm'>
-                  <div className='text-gray-600'>Member Since</div>
-                  <div className='font-semibold'>
-                    {createdUser.createdAt
-                      ? new Date(createdUser.createdAt).toLocaleDateString(
-                          'en-IN',
-                        )
-                      : 'N/A'}
+                <div className='flex-1 flex flex-col justify-start gap-6'>
+                  <div className='bg-white p-4 rounded shadow-sm'>
+                    <div className='text-gray-600'>Membership Type</div>
+                    <div className='font-semibold'>
+                      {createdUser.membershipType === 'annual'
+                        ? 'Annual'
+                        : 'Ordinary'}
+                    </div>
                   </div>
-                </div>
 
-                <div className='flex flex-col gap-3 mt-auto'>
-                  <button
-                    onClick={handlePrintCard}
-                    className='w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2'
-                  >
-                    प्रिंट करें / Print
-                  </button>
-                  <button
-                    onClick={handleDoneAfterPrint}
-                    className='w-full bg-orange-500 text-white px-4 py-3 rounded-lg hover:bg-orange-600 font-semibold'
-                  >
-                    Done
-                  </button>
+                  <div className='bg-white p-4 rounded shadow-sm'>
+                    <div className='text-gray-600'>Member Since</div>
+                    <div className='font-semibold'>
+                      {createdUser.createdAt
+                        ? new Date(createdUser.createdAt).toLocaleDateString(
+                            'en-IN',
+                          )
+                        : 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className='flex flex-col gap-3 mt-auto'>
+                    <button
+                      onClick={handlePrintCard}
+                      className='w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2'
+                    >
+                      प्रिंट करें / Print
+                    </button>
+                    <button
+                      onClick={handleDoneAfterPrint}
+                      className='w-full bg-orange-500 text-white px-4 py-3 rounded-lg hover:bg-orange-600 font-semibold'
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

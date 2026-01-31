@@ -400,6 +400,9 @@ const Register = () => {
           body: {
             amount: MEMBERSHIP_PLANS[selectedPlan].amount,
             membershipType: selectedPlan,
+            name: formData.username,
+            email: formData.email,
+            contactNo: formData.contactNo,
           },
         },
       );

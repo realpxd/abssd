@@ -88,55 +88,6 @@ exports.register = async (req, res) => {
         .json({ success: false, message: 'Username is required' });
     }
 
-    // Generate sequential memberNumber atomically.
-    // Ensure we don't overlap with any existing memberNumber values that may have been
-    // assigned directly (e.g., via backfill). Strategy:
-    // 1. Read current maximum memberNumber in users collection.
-    // 2. Atomically update the Counter document using an aggregation-pipeline update
-    //    to set seq = max(seq, currentMax) and then increment by 1.
-    // 3. As a safety-net, if a user already exists with the assigned memberNumber
-    //    (race or external DB change), increment the counter again until unique.
-    let memberNumber;
-    try {
-      const maxDoc = await User.findOne({ memberNumber: { $exists: true } })
-        .sort({ memberNumber: -1 })
-        .select('memberNumber')
-        .lean();
-      const currentMax =
-        maxDoc && maxDoc.memberNumber ? parseInt(maxDoc.memberNumber, 10) : 0;
-
-      // Use aggregation pipeline update (MongoDB 4.2+) to atomically ensure seq >= currentMax
-      // and then increment. Mongoose supports passing an array as the update.
-      const updatePipeline = [
-        { $set: { seq: { $max: ['$seq', currentMax] } } },
-        { $set: { seq: { $add: ['$seq', 1] } } },
-      ];
-
-      const counter = await Counter.findOneAndUpdate(
-        { _id: 'userId' },
-        updatePipeline,
-        { new: true, upsert: true },
-      );
-
-      memberNumber = counter?.seq;
-
-      // Safety loop: ensure no existing user already has this memberNumber (rare)
-      // If conflict, increment the counter until we find a free number.
-      while (memberNumber) {
-        const conflict = await User.findOne({ memberNumber });
-        if (!conflict) break;
-        const next = await Counter.findOneAndUpdate(
-          { _id: 'userId' },
-          { $inc: { seq: 1 } },
-          { new: true },
-        );
-        memberNumber = next?.seq;
-      }
-    } catch (err) {
-      console.error('Failed to generate memberNumber:', err);
-      memberNumber = undefined;
-    }
-
     // Create user
     // Handle uploaded files (if any)
     const files = req.files || {};
@@ -180,7 +131,6 @@ exports.register = async (req, res) => {
       membershipType,
       membershipAmount,
       membershipStatus: 'pending',
-      memberNumber,
       photo: photoPath,
       // If referral was provided and validated below, referredBy is set later
     });
@@ -227,6 +177,61 @@ exports.register = async (req, res) => {
       }
     }
 
+    // Generate sequential memberNumber atomically AFTER successful user creation.
+    // This avoids incrementing the counter for failed registrations.
+    // Ensure we don't overlap with any existing memberNumber values that may have been
+    // assigned directly (e.g., via backfill). Strategy:
+    // 1. Read current maximum memberNumber in users collection.
+    // 2. Atomically update the Counter document using an aggregation-pipeline update
+    //    to set seq = max(seq, currentMax) and then increment by 1.
+    // 3. As a safety-net, if a user already exists with the assigned memberNumber
+    //    (race or external DB change), increment the counter again until unique.
+    let memberNumber;
+
+    try {
+      const maxDoc = await User.findOne({ memberNumber: { $exists: true } })
+        .sort({ memberNumber: -1 })
+        .select('memberNumber')
+        .lean();
+      const currentMax =
+        maxDoc && maxDoc.memberNumber ? parseInt(maxDoc.memberNumber, 10) : 0;
+
+      // Use aggregation pipeline update (MongoDB 4.2+) to atomically ensure seq >= currentMax
+      // and then increment. Mongoose supports passing an array as the update.
+      const updatePipeline = [
+        { $set: { seq: { $max: ['$seq', currentMax] } } },
+        { $set: { seq: { $add: ['$seq', 1] } } },
+      ];
+
+      const counter = await Counter.findOneAndUpdate(
+        { _id: 'userId' },
+        updatePipeline,
+        { new: true, upsert: true },
+      );
+
+      memberNumber = counter?.seq;
+
+      // Safety loop: ensure no existing user already has this memberNumber (rare)
+      // If conflict, increment the counter until we find a free number.
+      while (memberNumber) {
+        const conflict = await User.findOne({ memberNumber });
+        if (!conflict) break;
+        const next = await Counter.findOneAndUpdate(
+          { _id: 'userId' },
+          { $inc: { seq: 1 } },
+          { new: true },
+        );
+        memberNumber = next?.seq;
+      }
+
+      if (memberNumber) {
+        user.memberNumber = memberNumber;
+        await user.save();
+      }
+    } catch (err) {
+      console.error('Failed to generate memberNumber:', err);
+    }
+
     // Generate token
     const token = user.generateToken();
 
@@ -264,13 +269,11 @@ exports.register = async (req, res) => {
         ? Object.keys(error.keyValue)[0]
         : 'field';
       if (dupField === 'username') {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message:
-              'Username already exists at the database level (unique index). If you want duplicate usernames, remove the unique index on the username field in the database.',
-          });
+        return res.status(409).json({
+          success: false,
+          message:
+            'Username already exists at the database level (unique index). If you want duplicate usernames, remove the unique index on the username field in the database.',
+        });
       }
       return res
         .status(409)
@@ -499,12 +502,10 @@ exports.sendEmailVerification = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'Verification email sent' });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || 'Error sending verification email',
-      });
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Error sending verification email',
+    });
   }
 };
 
@@ -543,20 +544,16 @@ exports.verifyEmail = async (req, res) => {
       .populate('position', 'name')
       .populate('referredBy', 'username memberNumber referralCode');
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Email verified',
-        data: { user: outUser, token: authToken },
-      });
+    res.status(200).json({
+      success: true,
+      message: 'Email verified',
+      data: { user: outUser, token: authToken },
+    });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || 'Error verifying email',
-      });
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Error verifying email',
+    });
   }
 };
 
@@ -632,12 +629,10 @@ exports.testEmail = async (req, res) => {
       .status(200)
       .json({ success: true, message: `Test email sent to ${to}` });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || 'Error sending test email',
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error sending test email',
+    });
   }
 };
 
@@ -904,20 +899,16 @@ exports.updateTeamLeader = async (req, res) => {
       // don't fail the request because email failed — it's best-effort
     }
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Team leader status updated',
-        data: out,
-      });
+    res.status(200).json({
+      success: true,
+      message: 'Team leader status updated',
+      data: out,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || 'Error updating team leader status',
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating team leader status',
+    });
   }
 };
 
@@ -1065,12 +1056,10 @@ exports.updateUserPosition = async (req, res) => {
       .status(200)
       .json({ success: true, message: 'User position updated', data: out });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || 'Error updating user position',
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating user position',
+    });
   }
 };
 
@@ -1136,12 +1125,10 @@ exports.updateUserByAdmin = async (req, res) => {
         _id: { $ne: userId },
       });
       if (existing) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message: 'Email already in use by another account',
-          });
+        return res.status(409).json({
+          success: false,
+          message: 'Email already in use by another account',
+        });
       }
       updates.email = updates.email.toLowerCase();
     }
@@ -1183,21 +1170,17 @@ exports.updateUserByAdmin = async (req, res) => {
         .json({ success: false, message: 'User not found' });
     }
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'User updated successfully',
-        data: user,
-      });
+    res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      data: user,
+    });
   } catch (error) {
     console.error('updateUserByAdmin error', error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || 'Error updating user',
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating user',
+    });
   }
 };
 
@@ -1215,12 +1198,10 @@ exports.updateMemberNumber = async (req, res) => {
 
     const num = parseInt(memberNumber, 10);
     if (isNaN(num) || num <= 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'memberNumber must be a positive integer',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'memberNumber must be a positive integer',
+      });
     }
 
     // Check for uniqueness: if some other user already has this memberNumber, reject
@@ -1229,12 +1210,10 @@ exports.updateMemberNumber = async (req, res) => {
       _id: { $ne: userId },
     });
     if (conflict) {
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: 'memberNumber already assigned to another user',
-        });
+      return res.status(409).json({
+        success: false,
+        message: 'memberNumber already assigned to another user',
+      });
     }
 
     const user = await User.findByIdAndUpdate(
@@ -1256,12 +1235,10 @@ exports.updateMemberNumber = async (req, res) => {
       .status(200)
       .json({ success: true, message: 'memberNumber updated', data: user });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || 'Error updating memberNumber',
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating memberNumber',
+    });
   }
 };
 
@@ -1341,11 +1318,9 @@ exports.deleteUser = async (req, res) => {
       .status(200)
       .json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || 'Error deleting user',
-      });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error deleting user',
+    });
   }
 };

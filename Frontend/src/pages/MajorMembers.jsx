@@ -11,13 +11,13 @@ const MEMBERS = [
   {
     id: 2,
     name: 'Akanksha Mali',
-    role: 'महासचिव (General secretary)',
+    role: 'महासचिव (General Secretary)',
     image: '/images/gs.jpeg',
   },
   {
     id: 3,
     name: 'Umesh Gupta',
-    role: 'कोषाध्यक्ष (cashier)',
+    role: 'कोषाध्यक्ष (Cashier)',
     image: '/images/cashier.jpeg',
   },
 ];

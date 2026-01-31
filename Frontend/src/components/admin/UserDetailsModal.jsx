@@ -3,6 +3,16 @@ import { getImageUrl } from '../../utils/imageUrl.js';
 import IDCard from '../IDCard.jsx';
 import client from '../../api/client.js';
 import Cropper from 'react-easy-crop';
+import {
+  FiEye,
+  FiCheck,
+  FiX,
+  FiStar,
+  FiMail,
+  FiShield,
+  FiTrash2,
+  FiLoader,
+} from 'react-icons/fi';
 
 const UserDetailsModal = ({
   user,
@@ -330,28 +340,30 @@ const UserDetailsModal = ({
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
       <div className='bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto'>
         {/* Header */}
-        <div className='sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center'>
+        <div className='sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center animate-in fade-in duration-200'>
           <h2 className='text-2xl font-bold text-gray-900'>User Details</h2>
-          <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-2'>
             <button
               onClick={() => setEditMode(!editMode)}
-              className='text-sm bg-gray-100 px-3 py-1 rounded'
+              className='px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200'
             >
-              {editMode ? 'Cancel Edit' : 'Edit'}
+              {editMode ? 'Cancel' : 'Edit'}
             </button>
             {editMode && (
               <button
                 onClick={handleSaveChanges}
-                className='text-sm bg-blue-200 px-3 py-1 rounded'
+                disabled={saving}
+                className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                Save Changes
+                {saving && <FiLoader size={16} className='animate-spin' />}
+                {saving ? 'Saving...' : 'Save'}
               </button>
             )}
             <button
               onClick={onClose}
-              className='text-gray-400 hover:text-gray-600 text-2xl'
+              className='p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200'
             >
-              ✕
+              <FiX size={20} />
             </button>
           </div>
         </div>
@@ -969,15 +981,15 @@ const UserDetailsModal = ({
             {Array.isArray(positions) &&
               positions.length > 0 &&
               typeof onTogglePosition === 'function' && (
-                <div className='mb-4 bg-gray-50 p-3 rounded'>
-                  <label className='block text-sm text-gray-700 mb-2'>
+                <div className='mb-4 bg-white p-4 rounded-lg border border-gray-200'>
+                  <label className='block text-sm font-semibold text-gray-700 mb-3'>
                     Assign Position
                   </label>
                   <div className='flex items-center gap-2'>
                     <select
                       value={selectedPosition}
                       onChange={(e) => setSelectedPosition(e.target.value)}
-                      className='px-3 py-2 border rounded-lg'
+                      className='flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                     >
                       <option value=''>-- None --</option>
                       {positions.map((p) => (
@@ -995,31 +1007,45 @@ const UserDetailsModal = ({
                         );
                         setLoading(false);
                       }}
-                      className='bg-indigo-600 text-white px-3 py-2 rounded'
+                      className='flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                      disabled={loading}
                     >
-                      Save
+                      {loading && (
+                        <FiLoader size={14} className='animate-spin' />
+                      )}
+                      {loading ? 'Saving...' : 'Save'}
                     </button>
                   </div>
                 </div>
               )}
 
-            <div className='flex flex-wrap gap-3'>
+            <div className='flex flex-wrap gap-2'>
               {!showIdCard && (
                 <button
                   onClick={() => setShowIdCard(true)}
                   disabled={loading}
-                  className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                 >
-                  👀 View ID CARD
+                  {loading ? (
+                    <FiLoader size={16} className='animate-spin' />
+                  ) : (
+                    <FiEye size={16} />
+                  )}
+                  {loading ? 'Loading...' : 'View ID Card'}
                 </button>
               )}
               {user.membershipStatus === 'pending' && (
                 <button
                   onClick={() => handleStatusUpdate('active')}
                   disabled={loading}
-                  className='bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                 >
-                  ✓ Approve Membership
+                  {loading ? (
+                    <FiLoader size={16} className='animate-spin' />
+                  ) : (
+                    <FiCheck size={16} />
+                  )}
+                  {loading ? 'Processing...' : 'Approve'}
                 </button>
               )}
               {/* Team Leader toggle (admin only) */}
@@ -1038,9 +1064,14 @@ const UserDetailsModal = ({
                       setLoading(false);
                     }}
                     disabled={loading}
-                    className='bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                   >
-                    ✖ Revoke Team Leader
+                    {loading ? (
+                      <FiLoader size={16} className='animate-spin' />
+                    ) : (
+                      <FiX size={16} />
+                    )}
+                    {loading ? 'Revoking...' : 'Revoke Team Leader'}
                   </button>
                 ) : (
                   <button
@@ -1056,9 +1087,14 @@ const UserDetailsModal = ({
                       setLoading(false);
                     }}
                     disabled={loading}
-                    className='bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                   >
-                    ⭐ Make Team Leader
+                    {loading ? (
+                      <FiLoader size={16} className='animate-spin' />
+                    ) : (
+                      <FiStar size={16} />
+                    )}
+                    {loading ? 'Processing...' : 'Make Team Leader'}
                   </button>
                 ))}
 
@@ -1066,9 +1102,14 @@ const UserDetailsModal = ({
                 <button
                   onClick={() => handleStatusUpdate('cancelled')}
                   disabled={loading}
-                  className='bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                 >
-                  ✕ Cancel Membership
+                  {loading ? (
+                    <FiLoader size={16} className='animate-spin' />
+                  ) : (
+                    <FiX size={16} />
+                  )}
+                  {loading ? 'Processing...' : 'Cancel Membership'}
                 </button>
               )}
 
@@ -1076,17 +1117,28 @@ const UserDetailsModal = ({
                 <button
                   onClick={() => handleStatusUpdate('active')}
                   disabled={loading}
-                  className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                 >
-                  ↻ Reactivate Membership
+                  {loading ? (
+                    <FiLoader size={16} className='animate-spin' />
+                  ) : (
+                    <FiCheck size={16} />
+                  )}
+                  {loading ? 'Processing...' : 'Reactivate'}
                 </button>
               )}
 
               <button
                 onClick={() => setShowNotificationForm(!showNotificationForm)}
-                className='bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700'
+                disabled={loading}
+                className='flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
               >
-                📧 Send Email Notification
+                {loading ? (
+                  <FiLoader size={16} className='animate-spin' />
+                ) : (
+                  <FiMail size={16} />
+                )}
+                {loading ? 'Processing...' : 'Email Notification'}
               </button>
 
               {/* Toggle Admin Role */}
@@ -1105,15 +1157,20 @@ const UserDetailsModal = ({
                       setLoading(false);
                     }}
                     disabled={loading}
-                    className='bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                   >
-                    👑 Make Admin
+                    {loading ? (
+                      <FiLoader size={16} className='animate-spin' />
+                    ) : (
+                      <FiShield size={16} />
+                    )}
+                    {loading ? 'Processing...' : 'Make Admin'}
                   </button>
                 ) : (
                   <button
                     onClick={async () => {
                       if (
-                        !confirm(`Revoke admin access from ${user.username}?`)
+                        !confirm(`Revoke admin status from ${user.username}?`)
                       )
                         return;
                       setLoading(true);
@@ -1121,9 +1178,14 @@ const UserDetailsModal = ({
                       setLoading(false);
                     }}
                     disabled={loading}
-                    className='bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                   >
-                    ⛔ Revoke Admin
+                    {loading ? (
+                      <FiLoader size={16} className='animate-spin' />
+                    ) : (
+                      <FiShield size={16} />
+                    )}
+                    {loading ? 'Processing...' : 'Revoke Admin'}
                   </button>
                 ))}
 
@@ -1141,10 +1203,15 @@ const UserDetailsModal = ({
                     await onDelete(user._id);
                     setLoading(false);
                   }}
-                  className='bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors duration-200'
                   disabled={loading}
                 >
-                  🗑️ Delete User
+                  {loading ? (
+                    <FiLoader size={16} className='animate-spin' />
+                  ) : (
+                    <FiTrash2 size={16} />
+                  )}
+                  {loading ? 'Deleting...' : 'Delete User'}
                 </button>
               )}
             </div>

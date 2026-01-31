@@ -14,6 +14,11 @@ const TestControls = () => {
     password: 'test123456',
     username: 'testuser',
     contactNo: '1234567890',
+    state: 'Rajasthan',
+    city: 'Jaipur',
+    orderId: '',
+    userId: '',
+    positionId: '',
   });
 
   // Test Backend Health
@@ -95,6 +100,12 @@ const TestControls = () => {
             body: { email: testData.email, password: testData.password },
           });
           break;
+        case 'adminLogin':
+          response = await client(api.endpoints.auth + '/admin/login', {
+            method: 'POST',
+            body: { email: testData.email, password: testData.password },
+          });
+          break;
         case 'register':
           response = await client(api.endpoints.auth + '/register', {
             method: 'POST',
@@ -109,6 +120,43 @@ const TestControls = () => {
           break;
         case 'me':
           response = await client(api.endpoints.auth + '/me');
+          break;
+        case 'forgotPassword':
+          response = await client(api.endpoints.auth + '/forgot-password', {
+            method: 'POST',
+            body: { email: testData.email },
+          });
+          break;
+        case 'resetPassword': {
+          const token = prompt('Enter reset token');
+          response = await client(api.endpoints.auth + '/reset-password', {
+            method: 'POST',
+            body: { token, password: testData.password },
+          });
+          break;
+        }
+        case 'sendEmailVerification':
+          response = await client(
+            api.endpoints.auth + '/send-email-verification',
+            { method: 'POST' },
+          );
+          break;
+        case 'verifyEmail': {
+          const token = prompt('Enter email verification token');
+          response = await client(api.endpoints.auth + '/verify-email', {
+            method: 'POST',
+            body: { token },
+          });
+          break;
+        }
+        case 'updateProfile':
+          response = await client(api.endpoints.auth + '/profile', {
+            method: 'PUT',
+            body: {
+              username: `${testData.username}_updated`,
+              contactNo: testData.contactNo,
+            },
+          });
           break;
         default:
           throw new Error('Unknown action');
@@ -317,6 +365,11 @@ const TestControls = () => {
         case 'get':
           response = await client(api.endpoints.contact);
           break;
+        case 'getById': {
+          const id = prompt('Enter Contact ID');
+          response = await client(api.endpoints.contact + `/${id}`);
+          break;
+        }
         default:
           throw new Error('Unknown action');
       }
@@ -356,6 +409,76 @@ const TestControls = () => {
             },
           });
           break;
+        case 'openAnnualModal':
+          response = await client(api.endpoints.payment + '/create-order', {
+            method: 'POST',
+            body: {
+              amount: 2555,
+              membershipType: 'annual',
+              name: testData.username,
+              email: testData.email,
+              contactNo: testData.contactNo,
+            },
+          });
+
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () =>
+              reject(new Error('Razorpay SDK failed to load'));
+            document.body.appendChild(script);
+          });
+
+          if (!window.Razorpay) {
+            throw new Error('Razorpay SDK not available');
+          }
+
+          const options = {
+            key: response.data.key,
+            amount: response.data.amount,
+            currency: response.data.currency,
+            name: 'ABSSD Trust',
+            description: 'Annual Membership',
+            order_id: response.data.orderId,
+            handler: (paymentResponse) => {
+              setResults((prev) => ({
+                ...prev,
+                payment_modal: {
+                  success: true,
+                  data: paymentResponse,
+                  timestamp: new Date().toISOString(),
+                },
+              }));
+            },
+            modal: {
+              ondismiss: () => {
+                setResults((prev) => ({
+                  ...prev,
+                  payment_modal: {
+                    success: false,
+                    error: 'Payment modal closed',
+                    timestamp: new Date().toISOString(),
+                  },
+                }));
+              },
+            },
+            prefill: {
+              name: testData.username,
+              email: testData.email,
+              contact: testData.contactNo,
+            },
+            theme: { color: '#F97316' },
+          };
+
+          const razorpay = new window.Razorpay(options);
+          razorpay.open();
+          break;
+        case 'status': {
+          const orderId = testData.orderId || prompt('Enter Order ID');
+          response = await client(api.endpoints.payment + `/status/${orderId}`);
+          break;
+        }
         default:
           throw new Error('Unknown action');
       }
@@ -380,6 +503,209 @@ const TestControls = () => {
     setLoading(false);
   };
 
+  // Test Geo APIs
+  const testGeo = async (action) => {
+    setLoading(true);
+    try {
+      let response;
+      switch (action) {
+        case 'states':
+          response = await client(api.endpoints.geo + '/states');
+          break;
+        case 'cities': {
+          const state = testData.state || prompt('Enter state');
+          response = await client(api.endpoints.geo + `/cities/${state}`);
+          break;
+        }
+        default:
+          throw new Error('Unknown action');
+      }
+      setResults((prev) => ({
+        ...prev,
+        [`geo_${action}`]: {
+          success: true,
+          data: response,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+    } catch (error) {
+      setResults((prev) => ({
+        ...prev,
+        [`geo_${action}`]: {
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+    }
+    setLoading(false);
+  };
+
+  // Test Positions APIs
+  const testPositions = async (action) => {
+    setLoading(true);
+    try {
+      let response;
+      switch (action) {
+        case 'get':
+          response = await client(api.endpoints.positions);
+          break;
+        case 'create':
+          response = await client(api.endpoints.positions, {
+            method: 'POST',
+            body: { name: 'Test Position', description: 'Test position' },
+          });
+          break;
+        case 'update': {
+          const id = testData.positionId || prompt('Enter Position ID');
+          response = await client(api.endpoints.positions + `/${id}`, {
+            method: 'PUT',
+            body: { name: 'Updated Position', description: 'Updated' },
+          });
+          break;
+        }
+        case 'delete': {
+          const id = testData.positionId || prompt('Enter Position ID');
+          response = await client(api.endpoints.positions + `/${id}`, {
+            method: 'DELETE',
+          });
+          break;
+        }
+        default:
+          throw new Error('Unknown action');
+      }
+      setResults((prev) => ({
+        ...prev,
+        [`positions_${action}`]: {
+          success: true,
+          data: response,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+    } catch (error) {
+      setResults((prev) => ({
+        ...prev,
+        [`positions_${action}`]: {
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+    }
+    setLoading(false);
+  };
+
+  // Test Admin User Management APIs
+  const testAdminUsers = async (action) => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      alert('Please login as admin to use this section');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let response;
+      switch (action) {
+        case 'list':
+          response = await client(api.endpoints.users);
+          break;
+        case 'get': {
+          const id = testData.userId || prompt('Enter User ID');
+          response = await client(api.endpoints.users + `/${id}`);
+          break;
+        }
+        case 'updateRole': {
+          const id = testData.userId || prompt('Enter User ID');
+          const role = prompt('Enter role (admin/user)', 'user');
+          response = await client(api.endpoints.users + `/${id}/role`, {
+            method: 'PUT',
+            body: { role },
+          });
+          break;
+        }
+        case 'updateMembership': {
+          const id = testData.userId || prompt('Enter User ID');
+          const status = prompt(
+            'Enter membership status (pending/active/expired/cancelled)',
+            'active',
+          );
+          response = await client(api.endpoints.users + `/${id}/membership`, {
+            method: 'PUT',
+            body: { membershipStatus: status },
+          });
+          break;
+        }
+        case 'updateMemberNumber': {
+          const id = testData.userId || prompt('Enter User ID');
+          const memberNumber = prompt('Enter member number');
+          response = await client(
+            api.endpoints.users + `/${id}/member-number`,
+            { method: 'PUT', body: { memberNumber } },
+          );
+          break;
+        }
+        case 'updatePosition': {
+          const id = testData.userId || prompt('Enter User ID');
+          const positionId = testData.positionId || prompt('Enter Position ID');
+          response = await client(api.endpoints.users + `/${id}/position`, {
+            method: 'PUT',
+            body: { positionId },
+          });
+          break;
+        }
+        case 'updateTeamLeader': {
+          const id = testData.userId || prompt('Enter User ID');
+          const isTeamLeader =
+            prompt('Set team leader? (true/false)', 'false') === 'true';
+          response = await client(api.endpoints.users + `/${id}/team-leader`, {
+            method: 'PUT',
+            body: { isTeamLeader },
+          });
+          break;
+        }
+        case 'notify': {
+          const id = testData.userId || prompt('Enter User ID');
+          response = await client(api.endpoints.users + `/${id}/notify`, {
+            method: 'POST',
+            body: {
+              subject: 'Test Notification',
+              message: 'This is a test notification from Test Controls.',
+            },
+          });
+          break;
+        }
+        case 'delete': {
+          const id = testData.userId || prompt('Enter User ID');
+          response = await client(api.endpoints.users + `/${id}`, {
+            method: 'DELETE',
+          });
+          break;
+        }
+        default:
+          throw new Error('Unknown action');
+      }
+
+      setResults((prev) => ({
+        ...prev,
+        [`admin_${action}`]: {
+          success: true,
+          data: response,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+    } catch (error) {
+      setResults((prev) => ({
+        ...prev,
+        [`admin_${action}`]: {
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        },
+      }));
+    }
+    setLoading(false);
+  };
+
   // Run All Tests
   const runAllTests = async () => {
     setLoading(true);
@@ -389,9 +715,11 @@ const TestControls = () => {
     await testBackendHealth();
     await testDatabase();
     await testAuth('checkEmail');
+    await testGeo('states');
     await testGallery('get');
     await testEvents('get');
     await testContact('create');
+    await testPositions('get');
 
     setLoading(false);
   };
@@ -763,6 +1091,63 @@ const TestControls = () => {
                 className='w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white'
               />
             </div>
+            <div>
+              <label className='block text-sm font-medium mb-2'>State</label>
+              <input
+                type='text'
+                value={testData.state}
+                onChange={(e) =>
+                  setTestData({ ...testData, state: e.target.value })
+                }
+                className='w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white'
+              />
+            </div>
+            <div>
+              <label className='block text-sm font-medium mb-2'>City</label>
+              <input
+                type='text'
+                value={testData.city}
+                onChange={(e) =>
+                  setTestData({ ...testData, city: e.target.value })
+                }
+                className='w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white'
+              />
+            </div>
+            <div>
+              <label className='block text-sm font-medium mb-2'>Order ID</label>
+              <input
+                type='text'
+                value={testData.orderId}
+                onChange={(e) =>
+                  setTestData({ ...testData, orderId: e.target.value })
+                }
+                className='w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white'
+              />
+            </div>
+            <div>
+              <label className='block text-sm font-medium mb-2'>User ID</label>
+              <input
+                type='text'
+                value={testData.userId}
+                onChange={(e) =>
+                  setTestData({ ...testData, userId: e.target.value })
+                }
+                className='w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white'
+              />
+            </div>
+            <div>
+              <label className='block text-sm font-medium mb-2'>
+                Position ID
+              </label>
+              <input
+                type='text'
+                value={testData.positionId}
+                onChange={(e) =>
+                  setTestData({ ...testData, positionId: e.target.value })
+                }
+                className='w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white'
+              />
+            </div>
           </div>
         </div>
 
@@ -837,6 +1222,48 @@ const TestControls = () => {
                 className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
               >
                 Register
+              </button>
+              <button
+                onClick={() => testAuth('adminLogin')}
+                disabled={loading}
+                className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Admin Login
+              </button>
+              <button
+                onClick={() => testAuth('forgotPassword')}
+                disabled={loading}
+                className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Forgot Password
+              </button>
+              <button
+                onClick={() => testAuth('resetPassword')}
+                disabled={loading}
+                className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Reset Password
+              </button>
+              <button
+                onClick={() => testAuth('sendEmailVerification')}
+                disabled={loading || !isAuthenticated}
+                className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Send Email Verification
+              </button>
+              <button
+                onClick={() => testAuth('verifyEmail')}
+                disabled={loading}
+                className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Verify Email
+              </button>
+              <button
+                onClick={() => testAuth('updateProfile')}
+                disabled={loading || !isAuthenticated}
+                className='bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Update Profile
               </button>
               <button
                 onClick={() => testAuth('me')}
@@ -949,11 +1376,74 @@ const TestControls = () => {
                 Create Contact
               </button>
               <button
+                onClick={() => testContact('getById')}
+                disabled={loading}
+                className='w-full bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Get Contact By ID
+              </button>
+              <button
                 onClick={() => testContact('get')}
                 disabled={loading || !isAuthenticated}
                 className='w-full bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded disabled:opacity-50'
               >
                 Get All Contacts
+              </button>
+            </div>
+          </div>
+
+          {/* Geo APIs */}
+          <div className='bg-gray-800 rounded-lg p-6'>
+            <h2 className='text-2xl font-bold mb-4'>Geo APIs</h2>
+            <div className='space-y-2'>
+              <button
+                onClick={() => testGeo('states')}
+                disabled={loading}
+                className='w-full bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Get States
+              </button>
+              <button
+                onClick={() => testGeo('cities')}
+                disabled={loading}
+                className='w-full bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Get Cities by State
+              </button>
+            </div>
+          </div>
+
+          {/* Positions APIs */}
+          <div className='bg-gray-800 rounded-lg p-6'>
+            <h2 className='text-2xl font-bold mb-4'>Positions APIs</h2>
+            <div className='space-y-2'>
+              <button
+                onClick={() => testPositions('get')}
+                disabled={loading}
+                className='w-full bg-lime-600 hover:bg-lime-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Get Positions
+              </button>
+              <button
+                onClick={() => testPositions('create')}
+                disabled={loading || !isAuthenticated}
+                className='w-full bg-lime-600 hover:bg-lime-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Create Position
+              </button>
+              <button
+                onClick={() => testPositions('update')}
+                disabled={loading || !isAuthenticated}
+                className='w-full bg-lime-600 hover:bg-lime-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Update Position
+              </button>
+              <button
+                onClick={() => testPositions('delete')}
+                disabled={loading || !isAuthenticated}
+                className='w-full bg-lime-600 hover:bg-lime-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Delete Position
               </button>
             </div>
           </div>
@@ -968,6 +1458,90 @@ const TestControls = () => {
                 className='w-full bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded disabled:opacity-50'
               >
                 Create Order
+              </button>
+              <button
+                onClick={() => testPayment('openAnnualModal')}
+                disabled={loading}
+                className='w-full bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Open Annual Membership Payment Modal
+              </button>
+              <button
+                onClick={() => testPayment('status')}
+                disabled={loading}
+                className='w-full bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded disabled:opacity-50'
+              >
+                Check Payment Status
+              </button>
+            </div>
+          </div>
+
+          {/* Admin User Management */}
+          <div className='bg-gray-800 rounded-lg p-6'>
+            <h2 className='text-2xl font-bold mb-4'>Admin User APIs</h2>
+            <div className='grid grid-cols-2 gap-2'>
+              <button
+                onClick={() => testAdminUsers('list')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                List Users
+              </button>
+              <button
+                onClick={() => testAdminUsers('get')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Get User
+              </button>
+              <button
+                onClick={() => testAdminUsers('updateRole')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Update Role
+              </button>
+              <button
+                onClick={() => testAdminUsers('updateMembership')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Update Membership
+              </button>
+              <button
+                onClick={() => testAdminUsers('updateMemberNumber')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Update Member #
+              </button>
+              <button
+                onClick={() => testAdminUsers('updatePosition')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Update Position
+              </button>
+              <button
+                onClick={() => testAdminUsers('updateTeamLeader')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Set Team Leader
+              </button>
+              <button
+                onClick={() => testAdminUsers('notify')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Notify User
+              </button>
+              <button
+                onClick={() => testAdminUsers('delete')}
+                disabled={loading || !isAuthenticated || user?.role !== 'admin'}
+                className='bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm disabled:opacity-50'
+              >
+                Delete User
               </button>
             </div>
           </div>

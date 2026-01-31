@@ -31,7 +31,7 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    const { amount, membershipType } = req.body;
+    const { amount, membershipType, email, contactNo, name } = req.body;
 
     if (!amount || !membershipType) {
       return res.status(400).json({
@@ -58,6 +58,9 @@ exports.createOrder = async (req, res) => {
       notes: {
         membershipType: membershipType,
         timestamp: new Date().toISOString(),
+        email: email || undefined,
+        contactNo: contactNo || undefined,
+        name: name || undefined,
       },
     };
 
@@ -71,7 +74,15 @@ exports.createOrder = async (req, res) => {
         currency: order.currency,
         status: 'created',
         membershipType: membershipType,
-        meta: { receipt: receiptId },
+        meta: {
+          receipt: receiptId,
+          notes: {
+            email: email || undefined,
+            contactNo: contactNo || undefined,
+            name: name || undefined,
+            membershipType: membershipType,
+          },
+        },
       });
     } catch (err) {
       logger.warn('Failed to persist PaymentAttempt:', err);

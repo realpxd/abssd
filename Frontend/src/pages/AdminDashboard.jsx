@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
+import { FiUserPlus, FiDownload, FiSearch, FiTrash2, FiPlus } from 'react-icons/fi';
 import client from '../api/client.js';
 import api from '../api/config.js';
 import AdminHeader from '../components/admin/AdminHeader.jsx';
@@ -12,6 +13,7 @@ import NewsForm from '../components/admin/NewsForm.jsx';
 import GalleryCard from '../components/admin/GalleryCard.jsx';
 import NewsCard from '../components/admin/NewsCard.jsx';
 import LoadingSpinner from '../components/admin/LoadingSpinner.jsx';
+import SkeletonLoader from '../components/admin/SkeletonLoader.jsx';
 import UsersList from '../components/admin/UsersList.jsx';
 import UserDetailsModal from '../components/admin/UserDetailsModal.jsx';
 import SEO from '../components/SEO.jsx';
@@ -80,11 +82,7 @@ const AdminDashboard = () => {
         });
         if (!mountedRef.current) return;
         setNewsItems(response.data || []);
-      } else if (
-        activeTab === 'users' ||
-        activeTab === 'create-user' ||
-        activeTab === 'positions'
-      ) {
+      } else if (activeTab === 'users' || activeTab === 'positions') {
         const response = await client(api.endpoints.users, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
@@ -117,6 +115,13 @@ const AdminDashboard = () => {
       mountedRef.current = false;
     };
   }, [activeTab, isAdmin, navigate, fetchData]);
+
+  useEffect(() => {
+    document.body.style.overflow = showAddForm ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showAddForm]);
 
   // debounce search to avoid excessive filtering on every keystroke
   useEffect(() => {
@@ -522,6 +527,7 @@ const AdminDashboard = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    setShowAddForm(false);
     if (tab === 'gallery') {
       resetGalleryForm();
     } else if (tab === 'news') {
@@ -694,67 +700,115 @@ const AdminDashboard = () => {
   // Prepare content area based on activeTab
   let content = null;
   if (loading) {
-    content = <LoadingSpinner />;
+    if (activeTab === 'gallery') {
+      content = <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'><SkeletonLoader type='card' count={6} /></div>;
+    } else if (activeTab === 'news') {
+      content = <div className='space-y-4'><SkeletonLoader type='list-item' count={3} /></div>;
+    } else if (activeTab === 'users') {
+      content = (
+        <div className='mt-6 overflow-x-auto rounded-lg shadow-md'>
+          <table className='min-w-full divide-y divide-gray-200'>
+            <thead className='bg-gray-50 border-b border-gray-200'>
+              <tr>
+                <th className='px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>No.</th>
+                <th className='px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>M.No.</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>User</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Email</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Contact</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Membership</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Status</th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <SkeletonLoader type='table-row' count={5} />
+            </tbody>
+          </table>
+        </div>
+      );
+    } else if (activeTab === 'positions') {
+      content = <div className='space-y-3'><SkeletonLoader type='list-item' count={4} /></div>;
+    }
   } else if (activeTab === 'gallery') {
     content = (
-      <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {galleryItems.map((item) => (
-          <GalleryCard
-            key={item._id}
-            item={item}
-            onEdit={(item) => startEdit(item, 'gallery')}
-            onDelete={(id) => handleDelete(id, 'gallery')}
-          />
-        ))}
+      <div>
+        {galleryItems.length === 0 ? (
+          <div className='text-center py-16 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg'>
+            <span className='text-5xl'>🖼️</span>
+            <p className='mt-3 text-gray-600 font-medium'>No gallery items yet. Create your first one!</p>
+          </div>
+        ) : (
+          <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            {galleryItems.map((item) => (
+              <GalleryCard
+                key={item._id}
+                item={item}
+                onEdit={(item) => startEdit(item, 'gallery')}
+                onDelete={(id) => handleDelete(id, 'gallery')}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   } else if (activeTab === 'news') {
     content = (
-      <div className='space-y-4'>
-        {newsItems.map((item) => (
-          <NewsCard
-            key={item._1d}
-            item={item}
-            onEdit={(item) => startEdit(item, 'news')}
-            onDelete={(id) => handleDelete(id, 'news')}
-          />
-        ))}
+      <div>
+        {newsItems.length === 0 ? (
+          <div className='text-center py-16 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg'>
+            <span className='text-5xl'>📰</span>
+            <p className='mt-3 text-gray-600 font-medium'>No news items yet. Create your first one!</p>
+          </div>
+        ) : (
+          <div className='space-y-4'>
+            {newsItems.map((item) => (
+              <NewsCard
+                key={item._id}
+                item={item}
+                onEdit={(item) => startEdit(item, 'news')}
+                onDelete={(id) => handleDelete(id, 'news')}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   } else if (activeTab === 'positions') {
     content = (
       <div className='space-y-6'>
-        <div className='bg-white p-6 rounded shadow'>
-          <h2 className='text-xl font-semibold mb-4'>Create Position</h2>
+        <div className='bg-white p-6 rounded-lg border border-gray-200'>
+          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Create New Position</h2>
           <form onSubmit={handleCreatePosition} className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium mb-1'>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
                 Position Name
               </label>
               <input
                 value={newPositionName}
                 onChange={(e) => setNewPositionName(e.target.value)}
-                className='w-full px-3 py-2 border rounded'
-                placeholder='e.g. President'
+                className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                placeholder='e.g. President, Treasurer'
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
                 Description (optional)
               </label>
               <textarea
                 value={newPositionDescription}
                 onChange={(e) => setNewPositionDescription(e.target.value)}
-                className='w-full px-3 py-2 border rounded'
+                className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                 rows={3}
+                placeholder='Describe the role and responsibilities...'
               />
             </div>
             <div className='flex gap-2'>
               <button
-                className='bg-green-600 text-white px-4 py-2 rounded'
+                className='flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200'
                 type='submit'
               >
-                Create
+                <FiPlus size={16} />
+                Create Position
               </button>
               <button
                 type='button'
@@ -762,7 +816,7 @@ const AdminDashboard = () => {
                   setNewPositionName('');
                   setNewPositionDescription('');
                 }}
-                className='bg-gray-200 px-4 py-2 rounded'
+                className='px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium text-sm transition-colors duration-200'
               >
                 Clear
               </button>
@@ -770,34 +824,34 @@ const AdminDashboard = () => {
           </form>
         </div>
 
-        <div className='bg-white p-6 rounded shadow'>
-          <h2 className='text-xl font-semibold mb-4'>Existing Positions</h2>
-          <div className='space-y-2'>
+        <div className='bg-white p-6 rounded-lg border border-gray-200'>
+          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Existing Positions</h2>
+          <div className='space-y-3'>
             {positions.length === 0 ? (
-              <p className='text-sm text-gray-500'>No positions found.</p>
+              <p className='text-center py-8 text-gray-500'>No positions found.</p>
             ) : (
               positions.map((pos) => (
                 <div
                   key={pos._id}
-                  className='flex items-center justify-between p-3 border rounded'
+                  className='flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'
                 >
                   <div>
-                    <div className='font-medium'>{pos.name}</div>
+                    <div className='font-semibold text-gray-900 text-base'>{pos.name}</div>
                     {pos.description && (
-                      <div className='text-sm text-gray-500'>
+                      <div className='text-sm text-gray-600 mt-1'>
                         {pos.description}
                       </div>
                     )}
                   </div>
-                  <div>
-                    <button
-                      onClick={() => handleDeletePosition(pos)}
-                      className='bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50'
-                      disabled={pos.name && pos.name.toLowerCase() === 'member'}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleDeletePosition(pos)}
+                    className='flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg font-medium text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                    disabled={pos.name && pos.name.toLowerCase() === 'member'}
+                    title={pos.name && pos.name.toLowerCase() === 'member' ? 'Default position cannot be deleted' : 'Delete this position'}
+                  >
+                    <FiTrash2 size={16} />
+                    Delete
+                  </button>
                 </div>
               ))
             )}
@@ -805,47 +859,63 @@ const AdminDashboard = () => {
         </div>
       </div>
     );
-  } else {
+  } else if (activeTab === 'users') {
     content = (
       <>
-        <div className='mb-4'>
-          <div className='flex items-center gap-3'>
-            <input
-              type='text'
-              placeholder='Search by User ID, Username, or Email...'
-              value={userSearchQuery}
-              onChange={(e) => setUserSearchQuery(e.target.value)}
-              className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
-            />
-            <div className='flex gap-2'>
+        {/* Header Section */}
+        <div className='mb-6'>
+          <div className='flex flex-col gap-4'>
+            {/* Primary Actions Row */}
+            <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3'>
               <button
-                onClick={() => handleExportUsers('csv')}
-                disabled={loading}
-                className='bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700'
+                onClick={() => setShowAddForm(true)}
+                className='flex items-center justify-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 font-medium text-sm transition-colors duration-200 whitespace-nowrap'
               >
-                Export CSV
+                <FiUserPlus size={18} />
+                Create User
               </button>
-              <button
-                onClick={() => handleExportUsers('xlsx')}
-                disabled={loading}
-                className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
-              >
-                Export Excel
-              </button>
+              <div className='flex-1 relative'>
+                <FiSearch className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' size={18} />
+                <input
+                  type='text'
+                  placeholder='Search by ID, username, or email...'
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm'
+                />
+              </div>
+              <div className='flex gap-2'>
+                <button
+                  onClick={() => handleExportUsers('csv')}
+                  disabled={loading}
+                  className='flex items-center justify-center gap-1.5 bg-green-600 text-white px-3.5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium text-sm transition-colors duration-200'
+                >
+                  <FiDownload size={16} />
+                  CSV
+                </button>
+                <button
+                  onClick={() => handleExportUsers('xlsx')}
+                  disabled={loading}
+                  className='flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3.5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium text-sm transition-colors duration-200'
+                >
+                  <FiDownload size={16} />
+                  Excel
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Filters row */}
-          <div className='mt-3 bg-white p-4 rounded-lg shadow-sm'>
-            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'>
+            {/* Filters Section */}
+            <div className='bg-white border border-gray-200 p-4 rounded-lg'>
+              <p className='text-sm font-semibold text-gray-700 mb-4'>Filters</p>
+              <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'>
               <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                <label className='block text-xs font-semibold text-gray-600 mb-2'>
                   Position
                 </label>
                 <select
                   value={filterPosition}
                   onChange={(e) => setFilterPosition(e.target.value)}
-                  className='w-full px-3 py-2 border rounded bg-white'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                 >
                   <option value=''>All</option>
                   {positions.map((p) => (
@@ -857,13 +927,13 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-1'>
-                  Referred By (Team Leaders)
+                <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                  Referred By
                 </label>
                 <select
                   value={filterReferredBy}
                   onChange={(e) => setFilterReferredBy(e.target.value)}
-                  className='w-full px-3 py-2 border rounded bg-white'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                 >
                   <option value=''>All</option>
                   {users
@@ -877,13 +947,13 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                <label className='block text-xs font-semibold text-gray-600 mb-2'>
                   Membership Type
                 </label>
                 <select
                   value={filterMembershipType}
                   onChange={(e) => setFilterMembershipType(e.target.value)}
-                  className='w-full px-3 py-2 border rounded bg-white'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                 >
                   <option value=''>All</option>
                   <option value='annual'>Annual</option>
@@ -892,13 +962,13 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                <label className='block text-xs font-semibold text-gray-600 mb-2'>
                   Membership Status
                 </label>
                 <select
                   value={filterMembershipStatus}
                   onChange={(e) => setFilterMembershipStatus(e.target.value)}
-                  className='w-full px-3 py-2 border rounded bg-white'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                 >
                   <option value=''>All</option>
                   <option value='active'>Active</option>
@@ -908,13 +978,13 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                <label className='block text-xs font-semibold text-gray-600 mb-2'>
                   Role
                 </label>
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className='w-full px-3 py-2 border rounded bg-white'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
                 >
                   <option value=''>All</option>
                   <option value='admin'>Admin</option>
@@ -923,29 +993,32 @@ const AdminDashboard = () => {
               </div>
 
               <div className='flex items-end'>
-                <div className='w-full'>
-                  <button
-                    onClick={() => {
-                      setFilterPosition('');
-                      setFilterReferredBy('');
-                      setFilterMembershipType('');
-                      setFilterMembershipStatus('');
-                      setFilterRole('');
-                    }}
-                    className='w-full bg-gray-100 px-3 py-2 rounded text-sm'
-                  >
-                    Clear filters
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setFilterPosition('');
+                    setFilterReferredBy('');
+                    setFilterMembershipType('');
+                    setFilterMembershipStatus('');
+                    setFilterRole('');
+                  }}
+                  className='w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-sm'
+                >
+                  Reset
+                </button>
               </div>
+            </div>
             </div>
           </div>
         </div>
+
+        {/* Users Table */}
+        <div className='mt-6 overflow-x-auto rounded-lg shadow-md'>
         <UsersList
           users={filteredUsers}
           onViewDetails={handleViewUserDetails}
           onPrintID={handlePrintUser}
         />
+        </div>
       </>
     );
   }
@@ -960,76 +1033,80 @@ const AdminDashboard = () => {
       />
       <AdminHeader username={user?.username} onLogout={handleLogout} />
 
-      <div className='container mx-auto px-4 py-8'>
-        <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+      <div className='container mx-auto px-4 py-6'>
+        {/* Tab Navigation */}
+        <div className='mb-6'>
+          <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
 
-        <FormModal
-          show={showAddForm && activeTab !== 'users'}
-          title={
-            activeTab === 'gallery'
-              ? `${editingId ? 'Edit' : 'Add New'} Gallery Item`
-              : activeTab === 'news'
-                ? `${editingId ? 'Edit' : 'Add New'} News Item`
-                : activeTab === 'create-user'
-                  ? 'Create User'
-                  : ''
-          }
-          onClose={() => {
-            if (activeTab === 'gallery') resetGalleryForm();
-            else if (activeTab === 'news') resetNewsForm();
-            else if (activeTab === 'create-user') setShowAddForm(false);
-          }}
-        >
-          {activeTab === 'gallery' && (
-            <GalleryForm
-              formData={galleryForm}
-              editingId={editingId}
-              onSubmit={handleGallerySubmit}
-              onChange={setGalleryForm}
-              onCancel={resetGalleryForm}
-              submitting={gallerySubmitting}
-            />
-          )}
-          {activeTab === 'news' && (
-            <NewsForm
-              formData={newsForm}
-              editingId={editingId}
-              onSubmit={handleNewsSubmit}
-              onChange={setNewsForm}
-              onCancel={resetNewsForm}
-              submitting={newsSubmitting}
-            />
-          )}
-          {activeTab === 'create-user' && (
-            <AdminCreateUser
-              onCreated={() => {
-                fetchData();
-                setShowAddForm(false);
+        {/* Main Content Container */}
+        <div className='bg-white rounded-lg border border-gray-200 overflow-hidden'>
+          {/* Content Padding */}
+          <div className='p-6'>
+            <FormModal
+              show={showAddForm}
+              title={
+                activeTab === 'gallery'
+                  ? `${editingId ? 'Edit' : 'Add'} Gallery Item`
+                  : activeTab === 'news'
+                    ? `${editingId ? 'Edit' : 'Add'} News Item`
+                    : activeTab === 'users'
+                      ? 'Create New User'
+                      : ''
+              }
+              onClose={() => {
+                if (activeTab === 'gallery') resetGalleryForm();
+                else if (activeTab === 'news') resetNewsForm();
+                else if (activeTab === 'users') setShowAddForm(false);
               }}
-              onCancel={() => setShowAddForm(false)}
-            />
-          )}
-        </FormModal>
+            >
+              {activeTab === 'gallery' && (
+                <GalleryForm
+                  formData={galleryForm}
+                  editingId={editingId}
+                  onSubmit={handleGallerySubmit}
+                  onChange={setGalleryForm}
+                  onCancel={resetGalleryForm}
+                  submitting={gallerySubmitting}
+                />
+              )}
+              {activeTab === 'news' && (
+                <NewsForm
+                  formData={newsForm}
+                  editingId={editingId}
+                  onSubmit={handleNewsSubmit}
+                  onChange={setNewsForm}
+                  onCancel={resetNewsForm}
+                  submitting={newsSubmitting}
+                />
+              )}
+              {activeTab === 'users' && (
+                <AdminCreateUser
+                  onCreated={() => {
+                    fetchData();
+                    setShowAddForm(false);
+                  }}
+                  onCancel={() => setShowAddForm(false)}
+                />
+              )}
+            </FormModal>
 
-        {!showAddForm && activeTab !== 'users' && (
-          <button
-            onClick={() => {
-              if (activeTab === 'gallery') resetGalleryForm();
-              else if (activeTab === 'news') resetNewsForm();
-              // create-user handled by AdminCreateUser component; just open modal
-              setShowAddForm(true);
-            }}
-            className='mb-6 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-medium'
-          >
-            {activeTab === 'create-user'
-              ? '+ Create User'
-              : `+ Add New ${
-                  activeTab === 'gallery' ? 'Gallery Item' : 'News Item'
-                }`}
-          </button>
-        )}
+            {!showAddForm && (activeTab === 'gallery' || activeTab === 'news') && (
+              <button
+                onClick={() => {
+                  if (activeTab === 'gallery') resetGalleryForm();
+                  else if (activeTab === 'news') resetNewsForm();
+                  setShowAddForm(true);
+                }}
+                className='mb-6 bg-orange-600 text-white px-5 py-2.5 rounded-lg hover:bg-orange-700 font-medium text-sm transition-colors duration-200'
+              >
+                {`+ Add New ${activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}`}
+              </button>
+            )}
 
-        {content}
+            {content}
+          </div>
+        </div>
       </div>
 
       {/* User Details Modal */}
