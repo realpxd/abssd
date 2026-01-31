@@ -18,6 +18,7 @@ This is a professional, modern website for **अखिल भारतीय स
 ## Scope
 
 ### Frontend Features
+
 - ✅ Hero section with call-to-action
 - ✅ About Us section with organization details
 - ✅ Services showcase
@@ -29,6 +30,7 @@ This is a professional, modern website for **अखिल भारतीय स
 - ✅ Footer with links and contact info
 
 ### Backend Features
+
 - ✅ RESTful API with Express
 - ✅ MongoDB database integration
 - ✅ Contact form submission endpoint
@@ -40,6 +42,7 @@ This is a professional, modern website for **अखिल भारतीय स
 ## Technology Stack
 
 ### Frontend
+
 - **React 19** - Latest React version
 - **Vite 7** - Fast build tool
 - **Tailwind CSS v4** - Latest Tailwind with new features
@@ -47,6 +50,7 @@ This is a professional, modern website for **अखिल भारतीय स
 - **Modern ES6+** - Latest JavaScript features
 
 ### Backend
+
 - **Node.js** - JavaScript runtime
 - **Express 5** - Web framework
 - **MongoDB** - NoSQL database
@@ -105,11 +109,13 @@ NGO/
 ## Setup Instructions
 
 ### Prerequisites
+
 - Node.js v18+
 - MongoDB (local or cloud)
 - npm or yarn
 
 ### Frontend Setup
+
 ```bash
 cd Frontend
 npm install
@@ -119,6 +125,7 @@ npm run dev
 ```
 
 ### Backend Setup
+
 ```bash
 cd Backend
 npm install
@@ -130,28 +137,33 @@ npm run dev
 ## API Endpoints
 
 ### Contact
+
 - `POST /api/contact` - Submit contact form
 - `GET /api/contact` - Get all contacts (admin)
 - `GET /api/contact/:id` - Get single contact
 
 ### Gallery
+
 - `GET /api/gallery` - Get all active gallery items
 - `POST /api/gallery` - Create gallery item (admin)
 - `PUT /api/gallery/:id` - Update gallery item (admin)
 - `DELETE /api/gallery/:id` - Delete gallery item (admin)
 
 ### Events
+
 - `GET /api/events` - Get all active events
 - `POST /api/events` - Create event (admin)
 - `PUT /api/events/:id` - Update event (admin)
 - `DELETE /api/events/:id` - Delete event (admin)
 
 ### Health
+
 - `GET /api/health` - Server health check
 
 ## Organization Information
 
 ### Basic Details
+
 - **Name (Hindi)**: अखिल भारतीय स्वच्छता सेवा दल ट्रस्ट
 - **Name (English)**: Akhil Bhartiya Swachta Sewa Dal Trust
 - **Abbreviation**: ABSSD
@@ -159,10 +171,12 @@ npm run dev
 - **Tagline**: सेवा, समर्पण और स्वच्छता का संकल्प
 
 ### Founder & Leadership
+
 - **Founder & National President**: श्री जीतू माली (Shri Jeetu Mali)
 - **Contact**: +91 8860442044
 
 ### Services Provided
+
 1. **स्वच्छता अभियान** (Cleanliness Campaigns)
    - Regular cleanliness drives in Khatu Dham
    - Monthly Ekadashi service
@@ -186,28 +200,33 @@ npm run dev
    - Environmental awareness programs
 
 ### Achievements
+
 - **10+ Years** of service
 - **500+ Volunteers** actively involved
 - **1000+ Cleanliness Drives** conducted
 - **24/7 Service** commitment
 
 ### Mission
+
 "स्वच्छ भारत, सुंदर भारत"
 (Clean India, Beautiful India)
 
 ## Design Features
 
 ### Color Scheme
+
 - **Primary**: Orange (#F97316) - Represents energy and service
 - **Secondary**: White/Gray - Clean and professional
 - **Accents**: Green (for environmental themes)
 
 ### Typography
+
 - Hindi and English support
 - Modern, readable fonts
 - Proper font sizing for accessibility
 
 ### UI/UX Features
+
 - Smooth scrolling navigation
 - Hover effects and transitions
 - Image modals for gallery
@@ -250,6 +269,7 @@ npm run dev
 ## Development Notes
 
 ### Frontend
+
 - Uses React Query for efficient data fetching
 - Fallback to placeholder data if API fails
 - Fully responsive with Tailwind CSS
@@ -257,6 +277,7 @@ npm run dev
 - Clean, maintainable code structure
 
 ### Backend
+
 - RESTful API design
 - MongoDB for flexible data storage
 - Error handling middleware
@@ -264,6 +285,7 @@ npm run dev
 - Environment-based configuration
 
 ### Database Models
+
 - **Contact**: Stores contact form submissions
 - **Gallery**: Stores gallery images and metadata
 - **Event**: Stores news/events information
@@ -271,6 +293,7 @@ npm run dev
 ## Testing
 
 ### Manual Testing Checklist
+
 - [ ] Frontend loads correctly
 - [ ] Navigation works on all devices
 - [ ] Contact form submits successfully
@@ -283,11 +306,13 @@ npm run dev
 ## Deployment Considerations
 
 ### Frontend
+
 - Build command: `npm run build`
 - Output directory: `dist/`
 - Can be deployed to Vercel, Netlify, or any static hosting
 
 ### Backend
+
 - Requires Node.js environment
 - MongoDB connection (local or cloud like MongoDB Atlas)
 - Environment variables must be set
@@ -296,6 +321,7 @@ npm run dev
 ## Support & Contact
 
 For technical support or questions:
+
 - Check README.md for detailed setup instructions
 - Review API documentation in this file
 - Check component files for implementation details
@@ -304,4 +330,3 @@ For technical support or questions:
 
 **Last Updated**: 2024
 **Project Status**: ✅ Complete - Ready for Development/Deployment
-

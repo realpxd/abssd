@@ -20,12 +20,14 @@ This README documents how to run, develop, and deploy the project locally and li
 ## Repository layout
 
 ```
-/Frontend        # React (Vite) app, Tailwind CSS, admin pages
-/Backend         # Express API, Mongoose models, controllers & jobs
+
+/Frontend # React (Vite) app, Tailwind CSS, admin pages
+/Backend # Express API, Mongoose models, controllers & jobs
 README.md
 start.sh
 stop.sh
 PROJECT.md
+
 ```
 
 ## Features (overview)
@@ -50,6 +52,7 @@ Create `.env` files in both `Frontend/` and `Backend/` as needed. Example entrie
 
 Backend (`Backend/.env`)
 ```
+
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/abssd
 NODE_ENV=development
@@ -61,12 +64,15 @@ EMAIL_SMTP_USER=your_smtp_user
 EMAIL_SMTP_PASS=your_smtp_pass
 RAZORPAY_KEY=your_razorpay_key
 RAZORPAY_SECRET=your_razorpay_secret
+
 ```
 
 Frontend (`Frontend/.env`)
 ```
+
 VITE_API_BASE_URL=http://localhost:5000/api
-```
+
+````
 
 Notes:
 - Keep secrets out of source control. Use `.env.example` as a template.
@@ -84,11 +90,12 @@ Using helper scripts (recommended for local dev):
 
 # to stop
 ./stop.sh
-```
+````
 
 Manual (frontend + backend in separate terminals):
 
 Frontend:
+
 ```bash
 cd Frontend
 npm install
@@ -99,6 +106,7 @@ npm run dev
 ```
 
 Backend:
+
 ```bash
 cd Backend
 npm install
@@ -198,6 +206,4 @@ For help or questions, reach out to project maintainers:
 
 ## License
 
-ISC
-4. Submit a pull request
-
+ISC 4. Submit a pull request

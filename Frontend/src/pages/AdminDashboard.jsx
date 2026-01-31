@@ -122,7 +122,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const t = setTimeout(
       () => setDebouncedSearch(userSearchQuery.trim().toLowerCase()),
-      300
+      300,
     );
     return () => clearTimeout(t);
   }, [userSearchQuery]);
@@ -290,7 +290,7 @@ const AdminDashboard = () => {
           XLSX = await import('xlsx');
         } catch (e) {
           alert(
-            'Excel export requires the "xlsx" package. Run "npm install xlsx" in the Frontend folder and rebuild.'
+            'Excel export requires the "xlsx" package. Run "npm install xlsx" in the Frontend folder and rebuild.',
           );
           return;
         }
@@ -626,7 +626,7 @@ const AdminDashboard = () => {
   const handleDeleteUser = async (userId) => {
     if (
       !confirm(
-        'Are you sure you want to permanently delete this user? This action cannot be undone.'
+        'Are you sure you want to permanently delete this user? This action cannot be undone.',
       )
     )
       return;
@@ -676,7 +676,7 @@ const AdminDashboard = () => {
     }
     if (
       !confirm(
-        `Delete position "${pos.name}"? This will remove the position from all users.`
+        `Delete position "${pos.name}"? This will remove the position from all users.`,
       )
     )
       return;
@@ -952,11 +952,11 @@ const AdminDashboard = () => {
 
   return (
     <div className='min-h-screen bg-gray-50'>
-      <SEO 
-        title="Admin Dashboard"
-        description="Administrator dashboard for managing gallery items, news articles, members, and positions."
-        canonical="/admin/dashboard"
-        robots="noindex, nofollow"
+      <SEO
+        title='Admin Dashboard'
+        description='Administrator dashboard for managing gallery items, news articles, members, and positions.'
+        canonical='/admin/dashboard'
+        robots='noindex, nofollow'
       />
       <AdminHeader username={user?.username} onLogout={handleLogout} />
 
@@ -969,10 +969,10 @@ const AdminDashboard = () => {
             activeTab === 'gallery'
               ? `${editingId ? 'Edit' : 'Add New'} Gallery Item`
               : activeTab === 'news'
-              ? `${editingId ? 'Edit' : 'Add New'} News Item`
-              : activeTab === 'create-user'
-              ? 'Create User'
-              : ''
+                ? `${editingId ? 'Edit' : 'Add New'} News Item`
+                : activeTab === 'create-user'
+                  ? 'Create User'
+                  : ''
           }
           onClose={() => {
             if (activeTab === 'gallery') resetGalleryForm();
@@ -1038,7 +1038,10 @@ const AdminDashboard = () => {
           user={selectedUser}
           autoPrint={autoPrint}
           onAutoPrinted={() => setAutoPrint(false)}
-          onClose={() => { setSelectedUser(null); setAutoPrint(false); }}
+          onClose={() => {
+            setSelectedUser(null);
+            setAutoPrint(false);
+          }}
           onUpdateStatus={handleUpdateMembershipStatus}
           onNotify={handleNotifyUser}
           onToggleAdmin={handleToggleAdmin}

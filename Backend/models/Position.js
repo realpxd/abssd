@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const positionSchema = new mongoose.Schema(
   {
@@ -19,7 +19,7 @@ const positionSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true }
-)
+  { timestamps: true },
+);
 
-module.exports = mongoose.model('Position', positionSchema)
+module.exports = mongoose.model('Position', positionSchema);

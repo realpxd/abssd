@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const gallerySchema = new mongoose.Schema(
   {
@@ -20,7 +20,15 @@ const gallerySchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['cleanliness', 'water-service', 'toilet-management', 'fair-service', 'ekadashi', 'environment', 'others'],
+      enum: [
+        'cleanliness',
+        'water-service',
+        'toilet-management',
+        'fair-service',
+        'ekadashi',
+        'environment',
+        'others',
+      ],
       default: 'cleanliness',
     },
     isActive: {
@@ -30,8 +38,7 @@ const gallerySchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
-)
+  },
+);
 
-module.exports = mongoose.model('Gallery', gallerySchema)
-
+module.exports = mongoose.model('Gallery', gallerySchema);

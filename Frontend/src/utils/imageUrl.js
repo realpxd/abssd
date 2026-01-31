@@ -1,4 +1,4 @@
-import api from '../api/config.js'
+import api from '../api/config.js';
 
 /**
  * Converts relative image URLs to absolute URLs pointing to the backend
@@ -6,23 +6,22 @@ import api from '../api/config.js'
  * @returns {string} - The absolute URL
  */
 export const getImageUrl = (imageUrl) => {
-  if (!imageUrl) return ''
-  
+  if (!imageUrl) return '';
+
   // If it's already a full URL (http/https), return as-is
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl
+    return imageUrl;
   }
-  
+
   // If it's a relative path starting with /uploads/, prepend backend base URL
   if (imageUrl.startsWith('/uploads/')) {
     // Remove /api from baseURL to get the backend root URL
-    const backendBaseUrl = api.baseURL
-    return `${backendBaseUrl}${imageUrl}`
+    const backendBaseUrl = api.baseURL;
+    return `${backendBaseUrl}${imageUrl}`;
   }
-  
+
   // For any other relative path, return as-is (might be a local asset)
-  return imageUrl
-}
+  return imageUrl;
+};
 
-export default getImageUrl
-
+export default getImageUrl;

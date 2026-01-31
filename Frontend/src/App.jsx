@@ -1,31 +1,31 @@
-import { Routes, Route } from 'react-router-dom'
-import Header from './components/Header'
-import Footer from './components/Footer'
-import ProtectedRoute from './components/ProtectedRoute'
-import AdminProtectedRoute from './components/AdminProtectedRoute'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import VerifyEmail from './pages/VerifyEmail'
-import Profile from './pages/Profile'
-import GalleryPage from './pages/GalleryPage'
-import NewsPage from './pages/NewsPage'
-import Donation from './pages/Donation'
-import AdminLogin from './pages/AdminLogin'
-import AdminDashboard from './pages/AdminDashboard'
-import TestControls from './pages/TestControls'
-import NotFound from './pages/NotFound'
-import MajorMembers from './pages/MajorMembers'
-import PaymentStatus from './pages/PaymentStatus'
+import { Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
+import Profile from './pages/Profile';
+import GalleryPage from './pages/GalleryPage';
+import NewsPage from './pages/NewsPage';
+import Donation from './pages/Donation';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import TestControls from './pages/TestControls';
+import NotFound from './pages/NotFound';
+import MajorMembers from './pages/MajorMembers';
+import PaymentStatus from './pages/PaymentStatus';
 
 function App() {
   return (
-    <div className="min-h-screen">
+    <div className='min-h-screen'>
       <Routes>
         <Route
-          path="/"
+          path='/'
           element={
             <>
               <Header />
@@ -34,13 +34,13 @@ function App() {
             </>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-  <Route path="/reset-password" element={<ResetPassword />} />
-  <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/register' element={<Register />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
+        <Route path='/verify-email' element={<VerifyEmail />} />
         <Route
-          path="/gallery"
+          path='/gallery'
           element={
             <>
               <GalleryPage />
@@ -48,7 +48,7 @@ function App() {
           }
         />
         <Route
-          path="/news"
+          path='/news'
           element={
             <>
               <NewsPage />
@@ -56,7 +56,7 @@ function App() {
           }
         />
         <Route
-          path="/donation"
+          path='/donation'
           element={
             <>
               <Header />
@@ -66,7 +66,7 @@ function App() {
           }
         />
         <Route
-          path="/core-team"
+          path='/core-team'
           element={
             <>
               <Header />
@@ -76,7 +76,7 @@ function App() {
           }
         />
         <Route
-          path="/profile"
+          path='/profile'
           element={
             <ProtectedRoute>
               <Header />
@@ -85,17 +85,20 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/payment-status" element={
-          <>
-            <Header />
-            <PaymentStatus />
-            <Footer />
-          </>
-        } />
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
-          path="/admin/dashboard"
+          path='/payment-status'
+          element={
+            <>
+              <Header />
+              <PaymentStatus />
+              <Footer />
+            </>
+          }
+        />
+        {/* Admin Routes */}
+        <Route path='/admin/login' element={<AdminLogin />} />
+        <Route
+          path='/admin/dashboard'
           element={
             <AdminProtectedRoute>
               <AdminDashboard />
@@ -106,7 +109,7 @@ function App() {
         {/* <Route path="/test-controls" element={<TestControls />} /> */}
         {/* 404 Page - Catch all unmatched routes */}
         <Route
-          path="*"
+          path='*'
           element={
             <>
               <Header />
@@ -117,7 +120,7 @@ function App() {
         />
       </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

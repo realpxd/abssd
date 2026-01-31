@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
-const bcrypt = require('bcryptjs')
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Password must be at least 6 characters'],
       select: false, // Don't return password by default
     },
-    
+
     // Personal Details
     dob: {
       type: Date,
@@ -78,7 +78,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    
+
     // Membership
     membershipStatus: {
       type: String,
@@ -101,7 +101,7 @@ const userSchema = new mongoose.Schema(
     membershipEndDate: {
       type: Date,
     },
-    
+
     // Account Status
     isEmailVerified: {
       type: Boolean,
@@ -150,35 +150,36 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
-)
+  },
+);
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    return next()
+    return next();
   }
-  const salt = await bcrypt.genSalt(10)
-  this.password = await bcrypt.hash(this.password, salt)
-  next()
-})
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
 // Compare password method
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password)
-}
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 // Generate JWT token
 userSchema.methods.generateToken = function () {
-  const jwt = require('jsonwebtoken')
-  const secret = process.env.JWT_SECRET
+  const jwt = require('jsonwebtoken');
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET is not configured. Please set it in environment variables.')
+    throw new Error(
+      'JWT_SECRET is not configured. Please set it in environment variables.',
+    );
   }
   return jwt.sign({ id: this._id }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '30d',
-  })
-}
+  });
+};
 
-module.exports = mongoose.model('User', userSchema)
-
+module.exports = mongoose.model('User', userSchema);

@@ -1,6 +1,6 @@
 const TabNavigation = ({ activeTab, onTabChange }) => {
   return (
-    <div className="flex space-x-4 mb-8 border-b">
+    <div className='flex space-x-4 mb-8 border-b'>
       <button
         onClick={() => onTabChange('gallery')}
         className={`px-6 py-3 font-medium ${
@@ -52,7 +52,7 @@ const TabNavigation = ({ activeTab, onTabChange }) => {
         Positions
       </button>
     </div>
-  )
-}
+  );
+};
 
-export default TabNavigation
+export default TabNavigation;

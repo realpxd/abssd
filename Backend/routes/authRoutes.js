@@ -1,6 +1,6 @@
-const express = require('express')
-const router = express.Router()
-const { body } = require('express-validator')
+const express = require('express');
+const router = express.Router();
+const { body } = require('express-validator');
 const {
   register,
   login,
@@ -20,67 +20,94 @@ const {
   updateMembershipStatus,
   deleteUser,
   notifyUser,
-  updateUserPosition
-} = require('../controllers/authController')
-const { protect, restrictToAdmin } = require('../middleware/auth')
-const upload = require('../middleware/upload')
+  updateUserPosition,
+} = require('../controllers/authController');
+const { protect, restrictToAdmin } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // Validation rules
 const registerValidation = [
   body('username').trim().notEmpty().withMessage('Username is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('contactNo').trim().notEmpty().withMessage('Contact number is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-]
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+];
 
 const loginValidation = [
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').notEmpty().withMessage('Password is required'),
-]
+];
 
 // Routes
-router.post('/check-email', checkEmail)
-router.post('/check-contact', checkContactNo)
+router.post('/check-email', checkEmail);
+router.post('/check-contact', checkContactNo);
 // Accept photo and aadhar uploads during registration
 // NOTE: run multer upload BEFORE validation so express-validator can see parsed
 // text fields from multipart/form-data (multer populates req.body).
-router.post('/register', upload.fields([
-  { name: 'photo', maxCount: 1 },
-  { name: 'aadharFront', maxCount: 1 },
-  { name: 'aadharBack', maxCount: 1 },
-]), registerValidation, register)
-router.post('/login', loginValidation, login)
-router.post('/admin/login', loginValidation, adminLogin)
-router.get('/me', protect, getMe)
-router.post('/forgot-password', forgotPassword)
+router.post(
+  '/register',
+  upload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'aadharFront', maxCount: 1 },
+    { name: 'aadharBack', maxCount: 1 },
+  ]),
+  registerValidation,
+  register,
+);
+router.post('/login', loginValidation, login);
+router.post('/admin/login', loginValidation, adminLogin);
+router.get('/me', protect, getMe);
+router.post('/forgot-password', forgotPassword);
 router.post('/send-email-verification', protect, (req, res, next) => {
-  const { sendEmailVerification } = require('../controllers/authController')
-  return sendEmailVerification(req, res, next)
-})
+  const { sendEmailVerification } = require('../controllers/authController');
+  return sendEmailVerification(req, res, next);
+});
 router.post('/verify-email', (req, res, next) => {
-  const { verifyEmail } = require('../controllers/authController')
-  return verifyEmail(req, res, next)
-})
-router.post('/reset-password', resetPassword)
-router.put('/profile', protect, upload.single('photo'), updateProfile)
+  const { verifyEmail } = require('../controllers/authController');
+  return verifyEmail(req, res, next);
+});
+router.post('/reset-password', resetPassword);
+router.put('/profile', protect, upload.single('photo'), updateProfile);
 
 // Admin routes for user management
-router.get('/users', protect, restrictToAdmin, getAllUsers)
-router.get('/users/:id', protect, restrictToAdmin, getUserById)
-router.put('/users/:id/membership', protect, restrictToAdmin, updateMembershipStatus)
-router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole)
+router.get('/users', protect, restrictToAdmin, getAllUsers);
+router.get('/users/:id', protect, restrictToAdmin, getUserById);
+router.put(
+  '/users/:id/membership',
+  protect,
+  restrictToAdmin,
+  updateMembershipStatus,
+);
+router.put('/users/:id/role', protect, restrictToAdmin, updateUserRole);
 // Admin update user (profile fields + photo)
-router.put('/users/:id', protect, restrictToAdmin, upload.single('photo'), updateUserByAdmin)
-router.put('/users/:id/team-leader', protect, restrictToAdmin, updateTeamLeader)
-router.put('/users/:id/member-number', protect, restrictToAdmin, updateMemberNumber)
-router.put('/users/:id/position', protect, restrictToAdmin, updateUserPosition)
+router.put(
+  '/users/:id',
+  protect,
+  restrictToAdmin,
+  upload.single('photo'),
+  updateUserByAdmin,
+);
+router.put(
+  '/users/:id/team-leader',
+  protect,
+  restrictToAdmin,
+  updateTeamLeader,
+);
+router.put(
+  '/users/:id/member-number',
+  protect,
+  restrictToAdmin,
+  updateMemberNumber,
+);
+router.put('/users/:id/position', protect, restrictToAdmin, updateUserPosition);
 router.post('/test-email', protect, restrictToAdmin, (req, res, next) => {
   // lightweight inline handler forwarded to controller for clarity
-  const { testEmail } = require('../controllers/authController')
-  return testEmail(req, res, next)
-})
-router.delete('/users/:id', protect, restrictToAdmin, deleteUser)
-router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser)
+  const { testEmail } = require('../controllers/authController');
+  return testEmail(req, res, next);
+});
+router.delete('/users/:id', protect, restrictToAdmin, deleteUser);
+router.post('/users/:id/notify', protect, restrictToAdmin, notifyUser);
 
-module.exports = router
-
+module.exports = router;
