@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import AuthHeader from '../components/AuthHeader.jsx';
 import SEO from '../components/SEO.jsx';
+import { sanitizeText, validateEmail } from '../utils/security.js';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -16,9 +17,15 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    // Don't sanitize email or password fields, just trim them
+    const sanitizedValue =
+      name === 'email' || name === 'password'
+        ? value.trim()
+        : sanitizeText(value);
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: sanitizedValue,
     });
     setError('');
   };
@@ -28,7 +35,15 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(formData.email, formData.password);
+    // Validate and sanitize email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      setError('कृपया वैध ईमेल दर्ज करें / Please enter a valid email');
+      setLoading(false);
+      return;
+    }
+
+    const result = await login(emailValidation.sanitized, formData.password);
 
     if (result.success) {
       navigate('/profile');

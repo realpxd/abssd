@@ -2,6 +2,8 @@ const Razorpay = require('razorpay');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 const PaymentAttempt = require('../models/PaymentAttempt');
+const { isValidEmail } = require('../utils/validators');
+const crypto = require('crypto');
 
 // Initialize Razorpay
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
@@ -106,7 +108,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Verify payment
+// Verify payment - Optimized for performance
 exports.verifyPayment = async (req, res) => {
   try {
     const {
@@ -118,6 +120,7 @@ exports.verifyPayment = async (req, res) => {
       membershipAmount,
     } = req.body;
 
+    // 1. QUICK VALIDATION (before any DB queries)
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
         success: false,
@@ -132,7 +135,7 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    const crypto = require('crypto');
+    // 2. SIGNATURE VERIFICATION (cryptographic operation, fast)
     const generated_signature = crypto
       .createHmac('sha256', razorpayKeySecret)
       .update(razorpay_order_id + '|' + razorpay_payment_id)
@@ -145,97 +148,108 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // Update PaymentAttempt (best-effort)
-    try {
-      const attempt = await PaymentAttempt.findOne({
-        orderId: razorpay_order_id,
-      });
-      if (attempt) {
-        attempt.paymentId = razorpay_payment_id;
-        attempt.status = 'captured';
-        attempt.updatedAt = new Date();
-        await attempt.save();
-      }
-    } catch (err) {
-      logger.warn('Failed to update PaymentAttempt on verify:', err);
-    }
+    // 3. DETERMINE USER LOOKUP
+    let userId = req.user?._id;
+    let lookupEmail = email ? email.toLowerCase().trim() : null;
 
-    // Payment verified - find user by email or userId
-    let user;
-    if (req.user) {
-      // User is authenticated
-      user = await User.findById(req.user._id);
-    } else if (email) {
-      // User not authenticated yet (registration flow) - find by email
-      user = await User.findOne({ email: email.toLowerCase() });
-    } else {
+    if (!userId && !lookupEmail) {
       return res.status(400).json({
         success: false,
         message: 'User email or authentication required',
       });
     }
 
-    if (!user) {
+    // 4. PREPARE MEMBERSHIP DATES (no DB calls)
+    const startDate = new Date();
+    const endDate = new Date();
+    const finalMembershipType = membershipType || 'ordinary';
+
+    if (finalMembershipType === 'annual') {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate.setFullYear(endDate.getFullYear() + 100);
+    }
+
+    // 5. PARALLEL OPERATIONS - Run independent DB operations together
+    const [existingUser, paymentAttempt] = await Promise.all([
+      // Find user by ID (if authenticated) or email (if registering)
+      userId
+        ? User.findById(userId).lean()
+        : lookupEmail
+          ? User.findOne({ email: lookupEmail }).lean()
+          : null,
+
+      // Find existing payment attempt in parallel
+      PaymentAttempt.findOne({ orderId: razorpay_order_id }).lean(),
+    ]);
+
+    if (!existingUser) {
       return res.status(404).json({
         success: false,
         message: 'User not found',
       });
     }
 
-    // Calculate membership dates
-    const startDate = new Date();
-    const endDate = new Date();
-    const membership = membershipType || user.membershipType;
-    if (membership === 'annual') {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    } else {
-      // Lifetime membership
-      endDate.setFullYear(endDate.getFullYear() + 100);
-    }
+    // 6. UPDATE OPERATIONS - Parallel updates (no need to wait for intermediate results)
+    const updatePromises = [
+      // Update user membership
+      User.findByIdAndUpdate(
+        existingUser._id,
+        {
+          membershipStatus: 'active',
+          paymentId: razorpay_payment_id,
+          membershipType: finalMembershipType,
+          membershipAmount: membershipAmount || existingUser.membershipAmount,
+          membershipStartDate: startDate,
+          membershipEndDate: endDate,
+        },
+        { new: true, projection: { password: 0 } }, // Don't send password, don't fetch unused fields
+      ).lean(),
 
-    // Update user membership
-    await User.findByIdAndUpdate(user._id, {
-      membershipStatus: 'active',
-      paymentId: razorpay_payment_id,
-      membershipType: membership || user.membershipType,
-      membershipAmount: membershipAmount || user.membershipAmount,
-      membershipStartDate: startDate,
-      membershipEndDate: endDate,
-    });
-
-    // Also persist paymentId on PaymentAttempt if present
-    try {
-      await PaymentAttempt.findOneAndUpdate(
+      // Update or create PaymentAttempt (single atomic operation)
+      PaymentAttempt.findOneAndUpdate(
         { orderId: razorpay_order_id },
-        { paymentId: razorpay_payment_id, status: 'captured' },
+        {
+          paymentId: razorpay_payment_id,
+          status: 'captured',
+          updatedAt: new Date(),
+        },
+        { upsert: true, new: false }, // We don't need the result
+      ).lean(),
+    ];
+
+    // Wait for both updates to complete
+    const [updatedUser] = await Promise.all(updatePromises);
+
+    // 7. SEND EMAIL ASYNCHRONOUSLY (non-blocking - fire and forget)
+    // Email will be sent in background without blocking the response
+    if (existingUser.email) {
+      sendMembershipActivationEmail(
+        existingUser.username || 'Member',
+        existingUser.email,
+        finalMembershipType,
+        startDate,
+        endDate,
+      ).catch((err) =>
+        logger.warn('Failed to send membership email (async):', err),
       );
-    } catch (err) {
-      logger.warn('Failed to persist paymentId to PaymentAttempt:', err);
     }
 
-    // Get updated user (populate position for frontend display)
-    const updatedUser = await User.findById(user._id)
-      .select('-password')
-      .populate('position', 'name');
-
-    // Send membership activation email (best-effort)
-    try {
-      const mailer = require('../utils/mailer');
-      const subject = 'ABSSD Trust - Membership activated';
-      const html = `<p>Dear ${updatedUser.username || ''},</p>
-        <p>Your membership has been activated. Membership type: <strong>${updatedUser.membershipType}</strong>.</p>
-        <p>Start Date: ${new Date(updatedUser.membershipStartDate).toLocaleDateString('en-IN')}</p>
-        <p>End Date: ${new Date(updatedUser.membershipEndDate).toLocaleDateString('en-IN')}</p>
-        <p>Thank you for joining ABSSD Trust.</p>`;
-      await mailer.sendMail({ to: updatedUser.email, subject, html });
-    } catch (mailErr) {
-      logger.warn('Failed to send membership activation email:', mailErr);
-    }
-
+    // 8. RESPOND IMMEDIATELY (email is now async)
     res.status(200).json({
       success: true,
       message: 'Payment verified and membership activated',
-      user: updatedUser,
+      user: updatedUser
+        ? {
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            membershipStatus: updatedUser.membershipStatus,
+            membershipType: updatedUser.membershipType,
+            membershipStartDate: updatedUser.membershipStartDate,
+            membershipEndDate: updatedUser.membershipEndDate,
+          }
+        : null,
     });
   } catch (error) {
     logger.error('Payment verification error:', error);
@@ -245,6 +259,29 @@ exports.verifyPayment = async (req, res) => {
     });
   }
 };
+
+// Helper function - Send membership email async (non-blocking)
+async function sendMembershipActivationEmail(
+  username,
+  email,
+  membershipType,
+  startDate,
+  endDate,
+) {
+  try {
+    const mailer = require('../utils/mailer');
+    const subject = 'ABSSD Trust - Membership activated';
+    const html = `<p>Dear ${username || 'Member'},</p>
+      <p>Your membership has been activated. Membership type: <strong>${membershipType}</strong>.</p>
+      <p>Start Date: ${new Date(startDate).toLocaleDateString('en-IN')}</p>
+      <p>End Date: ${new Date(endDate).toLocaleDateString('en-IN')}</p>
+      <p>Thank you for joining ABSSD Trust.</p>`;
+    await mailer.sendMail({ to: email, subject, html });
+  } catch (err) {
+    // Already logged by caller with "async" tag
+    throw err;
+  }
+}
 
 // Webhook handler for Razorpay events
 exports.webhookHandler = async (req, res) => {

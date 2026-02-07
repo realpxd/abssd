@@ -4,6 +4,7 @@ import client from '../api/client.js';
 import api from '../api/config.js';
 import AuthHeader from '../components/AuthHeader.jsx';
 import SEO from '../components/SEO.jsx';
+import { sanitizeText } from '../utils/security.js';
 
 const ResetPassword = () => {
   const location = useLocation();
@@ -31,15 +32,21 @@ const ResetPassword = () => {
       return setError(
         'Reset token is missing. Please use the link from your email.',
       );
-    if (!password || password.length < 6)
+
+    // Sanitize and validate password
+    const sanitizedPassword = sanitizeText(password);
+    const sanitizedConfirm = sanitizeText(confirm);
+
+    if (!sanitizedPassword || sanitizedPassword.length < 6)
       return setError('Password must be at least 6 characters');
-    if (password !== confirm) return setError('Passwords do not match');
+    if (sanitizedPassword !== sanitizedConfirm)
+      return setError('Passwords do not match');
 
     setLoading(true);
     try {
       const res = await client(api.endpoints.auth + '/reset-password', {
         method: 'POST',
-        body: { token, password },
+        body: { token: sanitizeText(token), password: sanitizedPassword },
       });
 
       // Backend returns token and user on success. Store token and navigate to profile.

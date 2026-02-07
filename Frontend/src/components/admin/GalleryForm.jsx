@@ -1,3 +1,5 @@
+import { sanitizeText, validateFileUpload } from '../../utils/security.js';
+
 const GalleryForm = ({
   formData,
   editingId,
@@ -6,6 +8,22 @@ const GalleryForm = ({
   onCancel,
   submitting,
 }) => {
+  const handleTextChange = (field, value) => {
+    onChange({ ...formData, [field]: sanitizeText(value) });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validation = validateFileUpload(file);
+      if (!validation.isValid) {
+        alert(validation.error);
+        return;
+      }
+      onChange({ ...formData, imageFile: file });
+    }
+  };
+
   return (
     <form onSubmit={(e) => onSubmit(e, editingId)} className='space-y-4'>
       <div className='grid md:grid-cols-2 gap-4'>
@@ -16,7 +34,7 @@ const GalleryForm = ({
           <input
             type='text'
             value={formData.title}
-            onChange={(e) => onChange({ ...formData, title: e.target.value })}
+            onChange={(e) => handleTextChange('title', e.target.value)}
             className='w-full px-4 py-2 border border-gray-300 rounded-lg'
           />
         </div>
@@ -27,7 +45,7 @@ const GalleryForm = ({
           <input
             type='text'
             value={formData.titleEn}
-            onChange={(e) => onChange({ ...formData, titleEn: e.target.value })}
+            onChange={(e) => handleTextChange('titleEn', e.target.value)}
             className='w-full px-4 py-2 border border-gray-300 rounded-lg'
           />
         </div>
@@ -38,9 +56,7 @@ const GalleryForm = ({
         </label>
         <textarea
           value={formData.description}
-          onChange={(e) =>
-            onChange({ ...formData, description: e.target.value })
-          }
+          onChange={(e) => handleTextChange('description', e.target.value)}
           className='w-full px-4 py-2 border border-gray-300 rounded-lg'
           rows='3'
         />
@@ -73,9 +89,7 @@ const GalleryForm = ({
           <input
             type='file'
             accept='image/*'
-            onChange={(e) =>
-              onChange({ ...formData, imageFile: e.target.files[0] })
-            }
+            onChange={handleFileChange}
             className='w-full px-4 py-2 border border-gray-300 rounded-lg'
             required={!editingId}
           />

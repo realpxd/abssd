@@ -4,6 +4,7 @@ import client from '../api/client.js';
 import api from '../api/config.js';
 import AuthHeader from '../components/AuthHeader.jsx';
 import SEO from '../components/SEO.jsx';
+import { sanitizeText, validateEmail } from '../utils/security.js';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -18,10 +19,18 @@ const ForgotPassword = () => {
     setMessage('');
     setLoading(true);
 
+    // Validate and sanitize email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setError('कृपया वैध ईमेल दर्ज करें / Please enter a valid email');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await client(api.endpoints.auth + '/forgot-password', {
         method: 'POST',
-        body: { email },
+        body: { email: emailValidation.sanitized },
       });
       setMessage(
         response.resetToken

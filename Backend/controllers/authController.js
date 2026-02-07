@@ -6,6 +6,11 @@ const path = require('path');
 const fs = require('fs');
 const Position = require('../models/Position');
 const mailer = require('../utils/mailer');
+const {
+  isValidEmail,
+  isValidPhone,
+  isSafeObject,
+} = require('../utils/validators');
 
 // Helper to generate a unique 5-digit numeric referral code
 const generateUniqueReferralCode = async () => {
@@ -357,7 +362,16 @@ exports.checkEmail = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format',
+        exists: false,
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     res.status(200).json({
       success: true,
@@ -383,7 +397,17 @@ exports.checkContactNo = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ contactNo });
+    // Validate phone format
+    if (!isValidPhone(contactNo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid phone number format',
+        exists: false,
+      });
+    }
+
+    const sanitizedPhone = contactNo.replace(/\s+/g, '');
+    const user = await User.findOne({ contactNo: sanitizedPhone });
 
     res.status(200).json({
       success: true,

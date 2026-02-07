@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import client from '../api/client.js';
 import api from '../api/config.js';
+import {
+  sanitizeText,
+  validateEmail,
+  validatePhone,
+  sanitizeObject,
+} from '../utils/security.js';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +15,7 @@ const Contact = () => {
     email: '',
     phone: '',
     message: '',
+    website: '', // Honeypot field - should remain empty
   });
 
   const contactMutation = useMutation({
@@ -19,23 +26,71 @@ const Contact = () => {
       }),
     onSuccess: () => {
       alert('Thank you! Your message has been sent successfully.');
-      setFormData({ name: '', email: '', phone: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', message: '', website: '' });
     },
     onError: (error) => {
-      alert('Error sending message. Please try again or contact us directly.');
+      const errorMessage =
+        error?.message ||
+        'Error sending message. Please try again or contact us directly.';
+      alert(errorMessage);
       console.error(error);
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    contactMutation.mutate(formData);
+
+    // Validate honeypot field (should be empty)
+    if (formData.website) {
+      console.warn('Honeypot field filled - possible spam attempt');
+      return;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      alert('कृपया वैध ईमेल दर्ज करें / Please enter a valid email');
+      return;
+    }
+
+    // Validate phone
+    const phoneValidation = validatePhone(formData.phone);
+    if (!phoneValidation.isValid) {
+      alert(
+        'कृपया वैध संपर्क नंबर दर्ज करें / Please enter a valid phone number',
+      );
+      return;
+    }
+
+    // Sanitize and validate all form fields
+    const sanitizedData = {
+      name: sanitizeText(formData.name),
+      email: emailValidation.sanitized,
+      phone: phoneValidation.sanitized,
+      message: sanitizeText(formData.message),
+    };
+
+    contactMutation.mutate(sanitizedData);
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // Only sanitize text fields (name, message)
+    // Email and phone should not be sanitized, just trimmed
+    let newValue = value;
+
+    if (name === 'name' || name === 'message') {
+      // Sanitize text fields to remove HTML
+      newValue = sanitizeText(value);
+    } else if (name !== 'website') {
+      // For email and phone, just trim whitespace
+      newValue = value.trim();
+    }
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: newValue,
     });
   };
 
@@ -258,6 +313,24 @@ const Contact = () => {
                   placeholder='Your Message'
                 ></textarea>
               </div>
+
+              {/* Honeypot field - hidden from users, bots will fill it */}
+              <input
+                type='text'
+                name='website'
+                value={formData.website}
+                onChange={handleChange}
+                tabIndex='-1'
+                autoComplete='off'
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '1px',
+                  height: '1px',
+                  opacity: 0,
+                }}
+                aria-hidden='true'
+              />
 
               <button
                 type='submit'
