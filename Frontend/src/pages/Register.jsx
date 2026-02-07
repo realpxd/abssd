@@ -5,6 +5,14 @@ import client from '../api/client.js';
 import api from '../api/config.js';
 import AuthHeader from '../components/AuthHeader.jsx';
 import SEO from '../components/SEO.jsx';
+import {
+  sanitizeText,
+  validateEmail,
+  validatePhone,
+  validateFileUpload,
+  preventPrototypePollution,
+  sanitizeObject,
+} from '../utils/security.js';
 
 const MEMBERSHIP_PLANS = {
   ordinary: {
@@ -147,11 +155,13 @@ const Register = () => {
     const { name, value, files } = e.target;
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
+      // Sanitize text input for address fields
+      const sanitizedValue = sanitizeText(value);
       setFormData({
         ...formData,
         address: {
           ...formData.address,
-          [addressField]: value,
+          [addressField]: sanitizedValue,
         },
       });
     } else if (
@@ -170,9 +180,23 @@ const Register = () => {
         [name]: files[0],
       });
     } else {
+      // Only sanitize text fields - don't sanitize email/phone
+      let sanitizedValue = value;
+      if (
+        name !== 'email' &&
+        name !== 'contactNo' &&
+        name !== 'aadharNo' &&
+        name !== 'password' &&
+        name !== 'confirmPassword'
+      ) {
+        sanitizedValue = sanitizeText(value);
+      } else {
+        // For email, phone, aadhar, and passwords just trim
+        sanitizedValue = value.trim();
+      }
       setFormData({
         ...formData,
-        [name]: value,
+        [name]: sanitizedValue,
       });
     }
     setError('');
@@ -189,8 +213,9 @@ const Register = () => {
   const handleEmailBlur = async () => {
     if (!formData.email) return;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    // Use security validation function
+    const { isValid, sanitized } = validateEmail(formData.email);
+    if (!isValid) {
       setEmailError('कृपया वैध ईमेल दर्ज करें / Please enter a valid email');
       return;
     }
@@ -200,7 +225,7 @@ const Register = () => {
     try {
       const response = await client(api.endpoints.auth + '/check-email', {
         method: 'POST',
-        body: { email: formData.email },
+        body: { email: sanitized },
       });
       if (response.exists) {
         setEmailError(
@@ -217,9 +242,9 @@ const Register = () => {
   const handleContactBlur = async () => {
     if (!formData.contactNo) return;
 
-    // Basic phone number validation (10 digits)
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formData.contactNo.replace(/\D/g, ''))) {
+    // Use security validation function for Indian phone format
+    const { isValid, sanitized } = validatePhone(formData.contactNo);
+    if (!isValid) {
       setContactError(
         'कृपया वैध संपर्क नंबर दर्ज करें (10 अंक) / Please enter a valid contact number (10 digits)',
       );
@@ -231,7 +256,7 @@ const Register = () => {
     try {
       const response = await client(api.endpoints.auth + '/check-contact', {
         method: 'POST',
-        body: { contactNo: formData.contactNo },
+        body: { contactNo: sanitized },
       });
       if (response.exists) {
         setContactError(
@@ -256,6 +281,23 @@ const Register = () => {
       );
       return false;
     }
+
+    // Validate and sanitize email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      setEmailError('कृपया वैध ईमेल दर्ज करें / Please enter a valid email');
+      return false;
+    }
+
+    // Validate and sanitize phone number
+    const phoneValidation = validatePhone(formData.contactNo);
+    if (!phoneValidation.isValid) {
+      setContactError(
+        'कृपया वैध संपर्क नंबर दर्ज करें (10 अंक) / Please enter a valid contact number (10 digits)',
+      );
+      return false;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('पासवर्ड मेल नहीं खा रहे हैं / Passwords do not match');
       return false;
@@ -268,14 +310,14 @@ const Register = () => {
     }
 
     // Check email and contact number if not already checked
-    if (!emailError && formData.email) {
+    if (!emailError && emailValidation.sanitized) {
       setValidating(true);
       try {
         const emailResponse = await client(
           api.endpoints.auth + '/check-email',
           {
             method: 'POST',
-            body: { email: formData.email },
+            body: { email: emailValidation.sanitized },
           },
         );
         if (emailResponse.exists) {
@@ -292,13 +334,13 @@ const Register = () => {
       }
     }
 
-    if (!contactError && formData.contactNo) {
+    if (!contactError && phoneValidation.sanitized) {
       try {
         const contactResponse = await client(
           api.endpoints.auth + '/check-contact',
           {
             method: 'POST',
-            body: { contactNo: formData.contactNo },
+            body: { contactNo: phoneValidation.sanitized },
           },
         );
         if (contactResponse.exists) {
@@ -333,6 +375,14 @@ const Register = () => {
       setError('कृपया अपनी फोटो अपलोड करें / Please upload your photo');
       return false;
     }
+
+    // Validate photo using security function
+    const photoValidation = validateFileUpload(formData.photo);
+    if (!photoValidation.isValid) {
+      setError(photoValidation.error);
+      return false;
+    }
+
     // const aadhaar = (formData.aadharNo || '').replace(/\s+/g, '')
     // const aadhaarRegex = /^[0-9]{12}$/
     // if (!aadhaar || !aadhaarRegex.test(aadhaar)) {
@@ -558,6 +608,20 @@ const Register = () => {
       );
       return false;
     }
+
+    // Validate Aadhaar files using security function
+    const frontValidation = validateFileUpload(formData.aadharFront);
+    if (!frontValidation.isValid) {
+      setError(`Aadhaar Front: ${frontValidation.error}`);
+      return false;
+    }
+
+    const backValidation = validateFileUpload(formData.aadharBack);
+    if (!backValidation.isValid) {
+      setError(`Aadhaar Back: ${backValidation.error}`);
+      return false;
+    }
+
     if (!formData.aadharConfirmed) {
       setError(
         'कृपया पुष्टि करें कि आपने सही आधार छवियाँ अपलोड की हैं / Please confirm that you have uploaded valid Aadhaar images',

@@ -8,9 +8,26 @@ if (typeof global.escapeRegExp === 'undefined') {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/database');
 const ensureDBConnection = require('./middleware/dbConnection');
 const logger = require('./utils/logger');
+
+// Import security middleware
+const {
+  apiLimiter,
+  authLimiter,
+  paymentLimiter,
+  contactLimiter,
+  uploadLimiter,
+  helmetConfig,
+  mongoSanitizeConfig,
+  hppConfig,
+  xssProtection,
+  requestSizeLimiter,
+  suspiciousActivityDetector,
+  sqlInjectionProtection,
+} = require('./middleware/security');
 
 // Import routes
 const contactRoutes = require('./routes/contactRoutes');
@@ -92,9 +109,28 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
+// Apply security middleware FIRST (before any routes or parsers)
+app.set('trust proxy', 1); // Trust first proxy (needed for rate limiting behind proxies)
+app.use(helmetConfig); // Security headers
+app.use(suspiciousActivityDetector); // Detect suspicious activity patterns
+app.use(requestSizeLimiter); // Prevent large payload attacks
+app.use(cookieParser()); // Parse cookies for CSRF
+
+// CORS with security
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+
+// Body parsers with limits
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Security sanitization middleware
+app.use(mongoSanitizeConfig); // Prevent NoSQL injection
+app.use(xssProtection); // Prevent XSS attacks
+app.use(sqlInjectionProtection); // Prevent SQL injection (defense in depth)
+app.use(hppConfig); // Prevent HTTP Parameter Pollution
+
+// Apply general API rate limiting
+app.use('/api', apiLimiter);
 
 // Ensure database connection before API routes (except health check)
 app.use('/api', (req, res, next) => {
@@ -114,7 +150,16 @@ app.use(
   }),
 );
 
-// Routes
+// Routes with specific rate limiters
+app.use('/api/auth/login', authLimiter); // Strict rate limiting for login
+app.use('/api/auth/register', authLimiter); // Strict rate limiting for registration
+app.use('/api/auth/forgot-password', authLimiter); // Strict rate limiting for password reset
+app.use('/api/auth/reset-password', authLimiter); // Strict rate limiting for password reset
+app.use('/api/payment', paymentLimiter); // Payment-specific rate limiting
+app.use('/api/contact', contactLimiter); // Contact form rate limiting
+app.use('/api/gallery', uploadLimiter); // Upload-specific rate limiting
+app.use('/api/events', uploadLimiter); // Upload-specific rate limiting
+
 app.use('/api/auth', authRoutes);
 app.use('/api/geo', geoRoutes);
 app.use('/api/payment', paymentRoutes);

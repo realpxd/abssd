@@ -12,7 +12,7 @@ const contactSchema = new mongoose.Schema(
       required: [true, 'Email is required'],
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email'],
     },
     phone: {
       type: String,

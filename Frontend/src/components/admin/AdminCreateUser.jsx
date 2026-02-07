@@ -3,6 +3,12 @@ import client from '../../api/client.js';
 import api from '../../api/config.js';
 import { getImageUrl } from '../../utils/imageUrl.js';
 import IDCard from '../IDCard.jsx';
+import {
+  sanitizeText,
+  validateEmail,
+  validatePhone,
+  validateFileUpload,
+} from '../../utils/security.js';
 
 const MEMBERSHIP_PLANS = {
   ordinary: {
@@ -121,9 +127,11 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     }
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
+      // Sanitize text input for address fields
+      const sanitizedValue = sanitizeText(value);
       setFormData({
         ...formData,
-        address: { ...formData.address, [addressField]: value },
+        address: { ...formData.address, [addressField]: sanitizedValue },
       });
     } else if (
       name === 'aadharFront' ||
@@ -134,7 +142,21 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
     } else if (files && files[0]) {
       setFormData({ ...formData, [name]: files[0] });
     } else {
-      setFormData({ ...formData, [name]: value });
+      // Only sanitize text fields - don't sanitize email/phone
+      let sanitizedValue = value;
+      if (
+        name !== 'email' &&
+        name !== 'contactNo' &&
+        name !== 'aadharNo' &&
+        name !== 'password' &&
+        name !== 'confirmPassword'
+      ) {
+        sanitizedValue = sanitizeText(value);
+      } else {
+        // For email, phone, aadhar, and passwords just trim
+        sanitizedValue = value.trim();
+      }
+      setFormData({ ...formData, [name]: sanitizedValue });
     }
     setError('');
     if (name === 'email') setEmailError('');
@@ -143,17 +165,20 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
 
   const handleEmailBlur = async () => {
     if (!formData.email) return;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+
+    // Use security validation function
+    const { isValid, sanitized } = validateEmail(formData.email);
+    if (!isValid) {
       setEmailError('Please enter a valid email');
       return;
     }
+
     setValidating(true);
     setEmailError('');
     try {
       const response = await client(api.endpoints.auth + '/check-email', {
         method: 'POST',
-        body: { email: formData.email },
+        body: { email: sanitized },
       });
       if (response.exists) setEmailError('Email already registered');
     } catch (e) {}
@@ -162,17 +187,20 @@ const AdminCreateUser = ({ onCreated, onCancel }) => {
 
   const handleContactBlur = async () => {
     if (!formData.contactNo) return;
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formData.contactNo.replace(/\D/g, ''))) {
+
+    // Use security validation function for Indian phone format
+    const { isValid, sanitized } = validatePhone(formData.contactNo);
+    if (!isValid) {
       setContactError('Please enter a valid 10-digit number');
       return;
     }
+
     setValidating(true);
     setContactError('');
     try {
       const response = await client(api.endpoints.auth + '/check-contact', {
         method: 'POST',
-        body: { contactNo: formData.contactNo },
+        body: { contactNo: sanitized },
       });
       if (response.exists) setContactError('Contact already registered');
     } catch (e) {}

@@ -1,7 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { DarkModeProvider } from '../context/DarkModeContext.jsx';
 import { useNavigate } from 'react-router-dom';
-import { FiUserPlus, FiDownload, FiSearch, FiTrash2, FiPlus } from 'react-icons/fi';
+import {
+  FiUserPlus,
+  FiDownload,
+  FiSearch,
+  FiTrash2,
+  FiPlus,
+} from 'react-icons/fi';
 import client from '../api/client.js';
 import api from '../api/config.js';
 import AdminHeader from '../components/admin/AdminHeader.jsx';
@@ -701,23 +708,47 @@ const AdminDashboard = () => {
   let content = null;
   if (loading) {
     if (activeTab === 'gallery') {
-      content = <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'><SkeletonLoader type='card' count={6} /></div>;
+      content = (
+        <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
+          <SkeletonLoader type='card' count={6} />
+        </div>
+      );
     } else if (activeTab === 'news') {
-      content = <div className='space-y-4'><SkeletonLoader type='list-item' count={3} /></div>;
+      content = (
+        <div className='space-y-4'>
+          <SkeletonLoader type='list-item' count={3} />
+        </div>
+      );
     } else if (activeTab === 'users') {
       content = (
         <div className='mt-6 overflow-x-auto rounded-lg shadow-md'>
           <table className='min-w-full divide-y divide-gray-200'>
             <thead className='bg-gray-50 border-b border-gray-200'>
               <tr>
-                <th className='px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>No.</th>
-                <th className='px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>M.No.</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>User</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Email</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Contact</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Membership</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Status</th>
-                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>Actions</th>
+                <th className='px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  No.
+                </th>
+                <th className='px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  M.No.
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  User
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  Email
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  Contact
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  Membership
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  Status
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -727,7 +758,11 @@ const AdminDashboard = () => {
         </div>
       );
     } else if (activeTab === 'positions') {
-      content = <div className='space-y-3'><SkeletonLoader type='list-item' count={4} /></div>;
+      content = (
+        <div className='space-y-3'>
+          <SkeletonLoader type='list-item' count={4} />
+        </div>
+      );
     }
   } else if (activeTab === 'gallery') {
     content = (
@@ -735,7 +770,9 @@ const AdminDashboard = () => {
         {galleryItems.length === 0 ? (
           <div className='text-center py-16 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg'>
             <span className='text-5xl'>🖼️</span>
-            <p className='mt-3 text-gray-600 font-medium'>No gallery items yet. Create your first one!</p>
+            <p className='mt-3 text-gray-600 font-medium'>
+              No gallery items yet. Create your first one!
+            </p>
           </div>
         ) : (
           <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -757,7 +794,9 @@ const AdminDashboard = () => {
         {newsItems.length === 0 ? (
           <div className='text-center py-16 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg'>
             <span className='text-5xl'>📰</span>
-            <p className='mt-3 text-gray-600 font-medium'>No news items yet. Create your first one!</p>
+            <p className='mt-3 text-gray-600 font-medium'>
+              No news items yet. Create your first one!
+            </p>
           </div>
         ) : (
           <div className='space-y-4'>
@@ -777,7 +816,9 @@ const AdminDashboard = () => {
     content = (
       <div className='space-y-6'>
         <div className='bg-white p-6 rounded-lg border border-gray-200'>
-          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Create New Position</h2>
+          <h2 className='text-2xl font-bold mb-6 text-gray-900'>
+            Create New Position
+          </h2>
           <form onSubmit={handleCreatePosition} className='space-y-4'>
             <div>
               <label className='block text-sm font-semibold text-gray-700 mb-2'>
@@ -825,10 +866,14 @@ const AdminDashboard = () => {
         </div>
 
         <div className='bg-white p-6 rounded-lg border border-gray-200'>
-          <h2 className='text-2xl font-bold mb-6 text-gray-900'>Existing Positions</h2>
+          <h2 className='text-2xl font-bold mb-6 text-gray-900'>
+            Existing Positions
+          </h2>
           <div className='space-y-3'>
             {positions.length === 0 ? (
-              <p className='text-center py-8 text-gray-500'>No positions found.</p>
+              <p className='text-center py-8 text-gray-500'>
+                No positions found.
+              </p>
             ) : (
               positions.map((pos) => (
                 <div
@@ -836,7 +881,9 @@ const AdminDashboard = () => {
                   className='flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'
                 >
                   <div>
-                    <div className='font-semibold text-gray-900 text-base'>{pos.name}</div>
+                    <div className='font-semibold text-gray-900 text-base'>
+                      {pos.name}
+                    </div>
                     {pos.description && (
                       <div className='text-sm text-gray-600 mt-1'>
                         {pos.description}
@@ -847,7 +894,11 @@ const AdminDashboard = () => {
                     onClick={() => handleDeletePosition(pos)}
                     className='flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg font-medium text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
                     disabled={pos.name && pos.name.toLowerCase() === 'member'}
-                    title={pos.name && pos.name.toLowerCase() === 'member' ? 'Default position cannot be deleted' : 'Delete this position'}
+                    title={
+                      pos.name && pos.name.toLowerCase() === 'member'
+                        ? 'Default position cannot be deleted'
+                        : 'Delete this position'
+                    }
                   >
                     <FiTrash2 size={16} />
                     Delete
@@ -875,7 +926,10 @@ const AdminDashboard = () => {
                 Create User
               </button>
               <div className='flex-1 relative'>
-                <FiSearch className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' size={18} />
+                <FiSearch
+                  className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
+                  size={18}
+                />
                 <input
                   type='text'
                   placeholder='Search by ID, username, or email...'
@@ -906,118 +960,120 @@ const AdminDashboard = () => {
 
             {/* Filters Section */}
             <div className='bg-white border border-gray-200 p-4 rounded-lg'>
-              <p className='text-sm font-semibold text-gray-700 mb-4'>Filters</p>
+              <p className='text-sm font-semibold text-gray-700 mb-4'>
+                Filters
+              </p>
               <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'>
-              <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-2'>
-                  Position
-                </label>
-                <select
-                  value={filterPosition}
-                  onChange={(e) => setFilterPosition(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
-                >
-                  <option value=''>All</option>
-                  {positions.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-2'>
-                  Referred By
-                </label>
-                <select
-                  value={filterReferredBy}
-                  onChange={(e) => setFilterReferredBy(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
-                >
-                  <option value=''>All</option>
-                  {users
-                    .filter((u) => !!u.isTeamLeader)
-                    .map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.username || u.email}
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                    Position
+                  </label>
+                  <select
+                    value={filterPosition}
+                    onChange={(e) => setFilterPosition(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                  >
+                    <option value=''>All</option>
+                    {positions.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.name}
                       </option>
                     ))}
-                </select>
-              </div>
+                  </select>
+                </div>
 
-              <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-2'>
-                  Membership Type
-                </label>
-                <select
-                  value={filterMembershipType}
-                  onChange={(e) => setFilterMembershipType(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
-                >
-                  <option value=''>All</option>
-                  <option value='annual'>Annual</option>
-                  <option value='ordinary'>Ordinary</option>
-                </select>
-              </div>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                    Referred By
+                  </label>
+                  <select
+                    value={filterReferredBy}
+                    onChange={(e) => setFilterReferredBy(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                  >
+                    <option value=''>All</option>
+                    {users
+                      .filter((u) => !!u.isTeamLeader)
+                      .map((u) => (
+                        <option key={u._id} value={u._id}>
+                          {u.username || u.email}
+                        </option>
+                      ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-2'>
-                  Membership Status
-                </label>
-                <select
-                  value={filterMembershipStatus}
-                  onChange={(e) => setFilterMembershipStatus(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
-                >
-                  <option value=''>All</option>
-                  <option value='active'>Active</option>
-                  <option value='pending'>Pending</option>
-                  <option value='cancelled'>Cancelled</option>
-                </select>
-              </div>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                    Membership Type
+                  </label>
+                  <select
+                    value={filterMembershipType}
+                    onChange={(e) => setFilterMembershipType(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                  >
+                    <option value=''>All</option>
+                    <option value='annual'>Annual</option>
+                    <option value='ordinary'>Ordinary</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className='block text-xs font-semibold text-gray-600 mb-2'>
-                  Role
-                </label>
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
-                >
-                  <option value=''>All</option>
-                  <option value='admin'>Admin</option>
-                  <option value='user'>User</option>
-                </select>
-              </div>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                    Membership Status
+                  </label>
+                  <select
+                    value={filterMembershipStatus}
+                    onChange={(e) => setFilterMembershipStatus(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                  >
+                    <option value=''>All</option>
+                    <option value='active'>Active</option>
+                    <option value='pending'>Pending</option>
+                    <option value='cancelled'>Cancelled</option>
+                  </select>
+                </div>
 
-              <div className='flex items-end'>
-                <button
-                  onClick={() => {
-                    setFilterPosition('');
-                    setFilterReferredBy('');
-                    setFilterMembershipType('');
-                    setFilterMembershipStatus('');
-                    setFilterRole('');
-                  }}
-                  className='w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-sm'
-                >
-                  Reset
-                </button>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                    Role
+                  </label>
+                  <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                  >
+                    <option value=''>All</option>
+                    <option value='admin'>Admin</option>
+                    <option value='user'>User</option>
+                  </select>
+                </div>
+
+                <div className='flex items-end'>
+                  <button
+                    onClick={() => {
+                      setFilterPosition('');
+                      setFilterReferredBy('');
+                      setFilterMembershipType('');
+                      setFilterMembershipStatus('');
+                      setFilterRole('');
+                    }}
+                    className='w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-sm'
+                  >
+                    Reset
+                  </button>
+                </div>
               </div>
-            </div>
             </div>
           </div>
         </div>
 
         {/* Users Table */}
         <div className='mt-6 overflow-x-auto rounded-lg shadow-md'>
-        <UsersList
-          users={filteredUsers}
-          onViewDetails={handleViewUserDetails}
-          onPrintID={handlePrintUser}
-        />
+          <UsersList
+            users={filteredUsers}
+            onViewDetails={handleViewUserDetails}
+            onPrintID={handlePrintUser}
+          />
         </div>
       </>
     );
@@ -1091,18 +1147,19 @@ const AdminDashboard = () => {
               )}
             </FormModal>
 
-            {!showAddForm && (activeTab === 'gallery' || activeTab === 'news') && (
-              <button
-                onClick={() => {
-                  if (activeTab === 'gallery') resetGalleryForm();
-                  else if (activeTab === 'news') resetNewsForm();
-                  setShowAddForm(true);
-                }}
-                className='mb-6 bg-orange-600 text-white px-5 py-2.5 rounded-lg hover:bg-orange-700 font-medium text-sm transition-colors duration-200'
-              >
-                {`+ Add New ${activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}`}
-              </button>
-            )}
+            {!showAddForm &&
+              (activeTab === 'gallery' || activeTab === 'news') && (
+                <button
+                  onClick={() => {
+                    if (activeTab === 'gallery') resetGalleryForm();
+                    else if (activeTab === 'news') resetNewsForm();
+                    setShowAddForm(true);
+                  }}
+                  className='mb-6 bg-orange-600 text-white px-5 py-2.5 rounded-lg hover:bg-orange-700 font-medium text-sm transition-colors duration-200'
+                >
+                  {`+ Add New ${activeTab === 'gallery' ? 'Gallery Item' : 'News Item'}`}
+                </button>
+              )}
 
             {content}
           </div>
@@ -1136,4 +1193,11 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+// Wrap with DarkModeProvider
+const AdminDashboardWithDarkMode = () => (
+  <DarkModeProvider>
+    <AdminDashboard />
+  </DarkModeProvider>
+);
+
+export default AdminDashboardWithDarkMode;
