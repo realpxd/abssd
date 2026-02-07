@@ -265,16 +265,6 @@ const sqlInjectionProtection = (req, res, next) => {
   next();
 };
 
-// CSRF token middleware
-const csrf = require('csurf');
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  },
-});
-
 module.exports = {
   apiLimiter,
   authLimiter,
@@ -288,5 +278,4 @@ module.exports = {
   requestSizeLimiter,
   suspiciousActivityDetector,
   sqlInjectionProtection,
-  csrfProtection,
 };
