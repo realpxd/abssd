@@ -1,4 +1,10 @@
-import { FiImage, FiFileText, FiUsers, FiTarget } from 'react-icons/fi';
+import {
+  FiImage,
+  FiFileText,
+  FiUsers,
+  FiTarget,
+  FiShare2,
+} from 'react-icons/fi';
 
 const TabNavigation = ({ activeTab, onTabChange }) => {
   const tabs = [
@@ -6,6 +12,7 @@ const TabNavigation = ({ activeTab, onTabChange }) => {
     { id: 'news', label: 'News', icon: FiFileText },
     { id: 'users', label: 'Users', icon: FiUsers },
     { id: 'positions', label: 'Positions', icon: FiTarget },
+    { id: 'social-cards', label: 'Social Cards', icon: FiShare2 },
   ];
 
   return (

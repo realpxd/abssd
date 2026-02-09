@@ -19,6 +19,7 @@ import TestControls from './pages/TestControls';
 import NotFound from './pages/NotFound';
 import MajorMembers from './pages/MajorMembers';
 import PaymentStatus from './pages/PaymentStatus';
+import Social from './pages/Social';
 
 function App() {
   return (
@@ -92,6 +93,14 @@ function App() {
               <Header />
               <PaymentStatus />
               <Footer />
+            </>
+          }
+        />
+        <Route
+          path='/social'
+          element={
+            <>
+              <Social />
             </>
           }
         />

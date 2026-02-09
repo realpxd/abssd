@@ -23,6 +23,8 @@ import LoadingSpinner from '../components/admin/LoadingSpinner.jsx';
 import SkeletonLoader from '../components/admin/SkeletonLoader.jsx';
 import UsersList from '../components/admin/UsersList.jsx';
 import UserDetailsModal from '../components/admin/UserDetailsModal.jsx';
+import SocialCardsList from '../components/admin/SocialCardsList.jsx';
+import SocialCardImageModal from '../components/admin/SocialCardImageModal.jsx';
 import SEO from '../components/SEO.jsx';
 
 const AdminDashboard = () => {
@@ -33,6 +35,9 @@ const AdminDashboard = () => {
   const [newsItems, setNewsItems] = useState([]);
   const [users, setUsers] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [socialCards, setSocialCards] = useState([]);
+  const [socialCardStats, setSocialCardStats] = useState({});
+  const [viewingSocialCard, setViewingSocialCard] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [autoPrint, setAutoPrint] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -102,6 +107,27 @@ const AdminDashboard = () => {
           if (posResp && posResp.data) setPositions(posResp.data);
         } catch (err) {
           // ignore
+        }
+      } else if (activeTab === 'social-cards') {
+        try {
+          const response = await client('/social-cards', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          if (!mountedRef.current) return;
+          setSocialCards(response.data || []);
+
+          // Fetch stats
+          const statsResp = await client('/social-cards/stats', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          if (!mountedRef.current) return;
+          setSocialCardStats(statsResp.stats || {});
+        } catch (err) {
+          console.error('Error fetching social cards:', err);
         }
       }
     } catch (error) {
@@ -704,6 +730,28 @@ const AdminDashboard = () => {
     }
   };
 
+  // Social Cards handlers
+  const handleDeleteSocialCard = async (id) => {
+    if (
+      !confirm('Are you sure you want to delete this social card submission?')
+    )
+      return;
+
+    try {
+      await client(`/social-cards/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      fetchData();
+    } catch (error) {
+      alert(error.message || 'Error deleting social card');
+    }
+  };
+
+  const handleViewSocialCardImage = (card) => {
+    setViewingSocialCard(card);
+  };
+
   // Prepare content area based on activeTab
   let content = null;
   if (loading) {
@@ -909,6 +957,15 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+    );
+  } else if (activeTab === 'social-cards') {
+    content = (
+      <SocialCardsList
+        socialCards={socialCards}
+        onDelete={handleDeleteSocialCard}
+        onViewImage={handleViewSocialCardImage}
+        stats={socialCardStats}
+      />
     );
   } else if (activeTab === 'users') {
     content = (
@@ -1187,6 +1244,14 @@ const AdminDashboard = () => {
             fetchData();
             setSelectedUser(null);
           }}
+        />
+      )}
+
+      {/* Social Card Image Modal */}
+      {viewingSocialCard && (
+        <SocialCardImageModal
+          card={viewingSocialCard}
+          onClose={() => setViewingSocialCard(null)}
         />
       )}
     </div>
