@@ -27,7 +27,7 @@ const CANVAS_CONFIG = {
   },
   ADDRESS: {
     X: 570,
-    Y: 480,
+    Y: 478,
     FONT: '38px "Akshar", sans-serif',
     LINE_HEIGHT: 50,
   },
