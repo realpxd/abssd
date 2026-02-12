@@ -96,14 +96,14 @@ function App() {
             </>
           }
         />
-        <Route
+        {/* <Route
           path='/social'
           element={
             <>
               <Social />
             </>
           }
-        />
+        /> */}
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route

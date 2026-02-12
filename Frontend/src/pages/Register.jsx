@@ -24,17 +24,17 @@ const MEMBERSHIP_PLANS = {
       'स्वयंसेवक प्रमाणपत्र / Volunteer certificate',
     ],
   },
-  // annual: {
-  //   name: 'वार्षिक सदस्यता / Annual Membership',
-  //   amount: 2555,
-  //   features: [
-  //     'सभी कार्यक्रमों में प्राथमिकता / Priority in all events',
-  //     'विशेष अपडेट्स / Special updates',
-  //     'स्वर्ण प्रमाणपत्र / Gold certificate',
-  //     'विशेष बैज / Special badge',
-  //     'मेले के दौरान रहने एवं भोजन की व्यवस्था / Arrangement of accommodation and meals during the fair',
-  //   ],
-  // },
+  annual: {
+    name: 'वार्षिक सदस्यता / Annual Membership',
+    amount: 2555,
+    features: [
+      'सभी कार्यक्रमों में प्राथमिकता / Priority in all events',
+      'विशेष अपडेट्स / Special updates',
+      'स्वर्ण प्रमाणपत्र / Gold certificate',
+      'विशेष बैज / Special badge',
+      'मेले के दौरान रहने एवं भोजन की व्यवस्था / Arrangement of accommodation and meals during the fair',
+    ],
+  },
 };
 
 const Register = () => {
@@ -43,7 +43,7 @@ const Register = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState('ordinary');
+  const [selectedPlan, setSelectedPlan] = useState('annual');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [validating, setValidating] = useState(false);
   const [emailError, setEmailError] = useState('');
