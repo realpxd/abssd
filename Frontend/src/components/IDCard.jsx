@@ -376,7 +376,9 @@ const IDCard = forwardRef(
                 <div className='text-gray-700 text-[14px] font-semibold'>
                   पता:{' '}
                 </div>
-                <div className='text-gray-800 text-[15px] max-w-[130px] break-words'>
+                <div
+                  className={`text-gray-800 text-[${formatCityState(user.address?.city, user.address?.state).length > 18 ? '13px' : '15px'}] max-w-[130px] break-words`}
+                >
                   {formatCityState(user.address?.city, user.address?.state)}
                 </div>
               </div>
@@ -386,7 +388,11 @@ const IDCard = forwardRef(
                   मोबाइल:{' '}
                 </div>
                 <div className='text-gray-800 text-[15px]'>
-                  {user.contactNo || 'N/A'}
+                  {user.contactNo
+                    ? user.contactNo
+                        .replace(/^\+91\s*/, '')
+                        .replace(/^\+\d+\s*/, '')
+                    : 'N/A'}
                 </div>
               </div>
               {user.referredBy && (
@@ -394,7 +400,9 @@ const IDCard = forwardRef(
                   <div className='text-gray-700 text-[14px] font-semibold'>
                     टीम प्रभारी:{' '}
                   </div>
-                  <div className='text-gray-800 text-[15px] font-semibold max-w-[130px] break-words'>
+                  <div
+                    className={`text-gray-800 text-[${(typeof user.referredBy === 'object' && formatUsername(user.referredBy.username).length > 10) || String(formatUsername(user.referredBy)).length > 10 ? '14px' : '15px'}] font-semibold max-w-[130px] break-words`}
+                  >
                     {typeof user.referredBy === 'object'
                       ? formatUsername(user.referredBy.username) || 'N/A'
                       : String(formatUsername(user.referredBy))}
