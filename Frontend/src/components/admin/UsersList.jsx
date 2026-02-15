@@ -200,8 +200,20 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
         selectedUsers.includes(u._id),
       );
 
-      // Group users into chunks of 4 (2x2 grid per page)
-      const pages = chunkArray(selectedUserObjects, 4);
+      // Group users into chunks of 5 (3 left + 2 right per page)
+      const createPages = (userList) => {
+        const pages = [];
+        for (let i = 0; i < userList.length; i += 5) {
+          const pageUsers = userList.slice(i, i + 5);
+          pages.push({
+            left: pageUsers.slice(0, 3), // 3 cards on left
+            right: pageUsers.slice(3, 5), // 2 cards on right
+          });
+        }
+        return pages;
+      };
+
+      const pages = createPages(selectedUserObjects);
 
       // Create a new window for printing
       const printWindow = window.open('', '_blank');
@@ -228,7 +240,7 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
       await new Promise((resolve) => {
         root.render(
           <div className='print-id-cards-container'>
-            {pages.map((pageUsers, pageIdx) => (
+            {pages.map((page, pageIdx) => (
               <div
                 key={pageIdx}
                 className='print-page'
@@ -236,33 +248,74 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
                   pageBreakAfter:
                     pageIdx < pages.length - 1 ? 'always' : 'auto',
                   pageBreakInside: 'avoid',
-                  minHeight: '100vh',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '20px',
+                  padding: '1mm',
                 }}
               >
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '20px',
-                    maxWidth: '100%',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '2px',
+                    height: '100%',
+                    alignContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  {pageUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <IDCard user={user} />
-                    </div>
-                  ))}
+                  {/* Left column - 3 cards rotated 90 degrees */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                      overflow: 'hidden',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {page.left.map((user) => (
+                      <div
+                        key={user._id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flex: '0 0 auto',
+                          transform: 'rotate(90deg)',
+                          transformOrigin: 'center',
+                          width: '100%',
+                          height: 'auto',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <IDCard user={user} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Right column - 2 larger cards */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {page.right.map((user) => (
+                      <div
+                        key={user._id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flex: '1 1 auto',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <IDCard user={user} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
@@ -286,10 +339,15 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
             <meta charset="utf-8" />
             ${headHtml}
             <style>
-              body {
+              * {
                 margin: 0;
                 padding: 0;
-                background: #f3f4f6;
+                box-sizing: border-box;
+              }
+              html, body {
+                margin: 0;
+                padding: 0;
+                background: white;
               }
               .print-id-cards-container {
                 width: 100%;
@@ -298,15 +356,26 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
                 box-shadow: none !important;
               }
               @media print {
-                body {
+                @page {
+                  size: A4;
+                  margin: 0;
+                }
+                html, body {
+                  margin: 0;
+                  padding: 0;
                   background: white;
                 }
                 .print-page {
+                  width: 210mm;
+                  height: 297mm;
+                  margin: 0;
+                  padding: 6mm;
+                  page-break-after: always;
                   box-shadow: none !important;
+                  background: white;
                 }
-                @page {
-                  size: A4;
-                  margin: 15mm;
+                .print-page:last-child {
+                  page-break-after: avoid;
                 }
               }
             </style>
