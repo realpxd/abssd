@@ -16,7 +16,13 @@ const createRateLimiter = (
     legacyHeaders: false,
     skip: (req) => {
       // Skip rate limiting for health check endpoints
-      return req.path === '/health' || req.path === '/api/health';
+      if (req.path === '/health' || req.path === '/api/health') return true;
+      // Skip rate limiting for admin users
+      if (req.user && req.user.isAdmin) return true;
+      // Skip rate limiting for admin routes
+      if (req.path.startsWith('/admin') || req.path.startsWith('/api/admin'))
+        return true;
+      return false;
     },
   });
 };

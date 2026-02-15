@@ -1,8 +1,4 @@
 const SocialCard = require('../models/SocialCard');
-const {
-  getPaginationParams,
-  getPaginationResponse,
-} = require('../utils/pagination');
 const { sanitizeString } = require('../utils/validators');
 
 // Create or update social card
@@ -50,7 +46,6 @@ exports.createSocialCard = async (req, res) => {
 // Get all social cards (Admin only)
 exports.getAllSocialCards = async (req, res) => {
   try {
-    const { page, limit, skip } = getPaginationParams(req);
     const { search } = req.query;
 
     let query = {};
@@ -65,10 +60,7 @@ exports.getAllSocialCards = async (req, res) => {
       };
     }
 
-    const socialCards = await SocialCard.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const socialCards = await SocialCard.find(query).sort({ createdAt: -1 });
 
     const total = await SocialCard.countDocuments(query);
     const generatedCount = await SocialCard.countDocuments({ generated: true });
@@ -76,7 +68,6 @@ exports.getAllSocialCards = async (req, res) => {
     res.json({
       success: true,
       data: socialCards,
-      pagination: getPaginationResponse(total, page, limit),
       stats: {
         total,
         generated: generatedCount,

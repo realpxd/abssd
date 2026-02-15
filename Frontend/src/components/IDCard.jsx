@@ -26,10 +26,10 @@ const FloralCorner = ({
 const formatUsername = (name) => {
   if (!name) return '';
   const s = String(name).trim();
-  if (s.length <= 12) return s;
+  if (s.length <= 10) return s;
   const parts = s.split(/\s+/);
   if (parts.length === 1) {
-    return parts[0].slice(0, 12);
+    return parts[0].slice(0, 10);
   }
   const first = parts[0];
   const last = parts[parts.length - 1];
@@ -50,10 +50,13 @@ const emailStyleFor = (email) => {
   const e = email ? String(email) : '';
   const len = e.length;
   let fontSize = 15;
-  if (len > 60) fontSize = 10;
-  else if (len > 45) fontSize = 11;
-  else if (len > 35) fontSize = 12;
-  else if (len > 25) fontSize = 13;
+  if (len > 55) fontSize = 9;
+  else if (len > 45) fontSize = 10;
+  else if (len >= 35) fontSize = 10;
+  else if (len > 29) fontSize = 11.3;
+  else if (len > 27) fontSize = 11.6;
+  else if (len > 25) fontSize = 12;
+  else if (len > 20) fontSize = 13;
   return { fontSize: `${fontSize}px` };
 };
 
