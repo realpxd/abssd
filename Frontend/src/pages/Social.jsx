@@ -13,29 +13,29 @@ import apiClient from '../api/client';
 // Canvas positioning constants
 const CANVAS_CONFIG = {
   PHOTO: {
-    X: 183,
-    Y: 276,
-    WIDTH: 280,
-    HEIGHT: 280,
+    X: 610,
+    Y: 210,
+    WIDTH: 200,
+    HEIGHT: 200,
     RADIUS: 12,
   },
   NAME: {
-    X: 570,
-    Y: 425,
-    FONT: 'bold 48px "Akshar", sans-serif',
+    X: 600,
+    Y: 435,
+    FONT: 'bold 56px "Akshar", sans-serif',
     LINE_HEIGHT: 60,
   },
   ADDRESS: {
-    X: 570,
-    Y: 478,
-    FONT: '38px "Akshar", sans-serif',
+    X: 600,
+    Y: 490,
+    FONT: 'bold 42px "Akshar", sans-serif',
     LINE_HEIGHT: 50,
   },
-  TEXT_COLOR: '#FFFFFF',
-  MAX_WIDTH_OFFSET: 80,
+  TEXT_COLOR: '#003366',
+  MAX_WIDTH_OFFSET: 30,
 };
 
-const TEMPLATE_IMAGE = '/images/abssdLink.jpg';
+const TEMPLATE_IMAGE = '/images/abssdLinkNew.jpeg';
 const IMAGE_RENDER_DELAY = 150;
 
 const Social = () => {
@@ -81,58 +81,50 @@ const Social = () => {
 
   // Utility function to draw text on canvas
   const drawTextOnCanvas = useCallback((ctx, nameText, addressText) => {
+    const canvasWidth = ctx.canvas.width;
     const maxWidth =
-      ctx.canvas.width - CANVAS_CONFIG.NAME.X - CANVAS_CONFIG.MAX_WIDTH_OFFSET;
+      canvasWidth - CANVAS_CONFIG.NAME.X - CANVAS_CONFIG.MAX_WIDTH_OFFSET;
 
-    // Name
+    // NAME - Single line, no wrapping
     ctx.font = CANVAS_CONFIG.NAME.FONT;
     ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    wrapText(
-      ctx,
-      nameText,
-      CANVAS_CONFIG.NAME.X,
-      CANVAS_CONFIG.NAME.Y,
-      maxWidth,
-      CANVAS_CONFIG.NAME.LINE_HEIGHT,
-    );
 
-    // Address
+    const nameMetrics = ctx.measureText(nameText);
+    const nameWidth = nameMetrics.width;
+
+    // Calculate name position - if it exceeds maxWidth, shift it left
+    const minX = CANVAS_CONFIG.MAX_WIDTH_OFFSET;
+    let nameX = CANVAS_CONFIG.NAME.X;
+
+    if (nameWidth > maxWidth) {
+      nameX = Math.max(
+        minX,
+        canvasWidth - nameWidth - CANVAS_CONFIG.MAX_WIDTH_OFFSET,
+      );
+    }
+
+    ctx.strokeText(nameText, nameX, CANVAS_CONFIG.NAME.Y);
+    ctx.fillText(nameText, nameX, CANVAS_CONFIG.NAME.Y);
+
+    // ADDRESS - Center it below the name dynamically
     ctx.font = CANVAS_CONFIG.ADDRESS.FONT;
     ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
-    wrapText(
-      ctx,
-      addressText,
-      CANVAS_CONFIG.ADDRESS.X,
-      CANVAS_CONFIG.ADDRESS.Y,
-      maxWidth,
-      CANVAS_CONFIG.ADDRESS.LINE_HEIGHT,
-    );
-  }, []);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.textAlign = 'left';
 
-  // Helper function to wrap text
-  const wrapText = useCallback((ctx, text, x, y, maxWidth, lineHeight) => {
-    if (!text) return;
+    const addressMetrics = ctx.measureText(addressText);
+    const addressWidth = addressMetrics.width;
 
-    const words = text.split(' ');
-    let line = '';
-    let yOffset = y;
+    // Center the address relative to the name
+    const addressX = nameX + (nameWidth - addressWidth) / 2;
 
-    for (let i = 0; i < words.length; i++) {
-      const testLine = line + words[i] + ' ';
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-
-      if (testWidth > maxWidth && i > 0) {
-        ctx.fillText(line.trim(), x, yOffset);
-        line = words[i] + ' ';
-        yOffset += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line.trim(), x, yOffset);
+    ctx.strokeText(addressText, addressX, CANVAS_CONFIG.ADDRESS.Y);
+    ctx.fillText(addressText, addressX, CANVAS_CONFIG.ADDRESS.Y);
   }, []);
 
   // Draw rounded rectangle clip path for photo
@@ -373,11 +365,11 @@ const Social = () => {
         description='Create and share your personalized ABSSD Trust support card'
         keywords='ABSSD Trust, social card, support, community'
       />
-      <div className='min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4'>
+      <div className='min-h-screen bg-gradient-to-br from-orange-50 to-orange-100  py-12 px-4'>
         <div className='max-w-7xl mx-auto'>
           {/* Header */}
           <div className='text-center mb-12'>
-            <h1 className='text-4xl font-bold text-orange-600 dark:text-orange-400 mb-2'>
+            <h1 className='text-4xl font-bold text-orange-600 mb-2'>
               Create Your Social Card
             </h1>
           </div>
@@ -386,8 +378,8 @@ const Social = () => {
           <div className='flex flex-col-reverse md:flex-row gap-8'>
             {/* Form Section - Left side on desktop */}
             <div className='w-full lg:w-1/2'>
-              <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8'>
-                <h2 className='text-2xl font-bold text-gray-800 dark:text-white mb-6'>
+              <div className='bg-white rounded-lg shadow-xl p-8'>
+                <h2 className='text-2xl font-bold text-gray-800  mb-6'>
                   Your Details
                 </h2>
 
@@ -395,7 +387,7 @@ const Social = () => {
                 <div className='mb-6'>
                   <label
                     htmlFor='name-input'
-                    className='block text-gray-700 dark:text-gray-300 font-semibold mb-2'
+                    className='block text-gray-700 font-semibold mb-2'
                   >
                     Your Name *
                   </label>
@@ -406,7 +398,7 @@ const Social = () => {
                     onChange={(e) => setName(e.target.value)}
                     placeholder='Enter your name'
                     maxLength={50}
-                    className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition'
+                    className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition'
                     style={{ fontFamily: 'Akshar, sans-serif' }}
                     aria-required='true'
                     autoComplete='name'
@@ -417,7 +409,7 @@ const Social = () => {
                 <div className='mb-6'>
                   <label
                     htmlFor='city-input'
-                    className='block text-gray-700 dark:text-gray-300 font-semibold mb-2'
+                    className='block text-gray-700 font-semibold mb-2'
                   >
                     City *
                   </label>
@@ -428,7 +420,7 @@ const Social = () => {
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder='Enter your city'
                     maxLength={30}
-                    className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition'
+                    className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition'
                     style={{ fontFamily: 'Akshar, sans-serif' }}
                     aria-required='true'
                     autoComplete='address-level2'
@@ -439,7 +431,7 @@ const Social = () => {
                 <div className='mb-8'>
                   <label
                     htmlFor='photo-upload'
-                    className='block text-gray-700 dark:text-gray-300 font-semibold mb-2'
+                    className='block text-gray-700 font-semibold mb-2'
                   >
                     Upload Your Photo
                   </label>
@@ -462,7 +454,7 @@ const Social = () => {
                       Choose Photo
                     </button>
                     {userPhoto && (
-                      <span className='text-green-600 dark:text-green-400 font-medium'>
+                      <span className='text-green-600 font-medium'>
                         ✓ {userPhoto.name}
                       </span>
                     )}
@@ -511,13 +503,13 @@ const Social = () => {
 
             {/* Preview Section - Right side on desktop */}
             <div className='w-full lg:w-1/2'>
-              <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 sticky top-8'>
-                <h2 className='text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center'>
+              <div className='bg-white rounded-lg shadow-xl p-8 sticky top-8'>
+                <h2 className='text-2xl font-bold text-gray-800 mb-4 text-center'>
                   Preview
                 </h2>
 
                 {/* Preview Image - Default visible or after generation */}
-                <div className='flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 rounded-lg p-4 min-h-[400px]'>
+                <div className='flex flex-col items-center justify-center bg-gray-100 rounded-lg p-4 min-h-[400px]'>
                   {composedImage ? (
                     <img
                       src={composedImage}
@@ -549,7 +541,7 @@ const Social = () => {
 
                     {/* Share Section */}
                     <div>
-                      <h3 className='text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center'>
+                      <h3 className='text-lg font-semibold text-gray-700 mb-4 text-center'>
                         Share on Social Media
                       </h3>
                       <div className='grid grid-cols-2 gap-4'>
