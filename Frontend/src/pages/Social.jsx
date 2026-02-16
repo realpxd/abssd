@@ -7,6 +7,8 @@ import {
   FaDownload,
   FaRedo,
 } from 'react-icons/fa';
+import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 import SEO from '../components/SEO';
 import apiClient from '../api/client';
 
@@ -14,20 +16,20 @@ import apiClient from '../api/client';
 const CANVAS_CONFIG = {
   PHOTO: {
     X: 610,
-    Y: 210,
+    Y: 205,
     WIDTH: 200,
     HEIGHT: 200,
     RADIUS: 12,
   },
   NAME: {
     X: 600,
-    Y: 435,
+    Y: 430,
     FONT: 'bold 56px "Akshar", sans-serif',
     LINE_HEIGHT: 60,
   },
   ADDRESS: {
     X: 600,
-    Y: 490,
+    Y: 495,
     FONT: 'bold 42px "Akshar", sans-serif',
     LINE_HEIGHT: 50,
   },
@@ -43,10 +45,15 @@ const Social = () => {
   const [address, setAddress] = useState('');
   const [userPhoto, setUserPhoto] = useState(null);
   const [userPhotoUrl, setUserPhotoUrl] = useState(null);
+  const [originalPhotoUrl, setOriginalPhotoUrl] = useState(null);
   const [composedImage, setComposedImage] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   const canvasRef = useRef(null);
   const previewCanvasRef = useRef(null);
@@ -71,13 +78,58 @@ const Social = () => {
     setUserPhoto(file);
     const reader = new FileReader();
     reader.onload = (event) => {
-      setUserPhotoUrl(event.target.result);
+      const imageUrl = event.target.result;
+      setOriginalPhotoUrl(imageUrl);
+      setUserPhotoUrl(imageUrl);
+      setShowCropModal(true);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
     };
     reader.onerror = () => {
       alert('Error reading file. Please try again.');
     };
     reader.readAsDataURL(file);
   }, []);
+
+  // Handle crop complete
+  const handleCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  // Create cropped image canvas
+  const createCroppedImage = useCallback(() => {
+    if (!originalPhotoUrl || !croppedAreaPixels) return;
+
+    const image = new Image();
+    image.src = originalPhotoUrl;
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+      const ctx = canvas.getContext('2d');
+
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+      );
+
+      canvas.toBlob((blob) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onload = () => {
+          setUserPhotoUrl(reader.result);
+          setShowCropModal(false);
+        };
+      });
+    };
+  }, [originalPhotoUrl, croppedAreaPixels]);
 
   // Utility function to draw text on canvas
   const drawTextOnCanvas = useCallback((ctx, nameText, addressText) => {
@@ -269,6 +321,9 @@ const Social = () => {
       setComposedImage(imageUrl);
       setShowShareOptions(true);
 
+      // Scroll to top to show the generated image
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       // Save to database
       setIsSaving(true);
       try {
@@ -351,8 +406,13 @@ const Social = () => {
     setAddress('');
     setUserPhoto(null);
     setUserPhotoUrl(null);
+    setOriginalPhotoUrl(null);
     setComposedImage(null);
     setShowShareOptions(false);
+    setShowCropModal(false);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -365,6 +425,73 @@ const Social = () => {
         description='Create and share your personalized ABSSD Trust support card'
         keywords='ABSSD Trust, social card, support, community'
       />
+
+      {/* Crop Modal */}
+      {showCropModal && originalPhotoUrl && (
+        <div className='fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4'>
+          <div className='bg-white rounded-lg shadow-2xl w-full max-w-2xl'>
+            <h3 className='text-2xl font-bold text-gray-800 p-6 border-b'>
+              Crop Your Photo
+            </h3>
+
+            <div className='relative w-full h-96 bg-gray-200'>
+              <Cropper
+                image={originalPhotoUrl}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape='round'
+                showGrid={false}
+                onCropChange={setCrop}
+                onCropComplete={handleCropComplete}
+                onZoomChange={setZoom}
+                restrictPosition={true}
+              />
+            </div>
+
+            {/* Zoom Slider */}
+            <div className='p-6 border-t'>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                Zoom
+              </label>
+              <input
+                type='range'
+                min='1'
+                max='3'
+                step='0.1'
+                value={zoom}
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className='w-full'
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className='flex gap-4 p-6 border-t bg-gray-50'>
+              <button
+                onClick={() => {
+                  setShowCropModal(false);
+                  setUserPhotoUrl(null);
+                  setOriginalPhotoUrl(null);
+                  setUserPhoto(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                className='flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition font-semibold'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createCroppedImage}
+                className='flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition font-semibold'
+              >
+                Crop & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className='min-h-screen bg-gradient-to-br from-orange-50 to-orange-100  py-12 px-4'>
         <div className='max-w-7xl mx-auto'>
           {/* Header */}
@@ -460,12 +587,28 @@ const Social = () => {
                     )}
                   </div>
                   {userPhotoUrl && (
-                    <div className='mt-4'>
-                      <img
-                        src={userPhotoUrl}
-                        alt='Your photo preview'
-                        className='w-32 h-32 object-cover rounded-full border-4 border-orange-500'
-                      />
+                    <div className='mt-4 flex items-end gap-4'>
+                      <div>
+                        <img
+                          src={userPhotoUrl}
+                          alt='Your photo preview'
+                          className='w-32 h-32 object-cover rounded-full border-4 border-orange-500'
+                        />
+                      </div>
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setOriginalPhotoUrl(userPhotoUrl);
+                          setCrop({ x: 0, y: 0 });
+                          setZoom(1);
+                          setCroppedAreaPixels(null);
+                          setShowCropModal(true);
+                        }}
+                        className='px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition font-semibold'
+                        aria-label='Edit photo'
+                      >
+                        Edit Photo
+                      </button>
                     </div>
                   )}
                 </div>
