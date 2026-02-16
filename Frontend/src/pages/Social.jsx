@@ -24,13 +24,19 @@ const CANVAS_CONFIG = {
   NAME: {
     X: 600,
     Y: 430,
-    FONT: 'bold 56px "Akshar", sans-serif',
+    FONT: 'bold 36px "Akshar", sans-serif',
     LINE_HEIGHT: 60,
+  },
+  PHONE: {
+    X: 600,
+    Y: 468,
+    FONT: 'bold 26px "Akshar", sans-serif',
+    LINE_HEIGHT: 50,
   },
   ADDRESS: {
     X: 600,
-    Y: 495,
-    FONT: 'bold 42px "Akshar", sans-serif',
+    Y: 505,
+    FONT: 'bold 22px "Akshar", sans-serif',
     LINE_HEIGHT: 50,
   },
   TEXT_COLOR: '#003366',
@@ -43,6 +49,7 @@ const IMAGE_RENDER_DELAY = 150;
 const Social = () => {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [mobile, setMobile] = useState('');
   const [userPhoto, setUserPhoto] = useState(null);
   const [userPhotoUrl, setUserPhotoUrl] = useState(null);
   const [originalPhotoUrl, setOriginalPhotoUrl] = useState(null);
@@ -132,52 +139,71 @@ const Social = () => {
   }, [originalPhotoUrl, croppedAreaPixels]);
 
   // Utility function to draw text on canvas
-  const drawTextOnCanvas = useCallback((ctx, nameText, addressText) => {
-    const canvasWidth = ctx.canvas.width;
-    const maxWidth =
-      canvasWidth - CANVAS_CONFIG.NAME.X - CANVAS_CONFIG.MAX_WIDTH_OFFSET;
+  const drawTextOnCanvas = useCallback(
+    (ctx, nameText, mobileText, addressText) => {
+      const canvasWidth = ctx.canvas.width;
+      const maxWidth =
+        canvasWidth - CANVAS_CONFIG.NAME.X - CANVAS_CONFIG.MAX_WIDTH_OFFSET;
 
-    // NAME - Single line, no wrapping
-    ctx.font = CANVAS_CONFIG.NAME.FONT;
-    ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 4;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
+      // NAME - Single line, no wrapping
+      ctx.font = CANVAS_CONFIG.NAME.FONT;
+      ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 4;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
 
-    const nameMetrics = ctx.measureText(nameText);
-    const nameWidth = nameMetrics.width;
+      const nameMetrics = ctx.measureText(nameText);
+      const nameWidth = nameMetrics.width;
 
-    // Calculate name position - if it exceeds maxWidth, shift it left
-    const minX = CANVAS_CONFIG.MAX_WIDTH_OFFSET;
-    let nameX = CANVAS_CONFIG.NAME.X;
+      // Calculate name position - if it exceeds maxWidth, shift it left
+      const minX = CANVAS_CONFIG.MAX_WIDTH_OFFSET;
+      let nameX = CANVAS_CONFIG.NAME.X;
 
-    if (nameWidth > maxWidth) {
-      nameX = Math.max(
-        minX,
-        canvasWidth - nameWidth - CANVAS_CONFIG.MAX_WIDTH_OFFSET,
-      );
-    }
+      if (nameWidth > maxWidth) {
+        nameX = Math.max(
+          minX,
+          canvasWidth - nameWidth - CANVAS_CONFIG.MAX_WIDTH_OFFSET,
+        );
+      }
 
-    ctx.strokeText(nameText, nameX, CANVAS_CONFIG.NAME.Y);
-    ctx.fillText(nameText, nameX, CANVAS_CONFIG.NAME.Y);
+      ctx.strokeText(nameText, nameX, CANVAS_CONFIG.NAME.Y);
+      ctx.fillText(nameText, nameX, CANVAS_CONFIG.NAME.Y);
 
-    // ADDRESS - Center it below the name dynamically
-    ctx.font = CANVAS_CONFIG.ADDRESS.FONT;
-    ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 3;
-    ctx.textAlign = 'left';
+      // PHONE - Center it below the name dynamically
+      if (mobileText?.trim()) {
+        ctx.font = CANVAS_CONFIG.PHONE.FONT;
+        ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.textAlign = 'left';
 
-    const addressMetrics = ctx.measureText(addressText);
-    const addressWidth = addressMetrics.width;
+        const phoneMetrics = ctx.measureText(mobileText);
+        const phoneWidth = phoneMetrics.width;
+        const phoneX = nameX + (nameWidth - phoneWidth) / 2;
 
-    // Center the address relative to the name
-    const addressX = nameX + (nameWidth - addressWidth) / 2;
+        ctx.strokeText(mobileText, phoneX, CANVAS_CONFIG.PHONE.Y);
+        ctx.fillText(mobileText, phoneX, CANVAS_CONFIG.PHONE.Y);
+      }
 
-    ctx.strokeText(addressText, addressX, CANVAS_CONFIG.ADDRESS.Y);
-    ctx.fillText(addressText, addressX, CANVAS_CONFIG.ADDRESS.Y);
-  }, []);
+      // ADDRESS - Center it below the name dynamically
+      ctx.font = CANVAS_CONFIG.ADDRESS.FONT;
+      ctx.fillStyle = CANVAS_CONFIG.TEXT_COLOR;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 3;
+      ctx.textAlign = 'left';
+
+      const addressMetrics = ctx.measureText(addressText);
+      const addressWidth = addressMetrics.width;
+
+      // Center the address relative to the name
+      const addressX = nameX + (nameWidth - addressWidth) / 2;
+
+      ctx.strokeText(addressText, addressX, CANVAS_CONFIG.ADDRESS.Y);
+      ctx.fillText(addressText, addressX, CANVAS_CONFIG.ADDRESS.Y);
+    },
+    [],
+  );
 
   // Draw rounded rectangle clip path for photo
   const drawRoundedClipPath = useCallback(
@@ -204,7 +230,7 @@ const Social = () => {
 
   // Main function to render on canvas
   const renderCanvasImage = useCallback(
-    (canvas, photoUrl, nameText, addressText) => {
+    (canvas, photoUrl, nameText, mobileText, addressText) => {
       if (!canvas) return;
 
       const ctx = canvas.getContext('2d');
@@ -265,15 +291,15 @@ const Social = () => {
             ctx.drawImage(userImg, drawX, drawY, drawWidth, drawHeight);
             ctx.restore();
 
-            drawTextOnCanvas(ctx, nameText, addressText);
+            drawTextOnCanvas(ctx, nameText, mobileText, addressText);
           };
 
           userImg.onerror = () => {
             console.error('Failed to load user photo');
-            drawTextOnCanvas(ctx, nameText, addressText);
+            drawTextOnCanvas(ctx, nameText, mobileText, addressText);
           };
         } else {
-          drawTextOnCanvas(ctx, nameText, addressText);
+          drawTextOnCanvas(ctx, nameText, mobileText, addressText);
         }
       };
 
@@ -292,9 +318,10 @@ const Social = () => {
       previewCanvasRef.current,
       userPhotoUrl,
       name || 'Your Name',
+      mobile || 'Your Mobile',
       address || 'Your City',
     );
-  }, [name, address, userPhotoUrl, renderCanvasImage]);
+  }, [name, mobile, address, userPhotoUrl, renderCanvasImage]);
 
   // Generate and save to database
   const generateAndSaveImage = useCallback(async () => {
@@ -312,7 +339,7 @@ const Social = () => {
     }
 
     try {
-      renderCanvasImage(canvas, userPhotoUrl, name, address);
+      renderCanvasImage(canvas, userPhotoUrl, name, mobile, address);
 
       // Wait for image to render
       await new Promise((resolve) => setTimeout(resolve, IMAGE_RENDER_DELAY));
@@ -331,6 +358,7 @@ const Social = () => {
           method: 'POST',
           body: {
             name: name.trim(),
+            mobile: mobile?.trim() || undefined,
             address: address.trim(),
             generated: true,
           },
@@ -345,7 +373,7 @@ const Social = () => {
       setIsSaving(false);
       setIsGenerating(false);
     }
-  }, [name, address, userPhotoUrl, renderCanvasImage]);
+  }, [name, mobile, address, userPhotoUrl, renderCanvasImage]);
 
   // Download image
   const downloadImage = useCallback(() => {
@@ -404,6 +432,7 @@ const Social = () => {
   const resetForm = useCallback(() => {
     setName('');
     setAddress('');
+    setMobile('');
     setUserPhoto(null);
     setUserPhotoUrl(null);
     setOriginalPhotoUrl(null);
@@ -529,6 +558,27 @@ const Social = () => {
                     style={{ fontFamily: 'Akshar, sans-serif' }}
                     aria-required='true'
                     autoComplete='name'
+                  />
+                </div>
+
+                {/* Mobile Input */}
+                <div className='mb-6'>
+                  <label
+                    htmlFor='mobile-input'
+                    className='block text-gray-700 font-semibold mb-2'
+                  >
+                    Mobile Number
+                  </label>
+                  <input
+                    id='mobile-input'
+                    type='tel'
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder='Enter your mobile number'
+                    maxLength={15}
+                    className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition'
+                    style={{ fontFamily: 'Akshar, sans-serif' }}
+                    autoComplete='tel'
                   />
                 </div>
 
