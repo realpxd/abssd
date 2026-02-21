@@ -143,6 +143,11 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       index: true,
     },
+    // Track if physical ID card has been issued to member
+    cardIssued: {
+      type: Boolean,
+      default: false,
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
     emailVerificationToken: String,

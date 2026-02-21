@@ -54,6 +54,7 @@ const AdminDashboard = () => {
   const [filterMembershipType, setFilterMembershipType] = useState('');
   const [filterMembershipStatus, setFilterMembershipStatus] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [filterCardIssued, setFilterCardIssued] = useState('');
 
   // Admin create-user handled inside AdminCreateUser component
 
@@ -202,6 +203,10 @@ const AdminDashboard = () => {
       if (filterRole) {
         if ((u.role || '') !== filterRole) return false;
       }
+      if (filterCardIssued) {
+        const wantsIssued = filterCardIssued === 'yes';
+        if (Boolean(u.cardIssued) !== wantsIssued) return false;
+      }
       return true;
     });
   }, [
@@ -212,6 +217,7 @@ const AdminDashboard = () => {
     filterMembershipType,
     filterMembershipStatus,
     filterRole,
+    filterCardIssued,
   ]);
 
   // Export users to CSV or Excel
@@ -580,6 +586,31 @@ const AdminDashboard = () => {
     // open details modal and request auto-print
     setSelectedUser(user);
     setAutoPrint(true);
+  };
+
+  const handleToggleCardIssued = async (userId, cardIssued) => {
+    try {
+      const response = await client(
+        `${api.endpoints.auth}/users/${userId}/card-issued`,
+        {
+          method: 'PUT',
+          body: { cardIssued },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        },
+      );
+
+      if (response.success) {
+        // Update local state to reflect the change
+        setUsers((prevUsers) =>
+          prevUsers.map((u) => (u._id === userId ? { ...u, cardIssued } : u)),
+        );
+      }
+    } catch (error) {
+      console.error('Error updating card issued status:', error);
+      alert(error.message || 'Error updating card issued status');
+    }
   };
 
   const handleUpdateMembershipStatus = async (userId, newStatus) => {
@@ -1108,6 +1139,21 @@ const AdminDashboard = () => {
                   </select>
                 </div>
 
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-2'>
+                    Card Issued
+                  </label>
+                  <select
+                    value={filterCardIssued}
+                    onChange={(e) => setFilterCardIssued(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm'
+                  >
+                    <option value=''>All</option>
+                    <option value='yes'>Yes</option>
+                    <option value='no'>No</option>
+                  </select>
+                </div>
+
                 <div className='flex items-end'>
                   <button
                     onClick={() => {
@@ -1116,6 +1162,7 @@ const AdminDashboard = () => {
                       setFilterMembershipType('');
                       setFilterMembershipStatus('');
                       setFilterRole('');
+                      setFilterCardIssued('');
                     }}
                     className='w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-sm'
                   >
@@ -1133,6 +1180,7 @@ const AdminDashboard = () => {
             users={filteredUsers}
             onViewDetails={handleViewUserDetails}
             onPrintID={handlePrintUser}
+            onToggleCardIssued={handleToggleCardIssued}
           />
         </div>
       </>

@@ -44,6 +44,7 @@ const UserRow = memo(
     onSelect,
     onViewDetails,
     onPrintID,
+    onToggleCardIssued,
   }) => {
     const statusConfig = getStatusConfig(user.membershipStatus);
 
@@ -129,6 +130,16 @@ const UserRow = memo(
             {statusConfig.text}
           </span>
         </td>
+        <td className='px-6 py-4 whitespace-nowrap text-center'>
+          <input
+            type='checkbox'
+            checked={user.cardIssued || false}
+            onChange={() => onToggleCardIssued?.(user._id, !user.cardIssued)}
+            className='w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer'
+            title={user.cardIssued ? 'Card Issued' : 'Card Not Issued'}
+            aria-label={`Toggle card issued status for ${user.username}`}
+          />
+        </td>
         <td className='px-6 py-4 whitespace-nowrap'>
           <div className='flex gap-2'>
             <button
@@ -156,7 +167,7 @@ const UserRow = memo(
 
 UserRow.displayName = 'UserRow';
 
-const UsersList = ({ users, onViewDetails, onPrintID }) => {
+const UsersList = ({ users, onViewDetails, onPrintID, onToggleCardIssued }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -505,6 +516,9 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
               <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
                 Status
               </th>
+              <th className='px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider'>
+                Card Issued
+              </th>
               <th className='px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider'>
                 Actions
               </th>
@@ -521,6 +535,7 @@ const UsersList = ({ users, onViewDetails, onPrintID }) => {
                 onSelect={handleSelectUser}
                 onViewDetails={onViewDetails}
                 onPrintID={onPrintID}
+                onToggleCardIssued={onToggleCardIssued}
               />
             ))}
           </tbody>

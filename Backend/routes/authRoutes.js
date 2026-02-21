@@ -21,6 +21,7 @@ const {
   deleteUser,
   notifyUser,
   updateUserPosition,
+  updateCardIssued,
 } = require('../controllers/authController');
 const { protect, restrictToAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -100,6 +101,12 @@ router.put(
   protect,
   restrictToAdmin,
   updateMemberNumber,
+);
+router.put(
+  '/users/:id/card-issued',
+  protect,
+  restrictToAdmin,
+  updateCardIssued,
 );
 router.put('/users/:id/position', protect, restrictToAdmin, updateUserPosition);
 router.post('/test-email', protect, restrictToAdmin, (req, res, next) => {
