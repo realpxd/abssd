@@ -1,9 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents.js';
 import { getImageUrl } from '../utils/imageUrl.js';
 
 const News = () => {
   const { data, isLoading, error } = useEvents();
+  const [expandedItems, setExpandedItems] = useState({});
+
+  const toggleDescription = (itemId) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  };
 
   // Fallback to placeholder events if API fails or no data
   const allNews = data?.data || [
@@ -68,49 +77,74 @@ const News = () => {
         {!isLoading && !error && (
           <>
             <div className='grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-8'>
-              {newsItems.map((item) => (
-                <article
-                  key={item._id || item.id}
-                  className='bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2'
-                >
-                  <div className='relative h-48 overflow-hidden'>
-                    <img
-                      src={
-                        getImageUrl(item.imageUrl || item.image) ||
-                        '/images/news-thumbnail.png'
-                      }
-                      alt={item.title}
-                      onError={(e) => {
-                        e.target.src = '/images/news-thumbnail.png';
-                      }}
-                      className='w-full h-full object-cover hover:scale-110 transition-transform duration-300'
-                      loading='lazy'
-                    />
-                  </div>
-                  <div className='p-6'>
-                    <div className='text-sm text-gray-500 mb-2'>
-                      {new Date(item.date).toLocaleDateString('hi-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+              {newsItems.map((item, index) => {
+                const itemId = item._id || item.id || index;
+                const isExpanded = Boolean(expandedItems[itemId]);
+
+                return (
+                  <article
+                    key={itemId}
+                    className='bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2'
+                  >
+                    <div className='relative h-48 overflow-hidden'>
+                      <img
+                        src={
+                          getImageUrl(item.imageUrl || item.image) ||
+                          '/images/news-thumbnail.png'
+                        }
+                        alt={item.title}
+                        onError={(e) => {
+                          e.target.src = '/images/news-thumbnail.png';
+                        }}
+                        className='w-full h-full object-cover hover:scale-110 transition-transform duration-300'
+                        loading='lazy'
+                      />
                     </div>
-                    <h3 className='text-xl font-bold text-gray-800 mb-2'>
-                      {item.title}
-                    </h3>
-                    <p className='text-sm text-gray-500 mb-3'>
-                      {item.titleEn || item.en}
-                    </p>
-                    <p className='text-gray-700'>{item.description}</p>
-                    <a
-                      href='#'
-                      className='inline-block mt-4 text-orange-600 hover:text-orange-700 font-semibold'
-                    >
-                      और पढ़ें →
-                    </a>
-                  </div>
-                </article>
-              ))}
+                    <div className='p-6'>
+                      <div className='text-sm text-gray-500 mb-2'>
+                        {new Date(item.date).toLocaleDateString('hi-IN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </div>
+                      <h3 className='text-xl font-bold text-gray-800 mb-2'>
+                        {item.title}
+                      </h3>
+                      <p className='text-sm text-gray-500 mb-3'>
+                        {item.titleEn || item.en}
+                      </p>
+                      <p
+                        className={`text-gray-700 ${
+                          isExpanded ? '' : 'line-clamp-3'
+                        }`}
+                      >
+                        {item.description}
+                      </p>
+                      <button
+                        type='button'
+                        onClick={() => toggleDescription(itemId)}
+                        className='inline-flex items-center mt-4 text-orange-600 hover:text-orange-700 font-semibold'
+                      >
+                        {isExpanded ? 'कम पढ़ें' : 'और पढ़ें'}
+                        <svg
+                          className='w-4 h-4 ml-1'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d={isExpanded ? 'M19 9l-7 7-7-7' : 'M9 5l7 7-7 7'}
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
             <div className='text-center'>
               <Link
