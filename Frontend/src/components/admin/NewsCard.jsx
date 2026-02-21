@@ -22,7 +22,7 @@ const NewsCard = ({ item, onEdit, onDelete }) => {
             {item.title}
           </h3>
           <p className='text-xs text-gray-500 mb-2'>{item.titleEn}</p>
-          <p className='text-sm text-gray-600 mb-3 line-clamp-2'>
+          <p className='text-sm text-gray-600 mb-3'>
             {item.description}
           </p>
           <div className='flex flex-wrap items-center gap-3 text-xs text-gray-600 mb-4'>
