@@ -184,7 +184,7 @@ const requestSizeLimiter = (req, res, next) => {
 
   const maxSize = isFileUploadPath
     ? 50 * 1024 * 1024 // 50MB for file uploads (increased from 10MB)
-    : 1 * 1024 * 1024; // 1MB for regular requests
+    : 20 * 1024 * 1024; // 1MB for regular requests
 
   if (contentLength && parseInt(contentLength) > maxSize) {
     return res.status(413).json({

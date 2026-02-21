@@ -214,7 +214,7 @@ const { isValid, sanitized } = validateEmail(email);
 
 // Validate file upload
 const { isValid, error } = validateFileUpload(file, {
-  maxSize: 5 * 1024 * 1024, // 5MB
+  maxSize: 20 * 1024 * 1024, // 20MB
   allowedTypes: ['image/jpeg', 'image/png'],
 });
 
