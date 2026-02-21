@@ -171,6 +171,9 @@ const AdminDashboard = () => {
     return users.filter((u) => {
       if (q) {
         const matches =
+          String(u.memberNumber || '')
+            .toLowerCase()
+            .includes(q) ||
           (u._id || '').toLowerCase().includes(q) ||
           (u.username || '').toLowerCase().includes(q) ||
           (u.email || '').toLowerCase().includes(q);
