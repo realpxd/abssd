@@ -303,8 +303,8 @@ const AdminDashboard = () => {
             : '',
           u.paymentId || '',
           u.isEmailVerified ? 'Yes' : 'No',
-          u.cardIssued ? 'Yes' : 'No',
           u.createdAt ? new Date(u.createdAt).toISOString() : '',
+          u.cardIssued ? 'Yes' : 'No',
         ];
       });
 
