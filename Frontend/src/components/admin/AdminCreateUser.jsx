@@ -13,7 +13,7 @@ import {
 const MEMBERSHIP_PLANS = {
   ordinary: {
     name: 'साधारण सदस्यता / Ordinary Membership',
-    amount: 500,
+    amount: 1100,
     features: [
       'सभी कार्यक्रमों में भागीदारी / Participation in all events',
       'नियमित अपडेट्स / Regular updates',
